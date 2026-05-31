@@ -1,0 +1,126 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
+
+export const Route = createFileRoute("/contact")({
+  head: () => ({
+    meta: [
+      { title: "Contact & Book a Tour — FIT Beyond Plus" },
+      { name: "description", content: "Visit FIT Beyond Plus in Tullahoma, TN. Book a free tour, ask a question, or sign up for a membership." },
+      { property: "og:title", content: "Contact FIT Beyond Plus" },
+      { property: "og:description", content: "Book a tour. Visit the facility. Start training." },
+    ],
+  }),
+  component: Contact,
+});
+
+function Contact() {
+  const [sent, setSent] = useState(false);
+
+  return (
+    <>
+      <PageHero
+        eyebrow="CONTACT"
+        title="Stop by. Book a tour. Get started."
+        description="Tell us what you're looking for and we'll get back to you within one business day. Or just walk in — we're here."
+      />
+
+      <section className="container-page py-20 grid lg:grid-cols-5 gap-12">
+        <div className="lg:col-span-3">
+          <h2 className="text-2xl md:text-3xl">Send us a message</h2>
+          {sent ? (
+            <div className="mt-8 rounded-lg border border-primary bg-primary/10 p-8 text-center">
+              <p className="text-lg">Thanks — we'll be in touch shortly.</p>
+            </div>
+          ) : (
+            <form
+              className="mt-8 space-y-5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setSent(true);
+              }}
+            >
+              <div className="grid sm:grid-cols-2 gap-5">
+                <Field label="Name" name="name" required />
+                <Field label="Email" name="email" type="email" required />
+              </div>
+              <div className="grid sm:grid-cols-2 gap-5">
+                <Field label="Phone" name="phone" type="tel" />
+                <div>
+                  <label className="block text-xs uppercase tracking-widest mb-2">Interested in</label>
+                  <select className="w-full h-11 rounded-md bg-secondary border border-border px-3 text-sm focus:outline-none focus:border-primary">
+                    <option>Book a tour</option>
+                    <option>Membership question</option>
+                    <option>Personal training</option>
+                    <option>Something else</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-widest mb-2">Message</label>
+                <textarea
+                  rows={5}
+                  className="w-full rounded-md bg-secondary border border-border px-3 py-2 text-sm focus:outline-none focus:border-primary"
+                  placeholder="Tell us a bit about your goals or what you're looking for."
+                />
+              </div>
+              <button
+                type="submit"
+                className="inline-flex h-12 items-center rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
+                style={{ boxShadow: "var(--shadow-glow)" }}
+              >
+                Send Message
+              </button>
+            </form>
+          )}
+        </div>
+
+        <aside className="lg:col-span-2 space-y-6">
+          <InfoCard icon={MapPin} title="Visit">
+            Tullahoma, Tennessee<br />Full address shared at booking
+          </InfoCard>
+          <InfoCard icon={Phone} title="Call">
+            <a href="tel:9315550123" className="hover:text-primary">(931) 555-0123</a>
+          </InfoCard>
+          <InfoCard icon={Mail} title="Email">
+            <a href="mailto:hello@fitbeyondplus.com" className="hover:text-primary">hello@fitbeyondplus.com</a>
+          </InfoCard>
+          <InfoCard icon={Clock} title="Hours">
+            Staffed: Mon–Fri 6a–8p · Sat 8a–4p<br />
+            Member access: 24/7
+          </InfoCard>
+        </aside>
+      </section>
+    </>
+  );
+}
+
+function Field({ label, name, type = "text", required }: { label: string; name: string; type?: string; required?: boolean }) {
+  return (
+    <div>
+      <label htmlFor={name} className="block text-xs uppercase tracking-widest mb-2">{label}</label>
+      <input
+        id={name}
+        name={name}
+        type={type}
+        required={required}
+        className="w-full h-11 rounded-md bg-secondary border border-border px-3 text-sm focus:outline-none focus:border-primary"
+      />
+    </div>
+  );
+}
+
+function InfoCard({ icon: Icon, title, children }: { icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-6">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-md bg-primary/15 text-primary flex items-center justify-center">
+          <Icon className="h-5 w-5" />
+        </div>
+        <h3 className="text-base">{title}</h3>
+      </div>
+      <div className="mt-3 text-sm text-muted-foreground leading-relaxed">{children}</div>
+    </div>
+  );
+}
