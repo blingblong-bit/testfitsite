@@ -45,12 +45,12 @@ function About() {
           <h2 className="text-3xl md:text-4xl text-center">What we stand for</h2>
           <div className="mt-14 grid md:grid-cols-3 gap-8">
             {[
-              { t: "Effort over ego", d: "We respect the work, not the weight. Everyone trains. Everyone gets stronger." },
-              { t: "Coaching that matters", d: "Real programming, real feedback. Our trainers are here to make you better." },
-              { t: "A space that delivers", d: "Functional layout. Premium gear. Cleaned daily. Maintained always." },
+              { n: "01", t: "Effort over ego", d: "We respect the work, not the weight. Everyone trains. Everyone gets stronger." },
+              { n: "02", t: "Coaching that matters", d: "Real programming, real feedback. Our trainers are here to make you better." },
+              { n: "03", t: "A space that delivers", d: "Functional layout. Premium gear. Cleaned daily. Maintained always." },
             ].map((v) => (
               <div key={v.t} className="border border-border bg-background p-8 rounded-lg">
-                <div className="text-5xl text-primary font-display">0{["1","2","3"][["effort over ego","coaching that matters","a space that delivers"].indexOf(v.t.toLowerCase())]}</div>
+                <div className="text-5xl text-primary font-display">{v.n}</div>
                 <h3 className="mt-4 text-xl">{v.t}</h3>
                 <p className="mt-3 text-sm text-muted-foreground">{v.d}</p>
               </div>
