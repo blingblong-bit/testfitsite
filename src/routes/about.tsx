@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHero } from "@/components/PageHero";
 import { CTASection } from "@/components/CTASection";
-import weightsImg from "@/assets/facility-weights.jpg";
+import weightsImg from "@/assets/real-stronger-together.jpg";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
