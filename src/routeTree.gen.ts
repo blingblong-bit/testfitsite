@@ -14,6 +14,7 @@ import { Route as PersonalTrainingRouteImport } from './routes/personal-training
 import { Route as MembershipsRouteImport } from './routes/memberships'
 import { Route as FacilityRouteImport } from './routes/facility'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -42,6 +43,11 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClassesRoute = ClassesRouteImport.update({
+  id: '/classes',
+  path: '/classes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -56,6 +62,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/classes': typeof ClassesRoute
   '/contact': typeof ContactRoute
   '/facility': typeof FacilityRoute
   '/memberships': typeof MembershipsRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/classes': typeof ClassesRoute
   '/contact': typeof ContactRoute
   '/facility': typeof FacilityRoute
   '/memberships': typeof MembershipsRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/classes': typeof ClassesRoute
   '/contact': typeof ContactRoute
   '/facility': typeof FacilityRoute
   '/memberships': typeof MembershipsRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/classes'
     | '/contact'
     | '/facility'
     | '/memberships'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/classes'
     | '/contact'
     | '/facility'
     | '/memberships'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/classes'
     | '/contact'
     | '/facility'
     | '/memberships'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  ClassesRoute: typeof ClassesRoute
   ContactRoute: typeof ContactRoute
   FacilityRoute: typeof FacilityRoute
   MembershipsRoute: typeof MembershipsRoute
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/classes': {
+      id: '/classes'
+      path: '/classes'
+      fullPath: '/classes'
+      preLoaderRoute: typeof ClassesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -178,6 +198,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  ClassesRoute: ClassesRoute,
   ContactRoute: ContactRoute,
   FacilityRoute: FacilityRoute,
   MembershipsRoute: MembershipsRoute,
