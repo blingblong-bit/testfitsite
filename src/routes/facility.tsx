@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHero } from "@/components/PageHero";
 import { CTASection } from "@/components/CTASection";
-import weights from "@/assets/real-dumbbells.jpg";
-import cardio from "@/assets/real-facility-floor.png";
-import functional from "@/assets/real-stronger-together.jpg";
+import weights from "@/assets/gym-shoulder-press.jpg";
+import cardio from "@/assets/gym-cardio-machines.jpg";
+import functional from "@/assets/gym-rower-brand.jpg";
 import hero from "@/assets/real-dumbbells.jpg";
 
 export const Route = createFileRoute("/facility")({
