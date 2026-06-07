@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Target, TrendingUp, Users, Calendar } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { CTASection } from "@/components/CTASection";
-import ptImg from "@/assets/personal-training.jpg";
+import ptImg from "@/assets/gym-shoulder-press.jpg";
 
 export const Route = createFileRoute("/personal-training")({
   head: () => ({

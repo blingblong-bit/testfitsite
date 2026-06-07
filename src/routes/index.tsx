@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Dumbbell, Users, Clock, Trophy, Heart, Shield } from "lucide-react";
 import heroImg from "@/assets/real-dumbbells.jpg";
-import weightsImg from "@/assets/real-stronger-together.jpg";
+import weightsImg from "@/assets/gym-shoulder-press.jpg";
 import { CTASection } from "@/components/CTASection";
 
 export const Route = createFileRoute("/")({
