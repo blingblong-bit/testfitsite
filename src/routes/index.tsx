@@ -60,7 +60,7 @@ function Home() {
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl">
             {[
               { k: "24/7", v: "Member Access" },
-              { k: "15K+", v: "Sq Ft Facility" },
+              { k: "13.5K", v: "Sq Ft Facility" },
               { k: "100+", v: "Pieces of Equipment" },
               { k: "1:1", v: "Personal Training" },
             ].map((s) => (

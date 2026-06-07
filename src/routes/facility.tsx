@@ -10,7 +10,7 @@ export const Route = createFileRoute("/facility")({
   head: () => ({
     meta: [
       { title: "Facility & Equipment — FIT Beyond Plus" },
-      { name: "description", content: "15,000+ sq ft training facility in Tullahoma, TN. Premium strength equipment, cardio, turf, and functional zones." },
+      { name: "description", content: "13,500 sq ft training facility in Tullahoma, TN. Premium strength equipment, cardio, turf, and functional zones." },
       { property: "og:title", content: "FIT Beyond Plus Facility" },
       { property: "og:description", content: "Premium equipment. Clean space. Built for training." },
       { property: "og:image", content: hero },
@@ -42,7 +42,7 @@ function Facility() {
     <>
       <PageHero
         eyebrow="THE FACILITY"
-        title="15,000+ sq ft. Built for serious training."
+        title="13,500 sq ft. Built for serious training."
         description="Every zone is designed to give you space to move, the right equipment to progress, and the cleanliness you expect from a premium gym."
       />
 
