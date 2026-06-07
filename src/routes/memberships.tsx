@@ -7,36 +7,56 @@ export const Route = createFileRoute("/memberships")({
   head: () => ({
     meta: [
       { title: "Memberships — FIT Beyond Plus" },
-      { name: "description", content: "Simple, honest membership options at FIT Beyond Plus in Tullahoma, TN. 24/7 access, no contracts, real value." },
+      { name: "description", content: "Monthly and paid-in-full membership options at FIT Beyond Plus in Tullahoma, TN. 24/7 access, no contracts on monthly plans." },
       { property: "og:title", content: "FIT Beyond Plus Memberships" },
-      { property: "og:description", content: "24/7 access. No contracts. Real value." },
+      { property: "og:description", content: "Monthly and paid-in-full options. Train your way." },
     ],
   }),
   component: Memberships,
 });
 
-const plans = [
+const monthlyPlans = [
   {
-    name: "Standard",
-    price: "29",
-    tagline: "Full gym access, no extras.",
-    features: ["24/7 keycard access", "All equipment & facilities", "Locker rooms & showers", "Free orientation session", "No long-term contract"],
-    highlighted: false,
+    name: "Single",
+    price: "37",
+    tagline: "One member. Full access.",
+    features: ["24/7 keycard access", "All equipment & facilities", "Locker rooms & showers", "Free orientation session"],
   },
   {
-    name: "Plus",
-    price: "49",
-    tagline: "Our most popular plan.",
-    features: ["Everything in Standard", "Bring a guest 2x / month", "Monthly form-check session", "Discounted personal training", "Member-only programming"],
-    highlighted: true,
+    name: "Duo",
+    price: "55",
+    tagline: "Train together.",
+    features: ["2 adult members", "All equipment & facilities", "Shared guest privileges", "Free orientation session"],
   },
   {
-    name: "Couples & Family",
-    price: "79",
-    tagline: "Train together, save together.",
-    features: ["Up to 2 adult members", "Add kids 12+ for $15/mo", "All Plus benefits included", "Shared guest privileges", "Family tour & onboarding"],
-    highlighted: false,
+    name: "Duo +1",
+    price: "63",
+    tagline: "Three adult members.",
+    features: ["3 adult members", "All equipment & facilities", "Shared guest privileges", "Free orientation session"],
   },
+  {
+    name: "Family",
+    price: "72",
+    tagline: "The whole crew.",
+    features: ["Family access", "All equipment & facilities", "Shared guest privileges", "Free orientation session"],
+  },
+  {
+    name: "Tanning",
+    price: "25",
+    tagline: "Unlimited tanning access.",
+    features: ["Unlimited tanning", "Clean, well-maintained beds", "Add to any membership"],
+  },
+];
+
+const paidInFullPlans = [
+  { name: "Single — 1 Week", price: "35" },
+  { name: "Single — 1 Month", price: "55" },
+  { name: "Single — 3 Months", price: "111" },
+  { name: "Single — 6 Months", price: "222" },
+  { name: "Single — 1 Year", price: "399" },
+  { name: "Duo — 1 Year", price: "605" },
+  { name: "Duo +1 — 1 Year", price: "693" },
+  { name: "Family — 1 Year", price: "864" },
 ];
 
 function Memberships() {
@@ -45,24 +65,16 @@ function Memberships() {
       <PageHero
         eyebrow="MEMBERSHIPS"
         title="Honest pricing. No surprises."
-        description="Pick the plan that fits how you train. Cancel anytime. No initiation fees, no pressure sales."
+        description="Monthly plans with full flexibility, or pay in full and skip the annual fee."
       />
 
       <section className="container-page py-20">
-        <div className="grid md:grid-cols-3 gap-6">
-          {plans.map((p) => (
-            <div
-              key={p.name}
-              className={`relative rounded-lg border p-8 flex flex-col ${
-                p.highlighted ? "border-primary bg-card" : "border-border bg-card"
-              }`}
-              style={p.highlighted ? { boxShadow: "var(--shadow-glow)" } : undefined}
-            >
-              {p.highlighted && (
-                <div className="absolute -top-3 left-8 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider px-3 py-1 rounded">
-                  Most popular
-                </div>
-              )}
+        <p className="text-xs tracking-[0.3em] text-primary">MONTHLY MEMBERSHIPS</p>
+        <p className="mt-2 text-sm text-muted-foreground">$49.99 annual fee billed July 1st · Cancel anytime with 30 days' notice</p>
+
+        <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {monthlyPlans.map((p) => (
+            <div key={p.name} className="relative rounded-lg border border-border bg-card p-8 flex flex-col">
               <h3 className="text-2xl">{p.name}</h3>
               <p className="mt-1 text-sm text-muted-foreground">{p.tagline}</p>
               <div className="mt-6 flex items-baseline gap-1">
@@ -79,11 +91,7 @@ function Memberships() {
               </ul>
               <Link
                 to="/contact"
-                className={`mt-8 inline-flex h-11 items-center justify-center rounded-md text-sm font-bold uppercase tracking-wide transition ${
-                  p.highlighted
-                    ? "bg-primary text-primary-foreground hover:brightness-110"
-                    : "border border-border hover:bg-secondary"
-                }`}
+                className="mt-8 inline-flex h-11 items-center justify-center rounded-md text-sm font-bold uppercase tracking-wide transition border border-border hover:bg-secondary"
               >
                 Join the Gym
               </Link>
@@ -91,8 +99,25 @@ function Memberships() {
           ))}
         </div>
 
+        <div className="mt-20">
+          <p className="text-xs tracking-[0.3em] text-primary">PAID IN FULL MEMBERSHIPS</p>
+          <p className="mt-2 text-sm text-muted-foreground">No annual fee · One upfront payment · Best value for committed training</p>
+
+          <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border">
+            {paidInFullPlans.map((p) => (
+              <div key={p.name} className="bg-card p-6 flex flex-col justify-between">
+                <h3 className="text-sm font-semibold">{p.name}</h3>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-3xl font-display font-bold">${p.price}</span>
+                  <span className="text-xs text-muted-foreground">paid in full</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="mt-12 text-center text-sm text-muted-foreground">
-          Day passes available for $12 · Active military & first responders get 15% off
+          Active military & first responders get 15% off · Day passes available for $12
         </div>
       </section>
 
@@ -101,10 +126,10 @@ function Memberships() {
           <h2 className="text-3xl md:text-4xl text-center">Common questions</h2>
           <div className="mt-12 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {[
-              { q: "Is there a contract?", a: "No. All memberships are month-to-month. Cancel anytime with 30 days' notice." },
+              { q: "Is there a contract on monthly plans?", a: "No. All monthly memberships are month-to-month. Cancel anytime with 30 days' notice." },
+              { q: "When is the annual fee charged?", a: "The $49.99 annual fee is billed on July 1st each year for all active monthly memberships." },
               { q: "Do you offer a free trial?", a: "Yes — book a tour and we'll set you up with a complimentary day pass." },
               { q: "What ages do you serve?", a: "Members 14+ welcome. Ages 14–17 require a parent or guardian on the membership." },
-              { q: "Can I freeze my membership?", a: "Yes. Members can freeze for up to 3 months per year at no charge." },
             ].map((f) => (
               <div key={f.q} className="border border-border bg-background p-6 rounded-lg">
                 <h3 className="text-base">{f.q}</h3>
