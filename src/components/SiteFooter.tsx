@@ -12,8 +12,8 @@ export function SiteFooter() {
             More than a gym. A serious training environment in Tullahoma, Tennessee — built for athletes, lifters, and anyone ready to put in the work.
           </p>
           <div className="mt-5 flex gap-3">
-            <a href="#" aria-label="Instagram" className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:text-primary"><Instagram className="h-4 w-4" /></a>
-            <a href="#" aria-label="Facebook" className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:text-primary"><Facebook className="h-4 w-4" /></a>
+            <a href="https://www.instagram.com/f.i.tbeyondplus/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:text-primary"><Instagram className="h-4 w-4" /></a>
+            <a href="https://www.facebook.com/fitbeyondplus/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:text-primary"><Facebook className="h-4 w-4" /></a>
           </div>
         </div>
 
