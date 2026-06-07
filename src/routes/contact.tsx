@@ -78,13 +78,13 @@ function Contact() {
 
         <aside className="lg:col-span-2 space-y-6">
           <InfoCard icon={MapPin} title="Visit">
-            Tullahoma, Tennessee<br />Full address shared at booking
+            449 W Lincoln St<br />Tullahoma, TN, United States, Tennessee
           </InfoCard>
           <InfoCard icon={Phone} title="Call">
-            <a href="tel:9315550123" className="hover:text-primary">(931) 555-0123</a>
+            <a href="tel:9312224449" className="hover:text-primary">(931) 222-4449</a>
           </InfoCard>
           <InfoCard icon={Mail} title="Email">
-            <a href="mailto:hello@fitbeyondplus.com" className="hover:text-primary">hello@fitbeyondplus.com</a>
+            <a href="mailto:Info@fitbeyondplus.com" className="hover:text-primary">Info@fitbeyondplus.com</a>
           </InfoCard>
           <InfoCard icon={Clock} title="Hours">
             Staffed: Mon–Fri 6a–8p · Sat 8a–4p<br />

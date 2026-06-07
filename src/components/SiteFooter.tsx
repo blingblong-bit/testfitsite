@@ -32,9 +32,9 @@ export function SiteFooter() {
         <div>
           <h4 className="text-sm tracking-widest text-foreground">Visit</h4>
           <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
-            <li className="flex gap-2"><MapPin className="h-4 w-4 mt-0.5 text-primary" /> Tullahoma, Tennessee</li>
-            <li className="flex gap-2"><Phone className="h-4 w-4 mt-0.5 text-primary" /> (931) 555-0123</li>
-            <li className="flex gap-2"><Mail className="h-4 w-4 mt-0.5 text-primary" /> hello@fitbeyondplus.com</li>
+            <li className="flex gap-2"><MapPin className="h-4 w-4 mt-0.5 text-primary" /> 449 W Lincoln St, Tullahoma, TN, United States, Tennessee</li>
+            <li className="flex gap-2"><Phone className="h-4 w-4 mt-0.5 text-primary" /> (931) 222-4449</li>
+            <li className="flex gap-2"><Mail className="h-4 w-4 mt-0.5 text-primary" /> Info@fitbeyondplus.com</li>
           </ul>
           <p className="mt-4 text-xs text-muted-foreground">Open daily · 24/7 member access</p>
         </div>
