@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHero } from "@/components/PageHero";
 import { CTASection } from "@/components/CTASection";
-import weightsImg from "@/assets/about-coaching.jpg";
+import weightsImg from "@/assets/about-owner.png.asset.json";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -25,7 +25,7 @@ function About() {
       />
 
       <section className="container-page py-20 grid md:grid-cols-2 gap-12 items-start">
-        <img src={weightsImg} alt="Facility" loading="lazy" width={1280} height={896} className="rounded-lg border border-border" />
+        <img src={weightsImg.url} alt="FIT Beyond Plus owner" loading="lazy" width={1280} height={1536} className="rounded-lg border border-border" />
         <div>
           <h2 className="text-3xl md:text-4xl">Our story</h2>
           <p className="mt-5 text-muted-foreground leading-relaxed">
