@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHero } from "@/components/PageHero";
 import { CTASection } from "@/components/CTASection";
+import barreAbsAsset from "@/assets/barre-abs.jpg.asset.json";
+import kickboxingLiftAsset from "@/assets/kickboxing-lift.jpg.asset.json";
 
 export const Route = createFileRoute("/classes")({
   head: () => ({
