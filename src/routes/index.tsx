@@ -83,10 +83,13 @@ function Home() {
             <p className="text-xs tracking-[0.3em] text-primary">WHO WE ARE</p>
             <h2 className="mt-3 text-4xl md:text-5xl">Built for people who actually want to train.</h2>
             <p className="mt-5 text-muted-foreground leading-relaxed">
-              FIT Beyond Plus is Tullahoma's home for serious fitness. We're a clean, well-equipped facility with the room and tools to train hard — and a coaching team that meets you wherever you're starting from.
+              At FIT Beyond Plus, you do not have to be advanced to belong here. You just have to be willing to start.
             </p>
             <p className="mt-4 text-muted-foreground leading-relaxed">
-              Whether you're chasing a PR, returning after years away, or stepping into a gym for the first time, you'll find space to work and people who respect the effort.
+              We serve first-time gym-goers, weekend warriors, athletes, parents, busy adults, and experienced lifters. Some members are learning the basics. Some are chasing performance. Some are rebuilding confidence. All of them deserve a gym that respects the work.
+            </p>
+            <p className="mt-4 text-muted-foreground leading-relaxed">
+              Our facility is designed to give you a serious training environment without the ego, attitude, or intimidation that keeps too many people from getting started.
             </p>
             <Link
               to="/about"
