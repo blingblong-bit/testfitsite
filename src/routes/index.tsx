@@ -117,12 +117,12 @@ function Home() {
           </div>
           <div className="mt-14 grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
             {[
-              { icon: Dumbbell, t: "Premium Equipment", d: "Hammer Strength, Rogue, dumbbells to 150 lb, full racks and platforms." },
-              { icon: Clock, t: "24/7 Access", d: "Members train on their schedule. Secure keycard entry, day or night." },
-              { icon: Users, t: "1-on-1 Coaching", d: "Certified trainers who actually program — not just count reps." },
-              { icon: Trophy, t: "Athlete-Ready", d: "Turf, sleds, plyo boxes, and conditioning gear for sport-specific work." },
-              { icon: Heart, t: "Beginner Friendly", d: "Free orientation. Zero judgment. Real help when you ask for it." },
-              { icon: Shield, t: "Clean & Maintained", d: "Daily sanitization. Working equipment. A space you'll want to come back to." },
+              { icon: Dumbbell, t: "Premium Equipment", d: "Train with quality strength equipment, free weights, machines, racks, platforms, and dumbbells built for real progress." },
+              { icon: Clock, t: "24/7 Access", d: "Members can train on their schedule with secure access, day or night." },
+              { icon: Users, t: "1-on-1 Coaching", d: "For those who want more guidance, our trainers provide real coaching, structure, accountability, and support." },
+              { icon: Trophy, t: "Athlete-Ready", d: "For athletes and serious lifters, we have the tools and training environment to build strength, power, and performance." },
+              { icon: Heart, t: "Beginner Friendly", d: "New to the gym? You are welcome here. We help you get started without judgment or pressure." },
+              { icon: Shield, t: "Clean & Maintained", d: "We care about the details: clean floors, working equipment, organized spaces, and a gym you actually want to come back to." },
             ].map(({ icon: Icon, t, d }) => (
               <div key={t} className="bg-background p-8 hover:bg-card transition-colors group">
                 <Icon className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
