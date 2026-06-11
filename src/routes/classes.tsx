@@ -2,7 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageHero } from "@/components/PageHero";
 import { CTASection } from "@/components/CTASection";
 import barreAbsAsset from "@/assets/barre-abs.jpg.asset.json";
-import kickboxingLiftAsset from "@/assets/kickboxing-lift.jpg.asset.json";
+import cardioLiftAsset from "@/assets/kickboxing-lift.jpg.asset.json";
+import trxAsset from "@/assets/trx.jpg.asset.json";
+import fitHiitAsset from "@/assets/fit-hiit.jpg.asset.json";
+import kickboxingAsset from "@/assets/kickboxing.jpg.asset.json";
 
 export const Route = createFileRoute("/classes")({
   head: () => ({
@@ -76,31 +79,22 @@ function Classes() {
       />
 
       <section className="container-page pt-16">
-        <div className="grid md:grid-cols-2 gap-6">
-          <figure className="overflow-hidden rounded-lg border border-border bg-card">
-            <img
-              src={barreAbsAsset.url}
-              alt="Barre Abs class at FIT Beyond Plus"
-              className="w-full h-72 md:h-96 object-cover"
-              loading="lazy"
-            />
-            <figcaption className="px-5 py-3 text-sm">
-              <span className="text-xs tracking-[0.3em] text-primary">BARRE ABS</span>
-              <p className="mt-1 text-muted-foreground">Low-impact strength, balance, and core work at the barre.</p>
-            </figcaption>
-          </figure>
-          <figure className="overflow-hidden rounded-lg border border-border bg-card">
-            <img
-              src={kickboxingLiftAsset.url}
-              alt="Kickboxing and Lift class at FIT Beyond Plus"
-              className="w-full h-72 md:h-96 object-cover"
-              loading="lazy"
-            />
-            <figcaption className="px-5 py-3 text-sm">
-              <span className="text-xs tracking-[0.3em] text-primary">KICKBOXING / LIFT</span>
-              <p className="mt-1 text-muted-foreground">High-energy conditioning paired with strength training.</p>
-            </figcaption>
-          </figure>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[
+            { src: barreAbsAsset.url, label: "BARRE ABS", caption: "Low-impact strength, balance, and core work at the barre.", alt: "Barre Abs class at FIT Beyond Plus" },
+            { src: trxAsset.url, label: "TRX", caption: "Suspension training for full-body strength and stability.", alt: "TRX class at FIT Beyond Plus" },
+            { src: fitHiitAsset.url, label: "FIT HIIT", caption: "High-intensity intervals with weighted ball circuits.", alt: "FIT HIIT class at FIT Beyond Plus" },
+            { src: kickboxingAsset.url, label: "KICKBOXING", caption: "High-energy cardio conditioning that builds endurance.", alt: "Kickboxing class at FIT Beyond Plus" },
+            { src: cardioLiftAsset.url, label: "CARDIO / LIFT", caption: "Cardio bursts paired with strength training.", alt: "Cardio and Lift class at FIT Beyond Plus" },
+          ].map((c) => (
+            <figure key={c.label} className="overflow-hidden rounded-lg border border-border bg-card">
+              <img src={c.src} alt={c.alt} className="w-full h-72 md:h-80 object-cover" loading="lazy" />
+              <figcaption className="px-5 py-3 text-sm">
+                <span className="text-xs tracking-[0.3em] text-primary">{c.label}</span>
+                <p className="mt-1 text-muted-foreground">{c.caption}</p>
+              </figcaption>
+            </figure>
+          ))}
         </div>
       </section>
 
