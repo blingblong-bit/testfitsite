@@ -192,6 +192,18 @@ function Memberships() {
         </div>
       </section>
 
+      <section className="container-page py-20 text-center">
+        <h2 className="text-3xl md:text-4xl">Not sure where to start?</h2>
+        <p className="mt-4 max-w-xl mx-auto text-muted-foreground">
+          Come take a tour. We will walk you through the facility, answer your questions, and help you decide what option makes the most sense for your goals.
+        </p>
+        <div className="mt-8">
+          <Link to="/contact" className="inline-flex h-12 items-center rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground" style={{ boxShadow: "var(--shadow-glow)" }}>
+            Book a Tour
+          </Link>
+        </div>
+      </section>
+
       <CTASection />
     </>
   );
