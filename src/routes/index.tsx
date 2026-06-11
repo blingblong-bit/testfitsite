@@ -39,7 +39,10 @@ function Home() {
             More than <span className="text-gradient-blue">a gym.</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            A serious training environment built for athletes, lifters, and anyone ready to do the work. No gimmicks. No intimidation. Just results.
+            FIT Beyond Plus is a clean, well-equipped training facility in Tullahoma, Tennessee built for beginners, athletes, serious lifters, and everyday people who want to get stronger, move better, and train with purpose.
+          </p>
+          <p className="mt-4 max-w-xl text-base text-muted-foreground">
+            You do not have to be in shape before joining. That is what the gym is for.
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
             <Link
@@ -80,10 +83,13 @@ function Home() {
             <p className="text-xs tracking-[0.3em] text-primary">WHO WE ARE</p>
             <h2 className="mt-3 text-4xl md:text-5xl">Built for people who actually want to train.</h2>
             <p className="mt-5 text-muted-foreground leading-relaxed">
-              FIT Beyond Plus is Tullahoma's home for serious fitness. We're a clean, well-equipped facility with the room and tools to train hard — and a coaching team that meets you wherever you're starting from.
+              At FIT Beyond Plus, you do not have to be advanced to belong here. You just have to be willing to start.
             </p>
             <p className="mt-4 text-muted-foreground leading-relaxed">
-              Whether you're chasing a PR, returning after years away, or stepping into a gym for the first time, you'll find space to work and people who respect the effort.
+              We serve first-time gym-goers, weekend warriors, athletes, parents, busy adults, and experienced lifters. Some members are learning the basics. Some are chasing performance. Some are rebuilding confidence. All of them deserve a gym that respects the work.
+            </p>
+            <p className="mt-4 text-muted-foreground leading-relaxed">
+              Our facility is designed to give you a serious training environment without the ego, attitude, or intimidation that keeps too many people from getting started.
             </p>
             <Link
               to="/about"
@@ -111,12 +117,12 @@ function Home() {
           </div>
           <div className="mt-14 grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
             {[
-              { icon: Dumbbell, t: "Premium Equipment", d: "Hammer Strength, Rogue, dumbbells to 150 lb, full racks and platforms." },
-              { icon: Clock, t: "24/7 Access", d: "Members train on their schedule. Secure keycard entry, day or night." },
-              { icon: Users, t: "1-on-1 Coaching", d: "Certified trainers who actually program — not just count reps." },
-              { icon: Trophy, t: "Athlete-Ready", d: "Turf, sleds, plyo boxes, and conditioning gear for sport-specific work." },
-              { icon: Heart, t: "Beginner Friendly", d: "Free orientation. Zero judgment. Real help when you ask for it." },
-              { icon: Shield, t: "Clean & Maintained", d: "Daily sanitization. Working equipment. A space you'll want to come back to." },
+              { icon: Dumbbell, t: "Premium Equipment", d: "Train with quality strength equipment, free weights, machines, racks, platforms, and dumbbells built for real progress." },
+              { icon: Clock, t: "24/7 Access", d: "Members can train on their schedule with secure access, day or night." },
+              { icon: Users, t: "1-on-1 Coaching", d: "For those who want more guidance, our trainers provide real coaching, structure, accountability, and support." },
+              { icon: Trophy, t: "Athlete-Ready", d: "For athletes and serious lifters, we have the tools and training environment to build strength, power, and performance." },
+              { icon: Heart, t: "Beginner Friendly", d: "New to the gym? You are welcome here. We help you get started without judgment or pressure." },
+              { icon: Shield, t: "Clean & Maintained", d: "We care about the details: clean floors, working equipment, organized spaces, and a gym you actually want to come back to." },
             ].map(({ icon: Icon, t, d }) => (
               <div key={t} className="bg-background p-8 hover:bg-card transition-colors group">
                 <Icon className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
