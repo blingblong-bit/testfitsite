@@ -26,7 +26,7 @@ function PT() {
       />
 
       <section className="container-page py-20 grid md:grid-cols-2 gap-12 items-center">
-        <img src={ptAsset.url} alt="Personal trainer coaching a client" loading="lazy" className="rounded-lg border border-border w-full h-[500px] object-cover" />
+        <img src={ptAsset.url} alt="Personal trainer coaching a client" loading="lazy" className="rounded-lg border border-border w-full max-h-[600px] object-contain bg-card mx-auto" />
         <div>
           <p className="text-xs tracking-[0.3em] text-primary">TRAINING PHILOSOPHY</p>
           <h2 className="mt-3 text-3xl md:text-4xl">Real coaching. Real progress.</h2>
