@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHero } from "@/components/PageHero";
 import { CTASection } from "@/components/CTASection";
 import weights from "@/assets/gym-shoulder-press.jpg";
@@ -9,31 +9,34 @@ import hero from "@/assets/real-dumbbells.jpg";
 export const Route = createFileRoute("/facility")({
   head: () => ({
     meta: [
-      { title: "Facility & Equipment — FIT Beyond Plus" },
-      { name: "description", content: "13,500 sq ft training facility in Tullahoma, TN. Premium strength equipment, cardio, turf, and functional zones." },
+      { title: "Facility — FIT Beyond Plus | Tullahoma, TN" },
+      { name: "description", content: "A clean, organized, well-equipped training facility in Tullahoma, TN. Built for beginners, athletes, and serious lifters." },
       { property: "og:title", content: "FIT Beyond Plus Facility" },
-      { property: "og:description", content: "Premium equipment. Clean space. Built for training." },
+      { property: "og:description", content: "Room to train. Tools to progress." },
       { property: "og:image", content: hero },
     ],
   }),
   component: Facility,
 });
 
-const zones = [
+const sections = [
   {
     img: weights,
-    title: "Free Weights",
-    desc: "Dumbbells from 5–150 lb, full Olympic platforms, multiple power racks, specialty bars, bumper plates, and Hammer Strength selectorized machines.",
+    eyebrow: "STRENGTH EQUIPMENT",
+    title: "Strength equipment for real training.",
+    body: "FIT Beyond Plus includes quality strength equipment for real training, including free weights, machines, racks, benches, platforms, plate-loaded equipment, and dumbbells. Whether your goal is building muscle, improving strength, training for sport, or simply becoming more confident in the gym, you will have the equipment you need.",
   },
   {
     img: cardio,
-    title: "Cardio Floor",
-    desc: "Rows of treadmills, ellipticals, stair-climbers, Concept2 rowers, AssaultBikes, and Echo bikes. Built for conditioning, not just steady-state.",
+    eyebrow: "BEGINNER-FRIENDLY FACILITY",
+    title: "New to the gym? You are welcome here.",
+    body: "We know starting can be intimidating. That is why we work to keep the gym clean, organized, and approachable. You do not need to know everything before you join. You do not need to already be in shape. You do not need to train like everyone else. You just need a place to start. FIT Beyond Plus gives new members a space where they can learn, build confidence, and improve at their own pace.",
   },
   {
     img: functional,
-    title: "Functional & Turf",
-    desc: "40-foot turf lane with sleds, kettlebells, plyo boxes, battle ropes, slam balls, and rig stations for athletic and conditioning work.",
+    eyebrow: "ADVANCED TRAINING FACILITY",
+    title: "Beginner-friendly does not mean basic.",
+    body: "For experienced lifters and athletes, FIT Beyond Plus provides the space and equipment to train hard. Whether you are working on strength, muscle, power, conditioning, or performance, our facility gives you the tools to build a serious training routine. We are welcoming to beginners and still equipped for people who want to push themselves.",
   },
 ];
 
@@ -42,61 +45,48 @@ function Facility() {
     <>
       <PageHero
         eyebrow="THE FACILITY"
-        title="13,500 sq ft. Built for serious training."
-        description="Every zone is designed to give you space to move, the right equipment to progress, and the cleanliness you expect from a premium gym."
+        title="A facility built for real training."
+        description="FIT Beyond Plus gives members access to a clean, organized, and well-equipped training environment built for strength, fitness, performance, and long-term progress. From beginners learning the basics to experienced lifters pushing heavy weight, our facility supports a wide range of training goals."
       />
 
-      <section className="container-page py-20 space-y-20">
-        {zones.map((z, i) => (
+      <section className="container-page py-20 max-w-3xl">
+        <p className="text-xs tracking-[0.3em] text-primary">FACILITY OVERVIEW</p>
+        <h2 className="mt-3 text-3xl md:text-4xl">Room to train. Tools to progress.</h2>
+        <p className="mt-5 text-muted-foreground leading-relaxed">
+          Our facility gives members access to the equipment and space they need to train with purpose. Whether you are building strength, improving your health, training for sport, or getting back into a routine, FIT Beyond Plus gives you a place to work at your level and keep moving forward.
+        </p>
+      </section>
+
+      <section className="container-page pb-20 space-y-20">
+        {sections.map((z, i) => (
           <div key={z.title} className={`grid md:grid-cols-2 gap-10 items-center ${i % 2 ? "md:[&>*:first-child]:order-2" : ""}`}>
             <img src={z.img} alt={z.title} loading="lazy" width={1280} height={896} className="rounded-lg border border-border" />
             <div>
-              <p className="text-xs tracking-[0.3em] text-primary">ZONE 0{i + 1}</p>
+              <p className="text-xs tracking-[0.3em] text-primary">{z.eyebrow}</p>
               <h2 className="mt-3 text-3xl md:text-4xl">{z.title}</h2>
-              <p className="mt-4 text-muted-foreground leading-relaxed">{z.desc}</p>
+              <p className="mt-4 text-muted-foreground leading-relaxed">{z.body}</p>
             </div>
           </div>
         ))}
       </section>
 
       <section className="bg-card border-y border-border">
-        <div className="container-page py-20">
-          <h2 className="text-3xl md:text-4xl text-center">Equipment highlights</h2>
-          <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border max-w-5xl mx-auto">
-            {[
-              "6 Power Racks",
-              "2 Olympic Platforms",
-              "Hammer Strength Plate-Loaded",
-              "Cybex Selectorized Line",
-              "Concept2 RowErgs",
-              "Echo & AssaultBikes",
-              "Turf Sled Lane",
-              "Functional Rig Stations",
-              "Glute-Ham Developer",
-              "Reverse Hyper",
-              "Specialty Bars (SSB, Trap, Cambered)",
-              "Dumbbells to 150 lb",
-            ].map((e) => (
-              <div key={e} className="bg-background p-5 text-sm">
-                <span className="text-primary mr-2">/</span>{e}
-              </div>
-            ))}
-          </div>
+        <div className="container-page py-20 max-w-3xl mx-auto text-center">
+          <p className="text-xs tracking-[0.3em] text-primary">CLEAN &amp; MAINTAINED</p>
+          <h2 className="mt-3 text-3xl md:text-4xl">Clean. Organized. Maintained.</h2>
+          <p className="mt-5 text-muted-foreground leading-relaxed">
+            A gym should feel like a place you want to return to. We focus on keeping the facility clean, the equipment maintained, and the training space organized so members can focus on their workout.
+          </p>
         </div>
       </section>
 
-      <section className="container-page py-20">
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            { t: "Locker Rooms", d: "Full-size lockers, hot showers, towel service, hair-dryers, and clean restrooms." },
-            { t: "Recovery", d: "Foam rollers, percussion guns, stretching zone, and dedicated mobility area." },
-            { t: "Amenities", d: "Filtered water stations, protein & supplement bar, parking, and member Wi-Fi." },
-          ].map((f) => (
-            <div key={f.t} className="border border-border p-7 rounded-lg bg-card">
-              <h3 className="text-xl">{f.t}</h3>
-              <p className="mt-3 text-sm text-muted-foreground">{f.d}</p>
-            </div>
-          ))}
+      <section className="container-page py-20 text-center">
+        <h2 className="text-3xl md:text-4xl">Want to see the facility in person?</h2>
+        <p className="mt-4 max-w-xl mx-auto text-muted-foreground">Come take a tour and see the equipment, layout, and environment for yourself.</p>
+        <div className="mt-8">
+          <Link to="/contact" className="inline-flex h-12 items-center rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground" style={{ boxShadow: "var(--shadow-glow)" }}>
+            Book a Tour
+          </Link>
         </div>
       </section>
 
