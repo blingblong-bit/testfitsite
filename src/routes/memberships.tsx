@@ -20,25 +20,25 @@ const monthlyPlans = [
     name: "Single",
     price: "37",
     tagline: "One member. Full access.",
-    features: ["24/7 keycard access", "All equipment & facilities", "Locker rooms & showers", "Free orientation session"],
+    features: ["24/7 keycard access", "All equipment & facilities", "All classes", "Sauna & tanning beds", "Locker rooms & showers", "Free orientation session"],
   },
   {
     name: "Duo",
     price: "55",
     tagline: "Train together.",
-    features: ["2 adult members", "All equipment & facilities", "Shared guest privileges", "Free orientation session"],
+    features: ["2 adult members", "All equipment & facilities", "All classes", "Sauna & tanning beds", "Shared guest privileges", "Free orientation session"],
   },
   {
     name: "Duo +1",
     price: "63",
     tagline: "Three adult members.",
-    features: ["3 adult members", "All equipment & facilities", "Shared guest privileges", "Free orientation session"],
+    features: ["3 adult members", "All equipment & facilities", "All classes", "Sauna & tanning beds", "Shared guest privileges", "Free orientation session"],
   },
   {
     name: "Family",
     price: "72",
     tagline: "The whole crew.",
-    features: ["Family access", "All equipment & facilities", "Shared guest privileges", "Free orientation session"],
+    features: ["Family access", "All equipment & facilities", "All classes", "Sauna & tanning beds", "Shared guest privileges", "Free orientation session"],
   },
   {
     name: "Tanning",
@@ -78,6 +78,19 @@ function Memberships() {
           <p className="mt-4 text-muted-foreground leading-relaxed">
             You get a clean facility, quality equipment, 24/7 access, and a gym culture built around respect and effort. Train on your schedule. Work at your level. Build at your pace.
           </p>
+          <ul className="mt-5 space-y-2">
+            {[
+              "Access to all classes",
+              "Sauna access",
+              "24/7 keycard access",
+              "Tanning beds",
+            ].map((item) => (
+              <li key={item} className="flex gap-3 text-sm text-muted-foreground">
+                <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
         </div>
         <div>
           <p className="text-xs tracking-[0.3em] text-primary">FIT BEYOND PLUS IS FOR:</p>
