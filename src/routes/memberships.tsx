@@ -182,7 +182,7 @@ function Memberships() {
         </div>
 
         <div className="mt-12 text-center text-sm text-muted-foreground">
-          Active military & first responders get 15% off · Day passes available for $12
+          Active military & first responders get 15% off · Day passes available for $10
         </div>
       </section>
 

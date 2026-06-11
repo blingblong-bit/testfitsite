@@ -101,38 +101,6 @@ function PT() {
       </section>
 
 
-      <section className="bg-card border-y border-border">
-        <div className="container-page py-20">
-          <div className="text-center">
-            <p className="text-xs tracking-[0.3em] text-primary">PACKAGES</p>
-            <h2 className="mt-3 text-3xl md:text-4xl">Simple, flexible pricing</h2>
-          </div>
-          <div className="mt-12 grid md:grid-cols-3 gap-6">
-            {[
-              { n: "Starter", s: "4 sessions / month", p: "240", d: "Perfect for getting started or a monthly tune-up." },
-              { n: "Committed", s: "8 sessions / month", p: "440", d: "Twice-a-week coaching for steady, measurable progress.", h: true },
-              { n: "All-In", s: "12 sessions / month", p: "600", d: "Three sessions a week — built for athletes and serious goals." },
-            ].map((p) => (
-              <div
-                key={p.n}
-                className={`rounded-lg border p-8 bg-background ${p.h ? "border-primary" : "border-border"}`}
-                style={p.h ? { boxShadow: "var(--shadow-glow)" } : undefined}
-              >
-                <h3 className="text-2xl">{p.n}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{p.s}</p>
-                <div className="mt-5 flex items-baseline gap-1">
-                  <span className="text-4xl font-display font-bold">${p.p}</span>
-                  <span className="text-sm text-muted-foreground">/ mo</span>
-                </div>
-                <p className="mt-4 text-sm text-muted-foreground">{p.d}</p>
-              </div>
-            ))}
-          </div>
-          <p className="mt-8 text-center text-sm text-muted-foreground">
-            Single sessions from $65 · Semi-private (2–3 people) from $45/person · Plus members get 10% off all packages.
-          </p>
-        </div>
-      </section>
 
       <section className="container-page py-20 text-center">
         <h2 className="text-3xl md:text-4xl">Start with a conversation.</h2>
