@@ -39,7 +39,10 @@ function Home() {
             More than <span className="text-gradient-blue">a gym.</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            A serious training environment built for athletes, lifters, and anyone ready to do the work. No gimmicks. No intimidation. Just results.
+            FIT Beyond Plus is a clean, well-equipped training facility in Tullahoma, Tennessee built for beginners, athletes, serious lifters, and everyday people who want to get stronger, move better, and train with purpose.
+          </p>
+          <p className="mt-4 max-w-xl text-base text-muted-foreground">
+            You do not have to be in shape before joining. That is what the gym is for.
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
             <Link
