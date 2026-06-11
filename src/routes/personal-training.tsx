@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Target, TrendingUp, Users, Calendar } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { CTASection } from "@/components/CTASection";
-import ptImg from "@/assets/gym-shoulder-press.jpg";
+import ptAsset from "@/assets/personal-training.jpg.asset.json";
 
 export const Route = createFileRoute("/personal-training")({
   head: () => ({
@@ -26,7 +26,7 @@ function PT() {
       />
 
       <section className="container-page py-20 grid md:grid-cols-2 gap-12 items-center">
-        <img src={ptImg} alt="Personal trainer coaching" loading="lazy" width={1280} height={896} className="rounded-lg border border-border" />
+        <img src={ptAsset.url} alt="Personal trainer coaching a client" loading="lazy" className="rounded-lg border border-border w-full h-[500px] object-cover" />
         <div>
           <p className="text-xs tracking-[0.3em] text-primary">TRAINING PHILOSOPHY</p>
           <h2 className="mt-3 text-3xl md:text-4xl">Real coaching. Real progress.</h2>
