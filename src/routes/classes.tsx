@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHero } from "@/components/PageHero";
 import { CTASection } from "@/components/CTASection";
+import barreAbsAsset from "@/assets/barre-abs.jpg.asset.json";
+import kickboxingLiftAsset from "@/assets/kickboxing-lift.jpg.asset.json";
 
 export const Route = createFileRoute("/classes")({
   head: () => ({
@@ -72,6 +74,35 @@ function Classes() {
         title="Group fitness, six days a week."
         description="HIIT, TRX, Barre, Yoga, Cardio, Kickboxing, and Pilates — included with any FIT membership or $10 drop-in."
       />
+
+      <section className="container-page pt-16">
+        <div className="grid md:grid-cols-2 gap-6">
+          <figure className="overflow-hidden rounded-lg border border-border bg-card">
+            <img
+              src={barreAbsAsset.url}
+              alt="Barre Abs class at FIT Beyond Plus"
+              className="w-full h-72 md:h-96 object-cover"
+              loading="lazy"
+            />
+            <figcaption className="px-5 py-3 text-sm">
+              <span className="text-xs tracking-[0.3em] text-primary">BARRE ABS</span>
+              <p className="mt-1 text-muted-foreground">Low-impact strength, balance, and core work at the barre.</p>
+            </figcaption>
+          </figure>
+          <figure className="overflow-hidden rounded-lg border border-border bg-card">
+            <img
+              src={kickboxingLiftAsset.url}
+              alt="Kickboxing and Lift class at FIT Beyond Plus"
+              className="w-full h-72 md:h-96 object-cover"
+              loading="lazy"
+            />
+            <figcaption className="px-5 py-3 text-sm">
+              <span className="text-xs tracking-[0.3em] text-primary">KICKBOXING / LIFT</span>
+              <p className="mt-1 text-muted-foreground">High-energy conditioning paired with strength training.</p>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
 
       <section className="container-page py-20">
         <div className="flex flex-wrap items-end justify-between gap-4">
