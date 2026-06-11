@@ -36,6 +36,12 @@ function PT() {
           <p className="mt-4 text-muted-foreground leading-relaxed">
             You do not need to be advanced to work with a trainer. You just need to be ready to start.
           </p>
+          <p className="mt-4 text-muted-foreground leading-relaxed">
+            We also offer post-physical therapy personal training for those recovering from injuries or finishing rehab.{' '}
+            <a href="https://www.fitbeyondtherapy.com/contact-us/" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+              Learn more about post-physical therapy training.
+            </a>
+          </p>
         </div>
       </section>
 
@@ -54,6 +60,7 @@ function PT() {
                   "You are an athlete looking for more structure.",
                   "You want accountability and support.",
                   "You want to feel more confident when you train.",
+                  "You are recovering from an injury or finishing physical therapy.",
                 ].map((line) => (
                   <li key={line} className="flex gap-3 text-sm text-muted-foreground">
                     <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
