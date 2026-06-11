@@ -128,13 +128,13 @@ function PT() {
       </section>
 
       <section className="container-page py-20 text-center">
-        <h2 className="text-3xl md:text-4xl">Not sure where to start?</h2>
+        <h2 className="text-3xl md:text-4xl">Start with a conversation.</h2>
         <p className="mt-4 max-w-xl mx-auto text-muted-foreground">
-          Book a free consultation. We'll talk through your goals and recommend the right path — no pressure, no upsell.
+          Tell us where you are, what you want to improve, and what has been holding you back. We will help you figure out the next step.
         </p>
         <div className="mt-8 flex flex-wrap gap-3 justify-center">
           <Link to="/contact" className="inline-flex h-12 items-center rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground" style={{ boxShadow: "var(--shadow-glow)" }}>
-            Book a Free Consult
+            Ask About Training
           </Link>
         </div>
       </section>
