@@ -64,9 +64,61 @@ function Memberships() {
     <>
       <PageHero
         eyebrow="MEMBERSHIPS"
-        title="Honest pricing. No surprises."
-        description="Monthly plans with full flexibility, or pay in full and skip the annual fee."
+        title="Join a gym built around progress."
+        description="A FIT Beyond Plus membership gives you access to a serious training environment without the intimidation. Whether you are starting your fitness journey, returning after time away, or looking for a better place to train, we are here to give you the space and support to keep moving forward."
       />
+
+      <section className="container-page py-20 grid md:grid-cols-2 gap-12 items-start">
+        <div>
+          <p className="text-xs tracking-[0.3em] text-primary">WHAT MEMBERSHIP MEANS HERE</p>
+          <h2 className="mt-3 text-3xl md:text-4xl">More than access to equipment.</h2>
+          <p className="mt-5 text-muted-foreground leading-relaxed">
+            Membership at FIT Beyond Plus is not just access to equipment. It is access to a better training environment.
+          </p>
+          <p className="mt-4 text-muted-foreground leading-relaxed">
+            You get a clean facility, quality equipment, 24/7 access, and a gym culture built around respect and effort. Train on your schedule. Work at your level. Build at your pace.
+          </p>
+        </div>
+        <div>
+          <p className="text-xs tracking-[0.3em] text-primary">FIT BEYOND PLUS IS FOR:</p>
+          <ul className="mt-5 space-y-3">
+            {[
+              "Beginners who want a comfortable place to start.",
+              "Adults who want to get stronger, healthier, and more consistent.",
+              "Athletes who need a facility that supports performance.",
+              "Lifters who want quality equipment and a focused environment.",
+              "People who are tired of crowded, dirty, or unserious gyms.",
+              "Anyone ready to take the next step.",
+            ].map((line) => (
+              <li key={line} className="flex gap-3 text-sm text-muted-foreground">
+                <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="bg-card border-y border-border">
+        <div className="container-page py-20">
+          <h2 className="text-3xl md:text-4xl text-center">Why members choose FIT Beyond Plus</h2>
+          <div className="mt-12 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { t: "24/7 Member Access", d: "Train when it works for your schedule." },
+              { t: "Quality Equipment", d: "Use the tools you need for strength, fitness, and performance." },
+              { t: "Supportive Environment", d: "Train around people who respect effort and improvement." },
+              { t: "Clean Facility", d: "A gym that is cared for and maintained." },
+              { t: "Coaching Available", d: "Personal training is available for those who want more guidance." },
+            ].map((f) => (
+              <div key={f.t} className="border border-border bg-background p-7 rounded-lg">
+                <h3 className="text-xl">{f.t}</h3>
+                <p className="mt-3 text-sm text-muted-foreground">{f.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
 
       <section className="container-page py-20">
         <p className="text-xs tracking-[0.3em] text-primary">MONTHLY MEMBERSHIPS</p>
