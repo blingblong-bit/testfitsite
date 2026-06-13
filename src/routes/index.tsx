@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Dumbbell, Users, Clock, Trophy, Heart, Shield } from "lucide-react";
-import heroAsset from "@/assets/hero-gym.jpg.asset.json";
+import heroAsset from "@/assets/hero-gym-v2.png.asset.json";
 import weightsImg from "@/assets/gym-shoulder-press.jpg";
 import { CTASection } from "@/components/CTASection";
 
