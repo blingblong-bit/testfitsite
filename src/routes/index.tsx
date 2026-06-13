@@ -30,7 +30,7 @@ function Home() {
           width={1920}
           height={1080}
         />
-        <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, oklch(0.15 0.04 250 / 0.92) 0%, oklch(0.15 0.04 250 / 0.75) 40%, oklch(0.15 0.04 250 / 0.35) 100%)" }} />
         <div
           className="absolute inset-0"
           style={{ background: "radial-gradient(800px circle at 70% 30%, oklch(0.70 0.18 235 / 0.18), transparent 60%)" }}
