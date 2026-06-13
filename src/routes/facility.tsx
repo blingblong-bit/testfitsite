@@ -117,9 +117,6 @@ function Facility() {
                   className="h-full w-full object-cover object-center"
                 />
               </div>
-              <figcaption className="px-4 py-3 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{photo.title}</span>
-              </figcaption>
             </figure>
           ))}
         </div>
