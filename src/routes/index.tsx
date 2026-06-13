@@ -27,23 +27,27 @@ function Home() {
           src={heroImg}
           alt="FIT Beyond Plus training floor"
           className="absolute inset-0 h-full w-full object-cover"
+          style={{ objectPosition: "25% center" }}
           width={1920}
           height={1080}
         />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, oklch(0.15 0.04 250 / 0.92) 0%, oklch(0.15 0.04 250 / 0.75) 40%, oklch(0.15 0.04 250 / 0.35) 100%)" }} />
+        {/* Subtle base darkening so the whole image stays visible */}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, oklch(0.15 0.04 250 / 0.35) 0%, oklch(0.12 0.03 250 / 0.45) 100%)" }} />
+        {/* Strong left-side gradient behind the text */}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, oklch(0.10 0.04 250 / 0.92) 0%, oklch(0.12 0.04 250 / 0.78) 28%, oklch(0.15 0.04 250 / 0.35) 55%, transparent 80%)" }} />
         <div
           className="absolute inset-0"
-          style={{ background: "radial-gradient(800px circle at 70% 30%, oklch(0.70 0.18 235 / 0.18), transparent 60%)" }}
+          style={{ background: "radial-gradient(700px circle at 75% 25%, oklch(0.70 0.18 235 / 0.15), transparent 60%)" }}
         />
         <div className="container-page relative py-28 md:py-40">
           <p className="text-xs tracking-[0.35em] text-primary">TULLAHOMA · TENNESSEE</p>
           <h1 className="mt-4 text-5xl md:text-7xl lg:text-8xl max-w-4xl leading-[0.95]">
             More than <span className="text-gradient-blue">a gym.</span>
           </h1>
-          <p className="mt-6 max-w-xl text-lg text-muted-foreground">
+          <p className="mt-6 max-w-xl text-lg text-foreground/85">
             FIT Beyond Plus is a clean, well-equipped training facility in Tullahoma, Tennessee built for beginners, athletes, serious lifters, and everyday people who want to get stronger, move better, and train with purpose.
           </p>
-          <p className="mt-4 max-w-xl text-base text-muted-foreground">
+          <p className="mt-4 max-w-xl text-base text-foreground/75">
             You do not have to be in shape before joining. That is what the gym is for.
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
@@ -61,8 +65,13 @@ function Home() {
               Book a Tour
             </Link>
           </div>
+        </div>
+      </section>
 
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl">
+      {/* Stats bar */}
+      <section className="border-y border-border bg-card">
+        <div className="container-page py-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               { k: "24/7", v: "Member Access" },
               { k: "13.5K", v: "Sq Ft Facility" },
