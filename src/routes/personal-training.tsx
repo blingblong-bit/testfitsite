@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Target, TrendingUp, Users, Calendar } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
-import { CTASection } from "@/components/CTASection";
+import { ClassesCTA } from "@/components/ClassesCTA";
 import ptAsset from "@/assets/personal-training.jpg.asset.json";
 
 export const Route = createFileRoute("/personal-training")({

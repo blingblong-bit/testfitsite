@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHero } from "@/components/PageHero";
-import { CTASection } from "@/components/CTASection";
+import { ClassesCTA } from "@/components/ClassesCTA";
 import barreAbsAsset from "@/assets/barre-abs.jpg.asset.json";
 import cardioLiftAsset from "@/assets/cardio-lift-v2.jpg.asset.json";
 import trxAsset from "@/assets/trx.jpg.asset.json";
