@@ -12,7 +12,7 @@ export function ClassesCTA() {
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
-            to="/classes"
+            to="/classes/schedule"
             className="inline-flex h-12 items-center gap-2 rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
             style={{ boxShadow: "var(--shadow-glow)" }}
           >
