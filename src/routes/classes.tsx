@@ -87,6 +87,7 @@ function Classes() {
             { src: fitHiitAsset.url, label: "FIT HIIT", caption: "High-intensity intervals with weighted ball circuits.", alt: "FIT HIIT class at FIT Beyond Plus" },
             { src: kickboxingAsset.url, label: "KICKBOXING", caption: "High-energy cardio conditioning that builds endurance.", alt: "Kickboxing class at FIT Beyond Plus" },
             { src: cardioLiftAsset.url, label: "CARDIO / LIFT", caption: "Cardio bursts paired with strength training.", alt: "Cardio and Lift class at FIT Beyond Plus" },
+            { src: yogaAsset.url, label: "YOGA", caption: "Balance, flexibility, and mindful movement.", alt: "Yoga class at FIT Beyond Plus" },
           ].map((c) => (
             <figure key={c.label} className="overflow-hidden rounded-lg border border-border bg-card">
               <img src={c.src} alt={c.alt} className="w-full h-72 md:h-80 object-cover" loading="lazy" />
