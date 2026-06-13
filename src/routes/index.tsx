@@ -27,7 +27,7 @@ function Home() {
           src={heroImg}
           alt="FIT Beyond Plus training floor"
           className="absolute inset-0 h-full w-full object-cover"
-          style={{ objectPosition: "25% center" }}
+          style={{ objectPosition: "center bottom" }}
           width={1920}
           height={1080}
         />
