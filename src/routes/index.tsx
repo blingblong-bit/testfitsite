@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Dumbbell, Users, Clock, Trophy, Heart, Shield } from "lucide-react";
-import heroImg from "@/assets/real-dumbbells.jpg";
+import heroAsset from "@/assets/hero-gym.jpg.asset.json";
 import weightsImg from "@/assets/gym-shoulder-press.jpg";
 import { CTASection } from "@/components/CTASection";
+
+const heroImg = heroAsset.url;
 
 export const Route = createFileRoute("/")({
   head: () => ({
