@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHero } from "@/components/PageHero";
-import { ClassesCTA } from "@/components/ClassesCTA";
+
 import weightsImg from "@/assets/about-owner.png.asset.json";
 
 export const Route = createFileRoute("/about")({
@@ -113,7 +113,6 @@ function About() {
         </div>
       </section>
 
-      <ClassesCTA />
     </>
   );
 }

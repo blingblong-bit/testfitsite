@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHero } from "@/components/PageHero";
-import { ClassesCTA } from "@/components/ClassesCTA";
+
 import trainingLegPressAsset from "@/assets/facility-training-legpress.jpg.asset.json";
 import cardioRowAsset from "@/assets/facility-cardio-row.jpg.asset.json";
 import fullFloorAsset from "@/assets/facility-full-floor.jpg.asset.json";
@@ -184,7 +184,6 @@ function Facility() {
         </div>
       </section>
 
-      <ClassesCTA />
     </>
   );
 }

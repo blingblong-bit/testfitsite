@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
-import { ClassesCTA } from "@/components/ClassesCTA";
+
 
 export const Route = createFileRoute("/memberships")({
   head: () => ({
@@ -217,7 +217,6 @@ function Memberships() {
         </div>
       </section>
 
-      <ClassesCTA />
     </>
   );
 }
