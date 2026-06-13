@@ -17,6 +17,8 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClassesIndexRouteImport } from './routes/classes.index'
+import { Route as ClassesScheduleRouteImport } from './routes/classes.schedule'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -58,37 +60,52 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClassesIndexRoute = ClassesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ClassesRoute,
+} as any)
+const ClassesScheduleRoute = ClassesScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
+  getParentRoute: () => ClassesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/classes': typeof ClassesRoute
+  '/classes': typeof ClassesRouteWithChildren
   '/contact': typeof ContactRoute
   '/facility': typeof FacilityRoute
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/classes/schedule': typeof ClassesScheduleRoute
+  '/classes/': typeof ClassesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/classes': typeof ClassesRoute
   '/contact': typeof ContactRoute
   '/facility': typeof FacilityRoute
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/classes/schedule': typeof ClassesScheduleRoute
+  '/classes': typeof ClassesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/classes': typeof ClassesRoute
+  '/classes': typeof ClassesRouteWithChildren
   '/contact': typeof ContactRoute
   '/facility': typeof FacilityRoute
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/classes/schedule': typeof ClassesScheduleRoute
+  '/classes/': typeof ClassesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,16 +118,19 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/classes/schedule'
+    | '/classes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
-    | '/classes'
     | '/contact'
     | '/facility'
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/classes/schedule'
+    | '/classes'
   id:
     | '__root__'
     | '/'
@@ -121,12 +141,14 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/classes/schedule'
+    | '/classes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  ClassesRoute: typeof ClassesRoute
+  ClassesRoute: typeof ClassesRouteWithChildren
   ContactRoute: typeof ContactRoute
   FacilityRoute: typeof FacilityRoute
   MembershipsRoute: typeof MembershipsRoute
@@ -192,13 +214,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/classes/': {
+      id: '/classes/'
+      path: '/'
+      fullPath: '/classes/'
+      preLoaderRoute: typeof ClassesIndexRouteImport
+      parentRoute: typeof ClassesRoute
+    }
+    '/classes/schedule': {
+      id: '/classes/schedule'
+      path: '/schedule'
+      fullPath: '/classes/schedule'
+      preLoaderRoute: typeof ClassesScheduleRouteImport
+      parentRoute: typeof ClassesRoute
+    }
   }
 }
+
+interface ClassesRouteChildren {
+  ClassesScheduleRoute: typeof ClassesScheduleRoute
+  ClassesIndexRoute: typeof ClassesIndexRoute
+}
+
+const ClassesRouteChildren: ClassesRouteChildren = {
+  ClassesScheduleRoute: ClassesScheduleRoute,
+  ClassesIndexRoute: ClassesIndexRoute,
+}
+
+const ClassesRouteWithChildren =
+  ClassesRoute._addFileChildren(ClassesRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  ClassesRoute: ClassesRoute,
+  ClassesRoute: ClassesRouteWithChildren,
   ContactRoute: ContactRoute,
   FacilityRoute: FacilityRoute,
   MembershipsRoute: MembershipsRoute,
@@ -208,3 +257,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
