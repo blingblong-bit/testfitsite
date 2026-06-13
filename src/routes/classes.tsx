@@ -2,10 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageHero } from "@/components/PageHero";
 import { CTASection } from "@/components/CTASection";
 import barreAbsAsset from "@/assets/barre-abs.jpg.asset.json";
-import cardioLiftAsset from "@/assets/kickboxing-lift.jpg.asset.json";
+import cardioLiftAsset from "@/assets/cardio-lift-v2.jpg.asset.json";
 import trxAsset from "@/assets/trx.jpg.asset.json";
 import fitHiitAsset from "@/assets/fit-hiit.jpg.asset.json";
 import kickboxingAsset from "@/assets/kickboxing.jpg.asset.json";
+import yogaAsset from "@/assets/yoga.jpg.asset.json";
 
 export const Route = createFileRoute("/classes")({
   head: () => ({
