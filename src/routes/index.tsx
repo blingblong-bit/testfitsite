@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Dumbbell, Users, Clock, Trophy, Heart, Shield } from "lucide-react";
-import heroImg from "@/assets/real-dumbbells.jpg";
+import heroAsset from "@/assets/hero-gym.jpg.asset.json";
 import weightsImg from "@/assets/gym-shoulder-press.jpg";
 import { CTASection } from "@/components/CTASection";
+
+const heroImg = heroAsset.url;
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -28,7 +30,7 @@ function Home() {
           width={1920}
           height={1080}
         />
-        <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, oklch(0.15 0.04 250 / 0.92) 0%, oklch(0.15 0.04 250 / 0.75) 40%, oklch(0.15 0.04 250 / 0.35) 100%)" }} />
         <div
           className="absolute inset-0"
           style={{ background: "radial-gradient(800px circle at 70% 30%, oklch(0.70 0.18 235 / 0.18), transparent 60%)" }}
