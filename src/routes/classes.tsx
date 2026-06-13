@@ -140,7 +140,7 @@ function Classes() {
         </p>
       </section>
 
-      <CTASection />
+      <ClassesCTA />
     </>
   );
 }

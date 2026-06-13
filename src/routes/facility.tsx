@@ -184,7 +184,7 @@ function Facility() {
         </div>
       </section>
 
-      <CTASection />
+      <ClassesCTA />
     </>
   );
 }

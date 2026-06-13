@@ -113,7 +113,7 @@ function About() {
         </div>
       </section>
 
-      <CTASection />
+      <ClassesCTA />
     </>
   );
 }

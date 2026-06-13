@@ -217,7 +217,7 @@ function Memberships() {
         </div>
       </section>
 
-      <CTASection />
+      <ClassesCTA />
     </>
   );
 }

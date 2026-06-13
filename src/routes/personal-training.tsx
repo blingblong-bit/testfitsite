@@ -114,7 +114,7 @@ function PT() {
         </div>
       </section>
 
-      <CTASection />
+      <ClassesCTA />
     </>
   );
 }
