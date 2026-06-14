@@ -31,6 +31,7 @@ type Referral = {
   status: string;
   email_sent: boolean;
   email_sent_at: string | null;
+  email_status: "pending" | "sent" | "failed";
   redeemed_at: string | null;
   redeemed_by: string | null;
   created_at: string;
@@ -325,6 +326,7 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
                   <th className="text-left px-4 py-3">Friend Email</th>
                   <th className="text-left px-4 py-3">Code</th>
                   <th className="text-left px-4 py-3">Status</th>
+                  <th className="text-left px-4 py-3">Email Status</th>
                   <th className="text-left px-4 py-3">Email Sent</th>
                   <th className="text-left px-4 py-3">Created</th>
                   <th className="text-left px-4 py-3">Redeemed</th>
@@ -348,6 +350,9 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
                         {r.status}
                       </span>
                     </td>
+                    <td className="px-4 py-3">
+                      <EmailStatusBadge status={r.email_status ?? "pending"} />
+                    </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {r.email_sent ? (r.email_sent_at ? new Date(r.email_sent_at).toLocaleString() : "Yes") : "No"}
                     </td>
@@ -361,6 +366,20 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
         )}
       </div>
     </div>
+  );
+}
+
+function EmailStatusBadge({ status }: { status: "pending" | "sent" | "failed" }) {
+  const cls =
+    status === "sent"
+      ? "bg-primary/15 text-primary"
+      : status === "failed"
+        ? "bg-destructive/15 text-destructive"
+        : "bg-secondary text-muted-foreground";
+  return (
+    <span className={"inline-block rounded-full px-3 py-1 text-xs uppercase tracking-widest " + cls}>
+      {status}
+    </span>
   );
 }
 
