@@ -7,6 +7,11 @@ import trxAsset from "@/assets/trx.jpg.asset.json";
 import fitHiitAsset from "@/assets/fit-hiit.jpg.asset.json";
 import kickboxingAsset from "@/assets/kickboxing.jpg.asset.json";
 import yogaAsset from "@/assets/yoga.jpg.asset.json";
+import kickboxingKidsAsset from "@/assets/kickboxing-kids.jpg.asset.json";
+import kickboxingAdultAsset from "@/assets/kickboxing-adult.jpg.asset.json";
+import bjjKidsAsset from "@/assets/bjj-kids.jpg.asset.json";
+import bjjAdultAsset from "@/assets/bjj-adult.jpg.asset.json";
+import { Phone, Mail } from "lucide-react";
 
 export const Route = createFileRoute("/classes/")({
   head: () => ({
