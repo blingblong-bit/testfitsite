@@ -9,6 +9,10 @@ export type LeadInput = {
   phone?: string | null;
   interest?: string | null;
   message?: string | null;
+  status?: string | null;
+  payment_status?: string | null;
+  payment_method?: string | null;
+  day_pass_price?: number | null;
 };
 
 export async function submitLead(input: LeadInput) {
@@ -29,6 +33,10 @@ export async function submitLead(input: LeadInput) {
 
   const { error } = await supabase.from("leads").insert({
     ...payload,
+    status: input.status ?? null,
+    payment_status: input.payment_status ?? null,
+    payment_method: input.payment_method ?? null,
+    day_pass_price: input.day_pass_price ?? null,
     lead_type: classification.lead_type,
     lead_score: classification.lead_score,
     should_notify: classification.should_notify,
