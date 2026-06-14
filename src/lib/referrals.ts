@@ -88,20 +88,62 @@ export async function createReferral(input: {
 
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = generateCode();
-    const { error } = await supabase.from("referrals").insert({
-      referral_code: code,
-      referrer_name,
-      referrer_email: normalized_referrer_email,
-      normalized_referrer_email,
-      friend_name,
-      friend_email: normalized_friend_email,
-      status: "sent",
-      email_sent: false,
-      email_sent_at: null,
-      email_status: "pending",
-    });
-    if (!error) return { ok: true, code };
-    if (!/duplicate|unique/i.test(error.message)) {
+    const { data: inserted, error } = await supabase
+      .from("referrals")
+      .insert({
+        referral_code: code,
+        referrer_name,
+        referrer_email: normalized_referrer_email,
+        normalized_referrer_email,
+        friend_name,
+        friend_email: normalized_friend_email,
+        status: "sent",
+        email_sent: false,
+        email_sent_at: null,
+        email_status: "pending",
+      })
+      .select("id")
+      .single();
+    if (!error && inserted) {
+      // Fire email; update row with result.
+      try {
+        const result = await sendReferralEmail({
+          data: {
+            friend_name,
+            friend_email: normalized_friend_email,
+            referrer_name,
+            referral_code: code,
+          },
+        });
+        if (result.ok) {
+          await supabase
+            .from("referrals")
+            .update({
+              email_status: "sent",
+              email_sent: true,
+              email_sent_at: new Date().toISOString(),
+            })
+            .eq("id", inserted.id);
+        } else {
+          await supabase
+            .from("referrals")
+            .update({
+              email_status: "failed",
+              email_sent: false,
+              notes: result.error ?? null,
+            })
+            .eq("id", inserted.id);
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "send_exception";
+        await supabase
+          .from("referrals")
+          .update({ email_status: "failed", email_sent: false, notes: msg })
+          .eq("id", inserted.id);
+      }
+      return { ok: true, code };
+    }
+    if (error && !/duplicate|unique/i.test(error.message)) {
       return { ok: false, error: error.message };
     }
   }
