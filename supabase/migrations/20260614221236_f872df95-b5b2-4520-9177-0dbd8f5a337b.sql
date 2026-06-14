@@ -1,0 +1,5 @@
+ALTER TABLE public.leads
+  ADD COLUMN IF NOT EXISTS status TEXT,
+  ADD COLUMN IF NOT EXISTS payment_status TEXT,
+  ADD COLUMN IF NOT EXISTS payment_method TEXT,
+  ADD COLUMN IF NOT EXISTS day_pass_price NUMERIC;

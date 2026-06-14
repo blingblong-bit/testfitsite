@@ -286,23 +286,43 @@ function SubmitButton({ submitting, label }: { submitting: boolean; label: strin
   );
 }
 
+type PaymentMethod = "venmo" | "cash" | "card" | "other";
+
 function DayPassScreen({ onDone }: { onDone: () => void }) {
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<"info" | "pay">("info");
+  const [guest, setGuest] = useState({ name: "", email: "", phone: "" });
+  const [method, setMethod] = useState<PaymentMethod | null>(null);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleInfoSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setSubmitting(true); setError(null);
     const d = new FormData(e.currentTarget);
+    setGuest({
+      name: String(d.get("name") ?? ""),
+      email: String(d.get("email") ?? ""),
+      phone: String(d.get("phone") ?? ""),
+    });
+    setStep("pay");
+  }
+
+  async function handlePaySubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!method) { setError("Please select a payment method."); return; }
+    setSubmitting(true); setError(null);
     try {
       await submitLead({
-        source: "day_pass",
-        name: String(d.get("name") ?? ""),
-        email: String(d.get("email") ?? ""),
-        phone: String(d.get("phone") ?? ""),
+        source: "paid_day_pass",
+        name: guest.name,
+        email: guest.email,
+        phone: guest.phone,
         interest: "Day Pass ($10)",
-        message: `Day pass purchase at front desk. Payment: ${String(d.get("payment") ?? "in person")}`,
+        message: `Day pass — paid via ${method}. $10 collected at front desk.`,
+        status: "checked_in",
+        payment_status: "confirmed",
+        payment_method: method,
+        day_pass_price: 10,
       });
       setSent(true);
     } catch (err) {
@@ -312,18 +332,71 @@ function DayPassScreen({ onDone }: { onDone: () => void }) {
 
   if (sent) return <ConfirmationCard title="You're all set!" message="Welcome to FIT Beyond Plus. Enjoy your workout." onDone={onDone} />;
 
+  if (step === "info") {
+    return (
+      <FormShell eyebrow="DAY PASS" title="Buy a Day Pass" sub="$10 single-day access.">
+        <form onSubmit={handleInfoSubmit} className="space-y-5">
+          <KioskField label="Full name" name="name" required />
+          <KioskField label="Email" name="email" type="email" required />
+          <KioskField label="Phone" name="phone" type="tel" required />
+          <SubmitButton submitting={false} label="Continue to Payment" />
+        </form>
+      </FormShell>
+    );
+  }
+
+  const methods: { id: PaymentMethod; label: string }[] = [
+    { id: "venmo", label: "Venmo" },
+    { id: "cash", label: "Cash" },
+    { id: "card", label: "Card" },
+    { id: "other", label: "Other" },
+  ];
+
   return (
-    <FormShell eyebrow="DAY PASS" title="Buy a Day Pass" sub="$10 single-day access. Pay at the front desk.">
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <KioskField label="Full name" name="name" required />
-        <KioskField label="Email" name="email" type="email" required />
-        <KioskField label="Phone" name="phone" type="tel" placeholder="(optional)" />
-        <input type="hidden" name="payment" value="in person" />
-        <div className="rounded-md border border-border bg-card p-4 text-sm text-muted-foreground">
-          Payment of <span className="text-foreground font-semibold">$10</span> collected at front desk. Online payment coming soon.
+    <FormShell eyebrow="PAYMENT" title="Confirm Payment — $10" sub={`Day pass for ${guest.name}`}>
+      <form onSubmit={handlePaySubmit} className="space-y-6">
+        <div className="rounded-2xl border border-border bg-card p-6 text-center">
+          <p className="text-xs uppercase tracking-widest text-primary">Venmo</p>
+          <div className="mt-4 mx-auto h-56 w-56 rounded-lg border-2 border-dashed border-border bg-secondary flex items-center justify-center">
+            <span className="text-xs text-muted-foreground text-center px-4">Venmo QR code<br/>(add image here)</span>
+          </div>
+          <p className="mt-4 text-sm text-foreground font-semibold">
+            Scan to pay $10 through Venmo, or pay at the front desk.
+          </p>
         </div>
+
+        <div>
+          <p className="block text-xs uppercase tracking-widest mb-3">Payment method</p>
+          <div className="grid grid-cols-2 gap-3">
+            {methods.map((m) => {
+              const active = method === m.id;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setMethod(m.id)}
+                  className={`h-14 rounded-md border text-base font-semibold transition-colors ${
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-secondary hover:border-primary"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <SubmitButton submitting={submitting} label="Submit Day Pass" />
+        <SubmitButton submitting={submitting} label="Confirm Payment & Check In" />
+        <button
+          type="button"
+          onClick={() => { setStep("info"); setError(null); }}
+          className="w-full text-sm text-muted-foreground hover:text-foreground"
+        >
+          ← Back to guest info
+        </button>
       </form>
     </FormShell>
   );

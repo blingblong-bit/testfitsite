@@ -38,6 +38,7 @@ export type Database = {
       leads: {
         Row: {
           created_at: string
+          day_pass_price: number | null
           email: string
           id: string
           interest: string | null
@@ -45,13 +46,17 @@ export type Database = {
           lead_type: string
           message: string | null
           name: string
+          payment_method: string | null
+          payment_status: string | null
           phone: string | null
           should_notify: boolean
           source: string
           spam_reason: string | null
+          status: string | null
         }
         Insert: {
           created_at?: string
+          day_pass_price?: number | null
           email: string
           id?: string
           interest?: string | null
@@ -59,13 +64,17 @@ export type Database = {
           lead_type?: string
           message?: string | null
           name: string
+          payment_method?: string | null
+          payment_status?: string | null
           phone?: string | null
           should_notify?: boolean
           source: string
           spam_reason?: string | null
+          status?: string | null
         }
         Update: {
           created_at?: string
+          day_pass_price?: number | null
           email?: string
           id?: string
           interest?: string | null
@@ -73,10 +82,13 @@ export type Database = {
           lead_type?: string
           message?: string | null
           name?: string
+          payment_method?: string | null
+          payment_status?: string | null
           phone?: string | null
           should_notify?: boolean
           source?: string
           spam_reason?: string | null
+          status?: string | null
         }
         Relationships: []
       }
