@@ -369,6 +369,20 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
   );
 }
 
+function EmailStatusBadge({ status }: { status: "pending" | "sent" | "failed" }) {
+  const cls =
+    status === "sent"
+      ? "bg-primary/15 text-primary"
+      : status === "failed"
+        ? "bg-destructive/15 text-destructive"
+        : "bg-secondary text-muted-foreground";
+  return (
+    <span className={"inline-block rounded-full px-3 py-1 text-xs uppercase tracking-widest " + cls}>
+      {status}
+    </span>
+  );
+}
+
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border bg-card p-5">
