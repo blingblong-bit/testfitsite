@@ -326,6 +326,7 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
                   <th className="text-left px-4 py-3">Friend Email</th>
                   <th className="text-left px-4 py-3">Code</th>
                   <th className="text-left px-4 py-3">Status</th>
+                  <th className="text-left px-4 py-3">Email Status</th>
                   <th className="text-left px-4 py-3">Email Sent</th>
                   <th className="text-left px-4 py-3">Created</th>
                   <th className="text-left px-4 py-3">Redeemed</th>
