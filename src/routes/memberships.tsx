@@ -186,25 +186,6 @@ function Memberships() {
         </div>
       </section>
 
-      <section className="bg-card border-y border-border">
-        <div className="container-page py-20">
-          <h2 className="text-3xl md:text-4xl text-center">Common questions</h2>
-          <div className="mt-12 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {[
-              { q: "Is there a contract on monthly plans?", a: "No. All monthly memberships are month-to-month. Cancel anytime with 30 days' notice." },
-              { q: "When is the annual fee charged?", a: "The $49.99 annual fee is billed on July 1st each year for all active monthly memberships." },
-              { q: "Do you offer a free trial?", a: "Yes — book a tour and we'll set you up with a complimentary day pass." },
-              { q: "What ages do you serve?", a: "Members 14+ welcome. Ages 14–17 require a parent or guardian on the membership." },
-            ].map((f) => (
-              <div key={f.q} className="border border-border bg-background p-6 rounded-lg">
-                <h3 className="text-base">{f.q}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{f.a}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="container-page py-20 text-center">
         <h2 className="text-3xl md:text-4xl">Not sure where to start?</h2>
         <p className="mt-4 max-w-xl mx-auto text-muted-foreground">
