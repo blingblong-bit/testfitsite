@@ -13,6 +13,9 @@ export type LeadInput = {
   payment_status?: string | null;
   payment_method?: string | null;
   day_pass_price?: number | null;
+  referral_code?: string | null;
+  referred_by?: string | null;
+  notes?: string | null;
 };
 
 export async function submitLead(input: LeadInput) {
