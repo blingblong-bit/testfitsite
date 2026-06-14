@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft, CalendarDays, CreditCard, DollarSign, Gift, Home, LogOut, Star, Ticket, UserPlus, Check,
+  ArrowLeft, CalendarDays, CreditCard, DollarSign, Gift, LogOut, Star, Ticket, UserPlus, Check, Copy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { submitLead } from "@/lib/leads";
+import { createReferral, redeemReferral } from "@/lib/referrals";
 
 export const Route = createFileRoute("/_authenticated/frontdesk")({
   head: () => ({
