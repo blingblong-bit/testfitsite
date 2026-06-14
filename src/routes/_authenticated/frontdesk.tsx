@@ -286,7 +286,7 @@ function SubmitButton({ submitting, label }: { submitting: boolean; label: strin
   );
 }
 
-type PaymentMethod = "venmo" | "cash" | "card" | "other";
+type PaymentMethod = "venmo" | "paid_at_desk";
 
 function DayPassScreen({ onDone }: { onDone: () => void }) {
   const [sent, setSent] = useState(false);
@@ -347,9 +347,7 @@ function DayPassScreen({ onDone }: { onDone: () => void }) {
 
   const methods: { id: PaymentMethod; label: string }[] = [
     { id: "venmo", label: "Venmo" },
-    { id: "cash", label: "Cash" },
-    { id: "card", label: "Card" },
-    { id: "other", label: "Other" },
+    { id: "paid_at_desk", label: "Paid at desk" },
   ];
 
   return (
