@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft, CalendarDays, CreditCard, DollarSign, Gift, Home, LogOut, Star, Ticket, UserPlus, Check,
+  ArrowLeft, CalendarDays, CreditCard, DollarSign, Gift, LogOut, Star, Ticket, UserPlus, Check, Copy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { submitLead } from "@/lib/leads";
+import { createReferral, redeemReferral } from "@/lib/referrals";
 
 export const Route = createFileRoute("/_authenticated/frontdesk")({
   head: () => ({
@@ -56,12 +57,6 @@ function FrontDesk() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate({ to: "/staff-home" })}
-              className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-4 text-sm hover:bg-secondary"
-            >
-              <Home className="h-4 w-4" /> <span className="hidden sm:inline">Staff Home</span>
-            </button>
             <button
               onClick={signOut}
               className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-4 text-sm hover:bg-secondary"
@@ -401,7 +396,7 @@ function DayPassScreen({ onDone }: { onDone: () => void }) {
 }
 
 function RedeemScreen({ onDone }: { onDone: () => void }) {
-  const [sent, setSent] = useState(false);
+  const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -409,30 +404,27 @@ function RedeemScreen({ onDone }: { onDone: () => void }) {
     e.preventDefault();
     setSubmitting(true); setError(null);
     const d = new FormData(e.currentTarget);
-    try {
-      await submitLead({
-        source: "referral_redeem",
-        name: String(d.get("name") ?? ""),
-        email: String(d.get("email") ?? ""),
-        phone: String(d.get("phone") ?? ""),
-        interest: `Referral code: ${String(d.get("code") ?? "")}`,
-        message: `Referral code redeemed at front desk. Code: ${String(d.get("code") ?? "")}`,
-      });
-      setSent(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not submit.");
-    } finally { setSubmitting(false); }
+    const code = String(d.get("code") ?? "");
+    const name = String(d.get("name") ?? "").trim();
+    const result = await redeemReferral(code, name || null);
+    setSubmitting(false);
+    if (!result.ok) { setError(result.error); return; }
+    setDone(true);
   }
 
-  if (sent) return <ConfirmationCard title="Code received" message="Staff will apply your referral reward shortly." onDone={onDone} />;
+  if (done) return (
+    <ConfirmationCard
+      title="Referral redeemed successfully"
+      message="Free day pass approved. Welcome to FIT Beyond Plus!"
+      onDone={onDone}
+    />
+  );
 
   return (
     <FormShell eyebrow="REFERRAL" title="Redeem a Referral Code" sub="Enter the code your friend gave you.">
       <form onSubmit={handleSubmit} className="space-y-5">
-        <KioskField label="Referral code" name="code" required placeholder="e.g. FBP-1234" />
-        <KioskField label="Your name" name="name" required />
-        <KioskField label="Email" name="email" type="email" required />
-        <KioskField label="Phone" name="phone" type="tel" placeholder="(optional)" />
+        <KioskField label="Referral code" name="code" required placeholder="e.g. ABCD234567" />
+        <KioskField label="Your name (optional)" name="name" placeholder="Helps us credit the referrer" />
         {error && <p className="text-sm text-destructive">{error}</p>}
         <SubmitButton submitting={submitting} label="Redeem Code" />
       </form>
@@ -441,43 +433,63 @@ function RedeemScreen({ onDone }: { onDone: () => void }) {
 }
 
 function ReferScreen({ onDone }: { onDone: () => void }) {
-  const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [code, setCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitting(true); setError(null);
     const d = new FormData(e.currentTarget);
-    const referrerName = String(d.get("referrer_name") ?? "").trim();
-    const referrerEmail = String(d.get("referrer_email") ?? "").trim();
-    const friendName = String(d.get("friend_name") ?? "").trim();
-    const friendContact = String(d.get("friend_contact") ?? "").trim();
-    try {
-      await submitLead({
-        source: "refer_friend",
-        name: referrerName,
-        email: referrerEmail,
-        phone: null,
-        interest: `Referring: ${friendName}`,
-        message: `Referrer: ${referrerName} (${referrerEmail})\nFriend: ${friendName}\nFriend contact: ${friendContact}`,
-      });
-      setSent(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not submit.");
-    } finally { setSubmitting(false); }
+    const result = await createReferral({
+      referrer_name: String(d.get("referrer_name") ?? ""),
+      referrer_contact: String(d.get("referrer_contact") ?? ""),
+      friend_name: String(d.get("friend_name") ?? ""),
+      friend_contact: String(d.get("friend_contact") ?? ""),
+    });
+    setSubmitting(false);
+    if (!result.ok) { setError(result.error); return; }
+    setCode(result.code);
   }
 
-  if (sent) return <ConfirmationCard title="Thanks for the referral!" message="We'll reach out to your friend and credit your account." onDone={onDone} />;
+  async function copyCode() {
+    if (!code) return;
+    try { await navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* ignore */ }
+  }
+
+  if (code) {
+    return (
+      <div className="max-w-xl mx-auto rounded-2xl border border-primary bg-primary/10 p-10 text-center">
+        <div className="mx-auto h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+          <Check className="h-8 w-8" />
+        </div>
+        <h2 className="mt-6 text-3xl">Referral created!</h2>
+        <p className="mt-3 text-sm text-muted-foreground">Share this code with your friend. They can redeem it at the front desk for a free day pass.</p>
+        <div className="mt-6 rounded-xl border border-border bg-card p-6">
+          <p className="text-xs uppercase tracking-widest text-primary">Referral Code</p>
+          <p className="mt-3 text-4xl font-bold tracking-[0.25em] font-mono">{code}</p>
+        </div>
+        <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button onClick={copyCode} className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-5 text-sm hover:bg-secondary">
+            <Copy className="h-4 w-4" /> {copied ? "Copied!" : "Copy code"}
+          </button>
+          <button onClick={onDone} className="inline-flex h-11 items-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground">
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <FormShell eyebrow="REFER A FRIEND" title="Refer a Friend" sub="Share FIT Beyond Plus and earn rewards.">
+    <FormShell eyebrow="REFER A FRIEND" title="Refer a Friend" sub="Generate a referral code to share. Your friend gets a free day pass.">
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="rounded-md border border-border bg-card p-4">
           <p className="text-xs uppercase tracking-widest text-primary">Your Info</p>
           <div className="mt-3 space-y-4">
             <KioskField label="Your name" name="referrer_name" required />
-            <KioskField label="Your email" name="referrer_email" type="email" required />
+            <KioskField label="Your email or phone" name="referrer_contact" required />
           </div>
         </div>
         <div className="rounded-md border border-border bg-card p-4">
@@ -488,7 +500,7 @@ function ReferScreen({ onDone }: { onDone: () => void }) {
           </div>
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <SubmitButton submitting={submitting} label="Send Referral" />
+        <SubmitButton submitting={submitting} label="Generate Referral Code" />
       </form>
     </FormShell>
   );
