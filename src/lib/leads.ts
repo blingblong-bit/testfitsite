@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { notifyNewLead } from "./notify-lead.functions";
 
 export type LeadInput = {
   source: string;
@@ -25,4 +26,14 @@ export async function submitLead(input: LeadInput) {
 
   const { error } = await supabase.from("leads").insert(payload);
   if (error) throw error;
+
+  // Fire-and-forget email notification. Don't block the user if it fails.
+  try {
+    await notifyNewLead({
+      data: { ...payload, submitted_at: new Date().toISOString() },
+    });
+  } catch (e) {
+    console.error("Lead notification failed:", e);
+  }
 }
+
