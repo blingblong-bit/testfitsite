@@ -436,8 +436,7 @@ function RedeemScreen({ onDone }: { onDone: () => void }) {
 function ReferScreen({ onDone }: { onDone: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [code, setCode] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [done, setDone] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -451,35 +450,16 @@ function ReferScreen({ onDone }: { onDone: () => void }) {
     });
     setSubmitting(false);
     if (!result.ok) { setError(result.error); return; }
-    setCode(result.code);
+    setDone(true);
   }
 
-  async function copyCode() {
-    if (!code) return;
-    try { await navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* ignore */ }
-  }
-
-  if (code) {
+  if (done) {
     return (
-      <div className="max-w-xl mx-auto rounded-2xl border border-primary bg-primary/10 p-10 text-center">
-        <div className="mx-auto h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-          <Check className="h-8 w-8" />
-        </div>
-        <h2 className="mt-6 text-3xl">Referral created!</h2>
-        <p className="mt-3 text-sm text-muted-foreground">Share this code with your friend. They can redeem it at the front desk for a free day pass.</p>
-        <div className="mt-6 rounded-xl border border-border bg-card p-6">
-          <p className="text-xs uppercase tracking-widest text-primary">Referral Code</p>
-          <p className="mt-3 text-4xl font-bold tracking-[0.25em] font-mono">{code}</p>
-        </div>
-        <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <button onClick={copyCode} className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-5 text-sm hover:bg-secondary">
-            <Copy className="h-4 w-4" /> {copied ? "Copied!" : "Copy code"}
-          </button>
-          <button onClick={onDone} className="inline-flex h-11 items-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground">
-            Done
-          </button>
-        </div>
-      </div>
+      <ConfirmationCard
+        title="Referral submitted successfully"
+        message="The free day pass code has been emailed to your friend."
+        onDone={onDone}
+      />
     );
   }
 
