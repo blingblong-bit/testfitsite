@@ -400,14 +400,32 @@ function RedeemScreen({ onDone }: { onDone: () => void }) {
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<"code" | "checkin">("code");
+  const [code, setCode] = useState("");
+  const [referrerName, setReferrerName] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleCodeSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitting(true); setError(null);
     const d = new FormData(e.currentTarget);
-    const code = String(d.get("code") ?? "");
-    const name = String(d.get("name") ?? "").trim();
-    const result = await redeemReferral(code, name || null);
+    const entered = String(d.get("code") ?? "").trim().toUpperCase();
+    const result = await lookupReferral(entered);
+    setSubmitting(false);
+    if (!result.ok) { setError(result.error); return; }
+    setCode(entered);
+    setReferrerName(result.referral.referrer_name ?? null);
+    setStep("checkin");
+  }
+
+  async function handleCheckinSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSubmitting(true); setError(null);
+    const d = new FormData(e.currentTarget);
+    const result = await redeemReferral(code, {
+      full_name: String(d.get("name") ?? ""),
+      email: String(d.get("email") ?? ""),
+      phone: String(d.get("phone") ?? ""),
+    });
     setSubmitting(false);
     if (!result.ok) { setError(result.error); return; }
     setDone(true);
@@ -421,13 +439,45 @@ function RedeemScreen({ onDone }: { onDone: () => void }) {
     />
   );
 
+  if (step === "code") {
+    return (
+      <FormShell eyebrow="REFERRAL" title="Redeem a Referral Code" sub="Enter the code your friend gave you.">
+        <form onSubmit={handleCodeSubmit} className="space-y-5">
+          <KioskField label="Referral code" name="code" required placeholder="e.g. ABCD234567" />
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <SubmitButton submitting={submitting} label="Continue" />
+        </form>
+      </FormShell>
+    );
+  }
+
   return (
-    <FormShell eyebrow="REFERRAL" title="Redeem a Referral Code" sub="Enter the code your friend gave you.">
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <KioskField label="Referral code" name="code" required placeholder="e.g. ABCD234567" />
-        <KioskField label="Your name (optional)" name="name" placeholder="Helps us credit the referrer" />
+    <FormShell eyebrow="CHECK IN" title="Referral Day Pass Check-In" sub="Tell us about yourself to complete your free day pass.">
+      <form onSubmit={handleCheckinSubmit} className="space-y-5">
+        <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Referral code</p>
+            <p className="mt-1 text-lg font-semibold">{code}</p>
+          </div>
+          {referrerName && (
+            <div>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Friend who referred you</p>
+              <p className="mt-1 text-lg font-semibold">{referrerName}</p>
+            </div>
+          )}
+        </div>
+        <KioskField label="Full name" name="name" required />
+        <KioskField label="Phone" name="phone" type="tel" required />
+        <KioskField label="Email" name="email" type="email" required />
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <SubmitButton submitting={submitting} label="Redeem Code" />
+        <SubmitButton submitting={submitting} label="Complete Check-In" />
+        <button
+          type="button"
+          onClick={() => { setStep("code"); setError(null); }}
+          className="w-full text-sm text-muted-foreground hover:text-foreground"
+        >
+          ← Use a different code
+        </button>
       </form>
     </FormShell>
   );
