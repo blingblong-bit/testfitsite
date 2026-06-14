@@ -125,20 +125,21 @@ export async function createReferral(input: {
             })
             .eq("id", inserted.id);
         } else {
+          console.error("[createReferral] email failed", result.error);
           await supabase
             .from("referrals")
             .update({
               email_status: "failed",
               email_sent: false,
-              notes: result.error ?? null,
             })
             .eq("id", inserted.id);
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : "send_exception";
+        console.error("[createReferral] email exception", msg);
         await supabase
           .from("referrals")
-          .update({ email_status: "failed", email_sent: false, notes: msg })
+          .update({ email_status: "failed", email_sent: false })
           .eq("id", inserted.id);
       }
       return { ok: true, code };
