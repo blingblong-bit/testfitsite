@@ -34,6 +34,7 @@ function AdminLeads() {
   const [leads, setLeads] = useState<Lead[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("customer_lead");
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   async function load() {
