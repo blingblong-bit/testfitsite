@@ -13,6 +13,7 @@ export type Referral = {
   status: string;
   email_sent: boolean;
   email_sent_at: string | null;
+  email_status: "pending" | "sent" | "failed";
   redeemed_at: string | null;
   redeemed_by: string | null;
   created_at: string;
