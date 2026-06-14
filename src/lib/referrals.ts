@@ -151,12 +151,36 @@ export async function createReferral(input: {
   return { ok: false, error: "Could not generate a unique referral code. Try again." };
 }
 
-export async function redeemReferral(
+export async function lookupReferral(
   code: string,
-  redeemedBy?: string | null,
 ): Promise<{ ok: true; referral: Referral } | { ok: false; error: string }> {
   const clean = code.trim().toUpperCase();
   if (!clean) return { ok: false, error: "Invalid referral code." };
+  const { data, error } = await supabase
+    .from("referrals")
+    .select("*")
+    .eq("referral_code", clean)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: "Invalid referral code." };
+  if (data.status === "redeemed")
+    return { ok: false, error: "This referral code has already been redeemed." };
+  return { ok: true, referral: data as Referral };
+}
+
+export async function redeemReferral(
+  code: string,
+  checkIn: { full_name: string; email: string; phone: string },
+): Promise<{ ok: true; referral: Referral } | { ok: false; error: string }> {
+  const clean = code.trim().toUpperCase();
+  if (!clean) return { ok: false, error: "Invalid referral code." };
+
+  const full_name = checkIn.full_name.trim();
+  const email = checkIn.email.trim().toLowerCase();
+  const phone = checkIn.phone.trim();
+  if (!full_name) return { ok: false, error: "Full name is required." };
+  if (!email) return { ok: false, error: "Email is required." };
+  if (!phone) return { ok: false, error: "Phone number is required." };
 
   const { data, error } = await supabase
     .from("referrals")
@@ -173,22 +197,17 @@ export async function redeemReferral(
     .update({
       status: "redeemed",
       redeemed_at: new Date().toISOString(),
-      redeemed_by: redeemedBy?.trim() || null,
+      redeemed_by: full_name,
     })
     .eq("id", data.id)
     .select("*")
     .single();
   if (upErr) return { ok: false, error: upErr.message };
 
-  const friendEmail = (data.friend_email ?? "").trim();
-  const legacyContact = (data.friend_contact ?? "").trim();
-  const email = friendEmail || (/@/.test(legacyContact) ? legacyContact : "");
-  const phone = !friendEmail && legacyContact && !/@/.test(legacyContact) ? legacyContact : null;
-
   await supabase.from("leads").insert({
     source: "referral_day_pass",
-    status: "checked_in",
-    name: data.friend_name,
+    status: "redeemed",
+    name: full_name,
     email,
     phone,
     referral_code: data.referral_code,
