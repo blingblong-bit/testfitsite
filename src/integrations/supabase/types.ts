@@ -104,37 +104,52 @@ export type Database = {
       referrals: {
         Row: {
           created_at: string
-          friend_contact: string
+          email_sent: boolean
+          email_sent_at: string | null
+          friend_contact: string | null
+          friend_email: string | null
           friend_name: string
           id: string
+          normalized_referrer_email: string | null
           redeemed_at: string | null
           redeemed_by: string | null
           referral_code: string
-          referrer_contact: string
+          referrer_contact: string | null
+          referrer_email: string | null
           referrer_name: string
           status: string
         }
         Insert: {
           created_at?: string
-          friend_contact: string
+          email_sent?: boolean
+          email_sent_at?: string | null
+          friend_contact?: string | null
+          friend_email?: string | null
           friend_name: string
           id?: string
+          normalized_referrer_email?: string | null
           redeemed_at?: string | null
           redeemed_by?: string | null
           referral_code: string
-          referrer_contact: string
+          referrer_contact?: string | null
+          referrer_email?: string | null
           referrer_name: string
           status?: string
         }
         Update: {
           created_at?: string
-          friend_contact?: string
+          email_sent?: boolean
+          email_sent_at?: string | null
+          friend_contact?: string | null
+          friend_email?: string | null
           friend_name?: string
           id?: string
+          normalized_referrer_email?: string | null
           redeemed_at?: string | null
           redeemed_by?: string | null
           referral_code?: string
-          referrer_contact?: string
+          referrer_contact?: string | null
+          referrer_email?: string | null
           referrer_name?: string
           status?: string
         }

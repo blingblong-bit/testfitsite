@@ -22,10 +22,15 @@ type Referral = {
   id: string;
   referral_code: string;
   referrer_name: string;
-  referrer_contact: string;
+  referrer_email: string | null;
+  referrer_contact: string | null;
+  normalized_referrer_email: string | null;
   friend_name: string;
-  friend_contact: string;
+  friend_email: string | null;
+  friend_contact: string | null;
   status: string;
+  email_sent: boolean;
+  email_sent_at: string | null;
   redeemed_at: string | null;
   redeemed_by: string | null;
   created_at: string;
@@ -248,16 +253,18 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
   const redeemed = referrals.filter((r) => r.status === "redeemed").length;
   const rate = total === 0 ? 0 : Math.round((redeemed / total) * 100);
 
-  // Leaderboard: count redeemed only
-  const counts = new Map<string, number>();
+  // Leaderboard: group redeemed referrals by normalized referrer email
+  const groups = new Map<string, { name: string; count: number }>();
   for (const r of referrals) {
     if (r.status !== "redeemed") continue;
-    const key = r.referrer_name.trim();
-    counts.set(key, (counts.get(key) ?? 0) + 1);
+    const key =
+      (r.normalized_referrer_email ?? r.referrer_email ?? "").trim().toLowerCase() ||
+      `name:${r.referrer_name.trim().toLowerCase()}`;
+    const existing = groups.get(key);
+    if (existing) existing.count += 1;
+    else groups.set(key, { name: r.referrer_name.trim(), count: 1 });
   }
-  const leaderboard = Array.from(counts.entries())
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count);
+  const leaderboard = Array.from(groups.values()).sort((a, b) => b.count - a.count);
 
   const topReferrer = leaderboard[0]?.name ?? "—";
 
@@ -312,11 +319,13 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
             <table className="w-full text-sm">
               <thead className="bg-secondary text-xs uppercase tracking-widest">
                 <tr>
-                  <th className="text-left px-4 py-3">Referrer</th>
-                  <th className="text-left px-4 py-3">Friend</th>
-                  <th className="text-left px-4 py-3">Friend Contact</th>
+                  <th className="text-left px-4 py-3">Referrer Name</th>
+                  <th className="text-left px-4 py-3">Referrer Email</th>
+                  <th className="text-left px-4 py-3">Friend Name</th>
+                  <th className="text-left px-4 py-3">Friend Email</th>
                   <th className="text-left px-4 py-3">Code</th>
                   <th className="text-left px-4 py-3">Status</th>
+                  <th className="text-left px-4 py-3">Email Sent</th>
                   <th className="text-left px-4 py-3">Created</th>
                   <th className="text-left px-4 py-3">Redeemed</th>
                 </tr>
@@ -324,12 +333,10 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
               <tbody>
                 {referrals.map((r) => (
                   <tr key={r.id} className="border-t border-border align-top">
-                    <td className="px-4 py-3">
-                      <div className="font-semibold">{r.referrer_name}</div>
-                      <div className="text-xs text-muted-foreground">{r.referrer_contact}</div>
-                    </td>
+                    <td className="px-4 py-3 font-semibold">{r.referrer_name}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{r.referrer_email ?? r.referrer_contact ?? "—"}</td>
                     <td className="px-4 py-3 font-semibold">{r.friend_name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{r.friend_contact}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{r.friend_email ?? r.friend_contact ?? "—"}</td>
                     <td className="px-4 py-3 font-mono">{r.referral_code}</td>
                     <td className="px-4 py-3">
                       <span className={
@@ -340,6 +347,9 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
                       }>
                         {r.status}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {r.email_sent ? (r.email_sent_at ? new Date(r.email_sent_at).toLocaleString() : "Yes") : "No"}
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">{r.redeemed_at ? new Date(r.redeemed_at).toLocaleString() : "—"}</td>
