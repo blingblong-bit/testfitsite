@@ -58,12 +58,6 @@ function FrontDesk() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate({ to: "/staff-home" })}
-              className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-4 text-sm hover:bg-secondary"
-            >
-              <Home className="h-4 w-4" /> <span className="hidden sm:inline">Staff Home</span>
-            </button>
-            <button
               onClick={signOut}
               className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-4 text-sm hover:bg-secondary"
             >
