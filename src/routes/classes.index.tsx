@@ -55,6 +55,8 @@ function ClassesIndex() {
         </div>
       </section>
 
+      <ClassesCTA />
+
       <section className="container-page pt-20">
         <div className="text-center max-w-3xl mx-auto">
           <p className="text-xs tracking-[0.3em] text-primary">SPECIALTY PROGRAMS</p>
@@ -105,9 +107,11 @@ function ClassesIndex() {
             </a>
           </div>
         </div>
-      </section>
 
-      <ClassesCTA />
+        <div className="mt-10 max-w-3xl mx-auto">
+          <CombatContactForm />
+        </div>
+      </section>
     </>
   );
 }
