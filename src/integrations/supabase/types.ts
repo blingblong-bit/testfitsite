@@ -41,30 +41,42 @@ export type Database = {
           email: string
           id: string
           interest: string | null
+          lead_score: number
+          lead_type: string
           message: string | null
           name: string
           phone: string | null
+          should_notify: boolean
           source: string
+          spam_reason: string | null
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
           interest?: string | null
+          lead_score?: number
+          lead_type?: string
           message?: string | null
           name: string
           phone?: string | null
+          should_notify?: boolean
           source: string
+          spam_reason?: string | null
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
           interest?: string | null
+          lead_score?: number
+          lead_type?: string
           message?: string | null
           name?: string
           phone?: string | null
+          should_notify?: boolean
           source?: string
+          spam_reason?: string | null
         }
         Relationships: []
       }

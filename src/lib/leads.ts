@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { notifyNewLead } from "./notify-lead.functions";
+import { classifyLead } from "./lead-classifier";
 
 export type LeadInput = {
   source: string;
@@ -24,16 +25,25 @@ export async function submitLead(input: LeadInput) {
     throw new Error("Name and email are required.");
   }
 
-  const { error } = await supabase.from("leads").insert(payload);
+  const classification = classifyLead(payload);
+
+  const { error } = await supabase.from("leads").insert({
+    ...payload,
+    lead_type: classification.lead_type,
+    lead_score: classification.lead_score,
+    should_notify: classification.should_notify,
+    spam_reason: classification.spam_reason,
+  });
   if (error) throw error;
 
-  // Fire-and-forget email notification. Don't block the user if it fails.
-  try {
-    await notifyNewLead({
-      data: { ...payload, submitted_at: new Date().toISOString() },
-    });
-  } catch (e) {
-    console.error("Lead notification failed:", e);
+  // Only notify admin for real customer leads.
+  if (classification.should_notify) {
+    try {
+      await notifyNewLead({
+        data: { ...payload, submitted_at: new Date().toISOString() },
+      });
+    } catch (e) {
+      console.error("Lead notification failed:", e);
+    }
   }
 }
-
