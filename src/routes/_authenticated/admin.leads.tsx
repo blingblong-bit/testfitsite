@@ -11,7 +11,13 @@ type Lead = {
   interest: string | null;
   message: string | null;
   created_at: string;
+  lead_type: string;
+  lead_score: number;
+  should_notify: boolean;
+  spam_reason: string | null;
 };
+
+type TypeFilter = "customer_lead" | "vendor_solicitation" | "spam" | "all";
 
 export const Route = createFileRoute("/_authenticated/admin/leads")({
   head: () => ({
