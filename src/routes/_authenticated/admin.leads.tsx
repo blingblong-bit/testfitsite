@@ -195,9 +195,17 @@ function AdminLeads() {
                 <span className="inline-block rounded-full bg-primary/15 text-primary px-3 py-1 text-xs uppercase tracking-widest">
                   {lead.source}
                 </span>
+                {lead.lead_type && lead.lead_type !== "customer_lead" && (
+                  <span className="ml-2 inline-block rounded-full bg-destructive/15 text-destructive px-3 py-1 text-xs uppercase tracking-widest">
+                    {lead.lead_type.replace("_", " ")}
+                  </span>
+                )}
                 <p className="mt-1 text-xs text-muted-foreground">
                   {new Date(lead.created_at).toLocaleString()}
                 </p>
+                {lead.spam_reason && (
+                  <p className="mt-1 text-xs text-muted-foreground italic">{lead.spam_reason}</p>
+                )}
               </div>
             </header>
             {lead.interest && (
