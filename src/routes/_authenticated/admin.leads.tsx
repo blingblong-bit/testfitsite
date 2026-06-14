@@ -136,8 +136,6 @@ function AdminLeads() {
         </div>
       </div>
 
-      {sources.length > 0 && (
-        <div className="mt-6 flex flex-wrap gap-2">
       <div className="mt-6 flex flex-wrap gap-2">
         <FilterChip active={typeFilter === "customer_lead"} onClick={() => { setTypeFilter("customer_lead"); setFilter("all"); }}>
           Customer Leads ({count("customer_lead")})
@@ -165,6 +163,8 @@ function AdminLeads() {
           ))}
         </div>
       )}
+
+      {error && (
         <div className="mt-8 rounded-md border border-destructive bg-destructive/10 p-4 text-sm">
           {error}. You may not have admin/staff access yet — an admin must grant your account a role.
         </div>
