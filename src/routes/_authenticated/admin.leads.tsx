@@ -22,10 +22,15 @@ type Referral = {
   id: string;
   referral_code: string;
   referrer_name: string;
-  referrer_contact: string;
+  referrer_email: string | null;
+  referrer_contact: string | null;
+  normalized_referrer_email: string | null;
   friend_name: string;
-  friend_contact: string;
+  friend_email: string | null;
+  friend_contact: string | null;
   status: string;
+  email_sent: boolean;
+  email_sent_at: string | null;
   redeemed_at: string | null;
   redeemed_by: string | null;
   created_at: string;
