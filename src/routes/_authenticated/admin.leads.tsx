@@ -104,8 +104,11 @@ function AdminLeads() {
     return <section className="container-page py-20"><p className="text-muted-foreground">Checking access…</p></section>;
   }
 
-  const visible = leads?.filter((l) => filter === "all" || l.source === filter) ?? [];
-  const sources = Array.from(new Set((leads ?? []).map((l) => l.source)));
+  const byType = leads?.filter((l) => typeFilter === "all" || (l.lead_type ?? "customer_lead") === typeFilter) ?? [];
+  const visible = byType.filter((l) => filter === "all" || l.source === filter);
+  const sources = Array.from(new Set(byType.map((l) => l.source)));
+  const count = (t: TypeFilter) =>
+    t === "all" ? (leads?.length ?? 0) : (leads?.filter((l) => (l.lead_type ?? "customer_lead") === t).length ?? 0);
 
   return (
     <section className="container-page py-16">
