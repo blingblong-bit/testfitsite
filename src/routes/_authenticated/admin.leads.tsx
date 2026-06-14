@@ -350,6 +350,9 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
                         {r.status}
                       </span>
                     </td>
+                    <td className="px-4 py-3">
+                      <EmailStatusBadge status={r.email_status ?? "pending"} />
+                    </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {r.email_sent ? (r.email_sent_at ? new Date(r.email_sent_at).toLocaleString() : "Yes") : "No"}
                     </td>
