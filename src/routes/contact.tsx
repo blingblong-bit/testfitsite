@@ -76,6 +76,7 @@ function Contact() {
                     className="w-full h-11 rounded-md bg-secondary border border-border px-3 text-sm focus:outline-none focus:border-primary"
                   >
                     <option>Book a tour</option>
+                    <option>Classes</option>
                     <option>Membership question</option>
                     <option>Personal training</option>
                     <option>Something else</option>
