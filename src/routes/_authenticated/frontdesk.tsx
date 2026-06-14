@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { submitLead } from "@/lib/leads";
-import { createReferral, redeemReferral } from "@/lib/referrals";
+import { createReferral, redeemReferral, lookupReferral } from "@/lib/referrals";
 
 export const Route = createFileRoute("/_authenticated/frontdesk")({
   head: () => ({
