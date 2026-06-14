@@ -22,6 +22,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClassesIndexRouteImport } from './routes/classes.index'
 import { Route as ClassesScheduleRouteImport } from './routes/classes.schedule'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AuthenticatedStaffHomeRouteImport } from './routes/_authenticated/staff-home'
+import { Route as AuthenticatedFrontdeskRouteImport } from './routes/_authenticated/frontdesk'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -88,6 +90,16 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedStaffHomeRoute = AuthenticatedStaffHomeRouteImport.update({
+  id: '/staff-home',
+  path: '/staff-home',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFrontdeskRoute = AuthenticatedFrontdeskRouteImport.update({
+  id: '/frontdesk',
+  path: '/frontdesk',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
   id: '/admin/leads',
   path: '/admin/leads',
@@ -104,6 +116,8 @@ export interface FileRoutesByFullPath {
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/frontdesk': typeof AuthenticatedFrontdeskRoute
+  '/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
   '/classes/schedule': typeof ClassesScheduleRoute
   '/classes/': typeof ClassesIndexRoute
@@ -118,6 +132,8 @@ export interface FileRoutesByTo {
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/frontdesk': typeof AuthenticatedFrontdeskRoute
+  '/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
   '/classes/schedule': typeof ClassesScheduleRoute
   '/classes': typeof ClassesIndexRoute
@@ -135,6 +151,8 @@ export interface FileRoutesById {
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/frontdesk': typeof AuthenticatedFrontdeskRoute
+  '/_authenticated/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
   '/classes/schedule': typeof ClassesScheduleRoute
   '/classes/': typeof ClassesIndexRoute
@@ -152,6 +170,8 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/frontdesk'
+    | '/staff-home'
     | '/admin/login'
     | '/classes/schedule'
     | '/classes/'
@@ -166,6 +186,8 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/frontdesk'
+    | '/staff-home'
     | '/admin/login'
     | '/classes/schedule'
     | '/classes'
@@ -182,6 +204,8 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/_authenticated/frontdesk'
+    | '/_authenticated/staff-home'
     | '/admin/login'
     | '/classes/schedule'
     | '/classes/'
@@ -295,6 +319,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/staff-home': {
+      id: '/_authenticated/staff-home'
+      path: '/staff-home'
+      fullPath: '/staff-home'
+      preLoaderRoute: typeof AuthenticatedStaffHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/frontdesk': {
+      id: '/_authenticated/frontdesk'
+      path: '/frontdesk'
+      fullPath: '/frontdesk'
+      preLoaderRoute: typeof AuthenticatedFrontdeskRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/leads': {
       id: '/_authenticated/admin/leads'
       path: '/admin/leads'
@@ -306,10 +344,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedFrontdeskRoute: typeof AuthenticatedFrontdeskRoute
+  AuthenticatedStaffHomeRoute: typeof AuthenticatedStaffHomeRoute
   AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedFrontdeskRoute: AuthenticatedFrontdeskRoute,
+  AuthenticatedStaffHomeRoute: AuthenticatedStaffHomeRoute,
   AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
 }
 

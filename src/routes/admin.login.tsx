@@ -21,7 +21,7 @@ function AdminLoginPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/admin/leads" });
+      if (data.user) navigate({ to: "/staff-home" });
     });
   }, [navigate]);
 
@@ -32,7 +32,7 @@ function AdminLoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      navigate({ to: "/admin/leads" });
+      navigate({ to: "/staff-home" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
