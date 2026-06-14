@@ -116,3 +116,76 @@ function ClassesIndex() {
     </>
   );
 }
+
+function CombatContactForm() {
+  const [sent, setSent] = useState(false);
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-8">
+      <h3 className="text-xl text-center">Send us a message about Combat Sports</h3>
+      <p className="mt-2 text-sm text-center text-muted-foreground">
+        Questions about Kickboxing or Brazilian Jiu-Jitsu? Fill out the form below.
+      </p>
+      {sent ? (
+        <div className="mt-6 rounded-lg border border-primary bg-primary/10 p-8 text-center">
+          <p className="text-lg">Thanks — we'll be in touch shortly.</p>
+        </div>
+      ) : (
+        <form
+          className="mt-6 space-y-5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setSent(true);
+          }}
+        >
+          <div className="grid sm:grid-cols-2 gap-5">
+            <Field label="Name" name="combat-name" required />
+            <Field label="Email" name="combat-email" type="email" required />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-5">
+            <Field label="Phone" name="combat-phone" type="tel" />
+            <div>
+              <label className="block text-xs uppercase tracking-widest mb-2">Interested in</label>
+              <select className="w-full h-11 rounded-md bg-secondary border border-border px-3 text-sm focus:outline-none focus:border-primary">
+                <option>Kids Kickboxing</option>
+                <option>Adult Kickboxing</option>
+                <option>Kids Brazilian Jiu-Jitsu</option>
+                <option>Adult Brazilian Jiu-Jitsu</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs uppercase tracking-widest mb-2">Message</label>
+            <textarea
+              rows={5}
+              className="w-full rounded-md bg-secondary border border-border px-3 py-2 text-sm focus:outline-none focus:border-primary"
+              placeholder="Tell us a bit about your goals or what you're looking for."
+            />
+          </div>
+          <button
+            type="submit"
+            className="inline-flex h-12 items-center rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
+            style={{ boxShadow: "var(--shadow-glow)" }}
+          >
+            Send Message
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
+function Field({ label, name, type = "text", required }: { label: string; name: string; type?: string; required?: boolean }) {
+  return (
+    <div>
+      <label htmlFor={name} className="block text-xs uppercase tracking-widest mb-2">{label}</label>
+      <input
+        id={name}
+        name={name}
+        type={type}
+        required={required}
+        className="w-full h-11 rounded-md bg-secondary border border-border px-3 text-sm focus:outline-none focus:border-primary"
+      />
+    </div>
+  );
+}
