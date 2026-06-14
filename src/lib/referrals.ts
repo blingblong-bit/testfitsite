@@ -4,56 +4,93 @@ export type Referral = {
   id: string;
   referral_code: string;
   referrer_name: string;
-  referrer_contact: string;
+  referrer_email: string | null;
+  referrer_contact: string | null;
+  normalized_referrer_email: string | null;
   friend_name: string;
-  friend_contact: string;
+  friend_email: string | null;
+  friend_contact: string | null;
   status: string;
+  email_sent: boolean;
+  email_sent_at: string | null;
   redeemed_at: string | null;
   redeemed_by: string | null;
   created_at: string;
 };
 
 function generateCode(): string {
-  // 10-char alphanumeric (uppercase, no confusing chars)
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let out = "";
   for (let i = 0; i < 10; i++) out += chars[Math.floor(Math.random() * chars.length)];
   return out;
 }
 
-function normalize(v: string) {
-  return v.trim().toLowerCase().replace(/[\s()\-]/g, "");
+function normalizeEmail(v: string) {
+  return v.trim().toLowerCase();
+}
+
+function titleCase(v: string) {
+  return v
+    .trim()
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .map((w) =>
+      w
+        .split("-")
+        .map((p) =>
+          p.length === 0 ? p : p[0].toUpperCase() + p.slice(1).toLowerCase(),
+        )
+        .join("-"),
+    )
+    .join(" ");
 }
 
 export async function createReferral(input: {
   referrer_name: string;
-  referrer_contact: string;
+  referrer_email: string;
   friend_name: string;
-  friend_contact: string;
+  friend_email: string;
 }): Promise<{ ok: true; code: string } | { ok: false; error: string }> {
-  const friend_contact = input.friend_contact.trim();
-  if (!friend_contact) return { ok: false, error: "Friend contact is required." };
+  const referrer_name = titleCase(input.referrer_name);
+  const friend_name = titleCase(input.friend_name);
+  const referrer_email_raw = input.referrer_email.trim();
+  const friend_email_raw = input.friend_email.trim();
 
-  // Duplicate check: same friend (by normalized contact) already referred
+  if (!referrer_name) return { ok: false, error: "Referrer name is required." };
+  if (!friend_name) return { ok: false, error: "Friend name is required." };
+  if (!referrer_email_raw || !/.+@.+\..+/.test(referrer_email_raw))
+    return { ok: false, error: "A valid referrer email is required." };
+  if (!friend_email_raw || !/.+@.+\..+/.test(friend_email_raw))
+    return { ok: false, error: "A valid friend email is required." };
+
+  const normalized_referrer_email = normalizeEmail(referrer_email_raw);
+  const normalized_friend_email = normalizeEmail(friend_email_raw);
+
+  // Duplicate check on friend email
   const { data: existing, error: dupErr } = await supabase
     .from("referrals")
-    .select("id, friend_contact");
+    .select("id, friend_email")
+    .ilike("friend_email", normalized_friend_email);
   if (dupErr) return { ok: false, error: dupErr.message };
-  const norm = normalize(friend_contact);
-  if ((existing ?? []).some((r) => normalize(r.friend_contact) === norm)) {
-    return { ok: false, error: "This person has already been referred and cannot receive another referral code." };
+  if ((existing ?? []).length > 0) {
+    return {
+      ok: false,
+      error: "This email has already been referred and cannot receive another referral code.",
+    };
   }
 
-  // Generate unique code (retry on collision)
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = generateCode();
     const { error } = await supabase.from("referrals").insert({
       referral_code: code,
-      referrer_name: input.referrer_name.trim(),
-      referrer_contact: input.referrer_contact.trim(),
-      friend_name: input.friend_name.trim(),
-      friend_contact,
+      referrer_name,
+      referrer_email: normalized_referrer_email,
+      normalized_referrer_email,
+      friend_name,
+      friend_email: normalized_friend_email,
       status: "sent",
+      email_sent: false,
+      email_sent_at: null,
     });
     if (!error) return { ok: true, code };
     if (!/duplicate|unique/i.test(error.message)) {
@@ -77,7 +114,8 @@ export async function redeemReferral(
     .maybeSingle();
   if (error) return { ok: false, error: error.message };
   if (!data) return { ok: false, error: "Invalid referral code." };
-  if (data.status === "redeemed") return { ok: false, error: "This referral code has already been redeemed." };
+  if (data.status === "redeemed")
+    return { ok: false, error: "This referral code has already been redeemed." };
 
   const { data: updated, error: upErr } = await supabase
     .from("referrals")
@@ -91,15 +129,17 @@ export async function redeemReferral(
     .single();
   if (upErr) return { ok: false, error: upErr.message };
 
-  // Create a lead record for the friend so staff can follow up later.
-  const contact = data.friend_contact?.trim() ?? "";
-  const isEmail = /@/.test(contact);
+  const friendEmail = (data.friend_email ?? "").trim();
+  const legacyContact = (data.friend_contact ?? "").trim();
+  const email = friendEmail || (/@/.test(legacyContact) ? legacyContact : "");
+  const phone = !friendEmail && legacyContact && !/@/.test(legacyContact) ? legacyContact : null;
+
   await supabase.from("leads").insert({
     source: "referral_day_pass",
     status: "checked_in",
     name: data.friend_name,
-    email: isEmail ? contact : "",
-    phone: isEmail ? null : contact || null,
+    email,
+    phone,
     referral_code: data.referral_code,
     referred_by: data.referrer_name,
     notes: "Redeemed free day pass from referral code.",

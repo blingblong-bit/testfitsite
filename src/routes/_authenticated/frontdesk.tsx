@@ -240,8 +240,8 @@ function ConfirmationCard({ title, message, onDone }: { title: string; message: 
 }
 
 function KioskField({
-  label, name, type = "text", required, placeholder,
-}: { label: string; name: string; type?: string; required?: boolean; placeholder?: string }) {
+  label, name, type = "text", required, placeholder, helper,
+}: { label: string; name: string; type?: string; required?: boolean; placeholder?: string; helper?: string }) {
   return (
     <div>
       <label htmlFor={name} className="block text-xs uppercase tracking-widest mb-2">{label}</label>
@@ -253,6 +253,7 @@ function KioskField({
         placeholder={placeholder}
         className="w-full h-14 rounded-md bg-secondary border border-border px-4 text-base focus:outline-none focus:border-primary"
       />
+      {helper && <p className="mt-1.5 text-xs text-muted-foreground">{helper}</p>}
     </div>
   );
 }
@@ -444,9 +445,9 @@ function ReferScreen({ onDone }: { onDone: () => void }) {
     const d = new FormData(e.currentTarget);
     const result = await createReferral({
       referrer_name: String(d.get("referrer_name") ?? ""),
-      referrer_contact: String(d.get("referrer_contact") ?? ""),
+      referrer_email: String(d.get("referrer_email") ?? ""),
       friend_name: String(d.get("friend_name") ?? ""),
-      friend_contact: String(d.get("friend_contact") ?? ""),
+      friend_email: String(d.get("friend_email") ?? ""),
     });
     setSubmitting(false);
     if (!result.ok) { setError(result.error); return; }
@@ -488,15 +489,15 @@ function ReferScreen({ onDone }: { onDone: () => void }) {
         <div className="rounded-md border border-border bg-card p-4">
           <p className="text-xs uppercase tracking-widest text-primary">Your Info</p>
           <div className="mt-3 space-y-4">
-            <KioskField label="Your name" name="referrer_name" required />
-            <KioskField label="Your email or phone" name="referrer_contact" required />
+            <KioskField label="Your name" name="referrer_name" required helper="Enter first and last name." />
+            <KioskField label="Your email" name="referrer_email" type="email" required />
           </div>
         </div>
         <div className="rounded-md border border-border bg-card p-4">
           <p className="text-xs uppercase tracking-widest text-primary">Friend's Info</p>
           <div className="mt-3 space-y-4">
-            <KioskField label="Friend's name" name="friend_name" required />
-            <KioskField label="Friend's email or phone" name="friend_contact" required />
+            <KioskField label="Friend's name" name="friend_name" required helper="Enter first and last name." />
+            <KioskField label="Friend's email" name="friend_email" type="email" required />
           </div>
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
