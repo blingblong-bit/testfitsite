@@ -23,6 +23,7 @@ import { Route as ClassesIndexRouteImport } from './routes/classes.index'
 import { Route as ClassesScheduleRouteImport } from './routes/classes.schedule'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AuthenticatedStaffHomeRouteImport } from './routes/_authenticated/staff-home'
+import { Route as AuthenticatedFrontdeskRouteImport } from './routes/_authenticated/frontdesk'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -94,6 +95,11 @@ const AuthenticatedStaffHomeRoute = AuthenticatedStaffHomeRouteImport.update({
   path: '/staff-home',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFrontdeskRoute = AuthenticatedFrontdeskRouteImport.update({
+  id: '/frontdesk',
+  path: '/frontdesk',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
   id: '/admin/leads',
   path: '/admin/leads',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
   '/classes/schedule': typeof ClassesScheduleRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
   '/classes/schedule': typeof ClassesScheduleRoute
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/_authenticated/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
   '/classes/schedule': typeof ClassesScheduleRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/frontdesk'
     | '/staff-home'
     | '/admin/login'
     | '/classes/schedule'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/frontdesk'
     | '/staff-home'
     | '/admin/login'
     | '/classes/schedule'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/_authenticated/frontdesk'
     | '/_authenticated/staff-home'
     | '/admin/login'
     | '/classes/schedule'
@@ -314,6 +326,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStaffHomeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/frontdesk': {
+      id: '/_authenticated/frontdesk'
+      path: '/frontdesk'
+      fullPath: '/frontdesk'
+      preLoaderRoute: typeof AuthenticatedFrontdeskRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/leads': {
       id: '/_authenticated/admin/leads'
       path: '/admin/leads'
@@ -325,11 +344,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedFrontdeskRoute: typeof AuthenticatedFrontdeskRoute
   AuthenticatedStaffHomeRoute: typeof AuthenticatedStaffHomeRoute
   AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedFrontdeskRoute: AuthenticatedFrontdeskRoute,
   AuthenticatedStaffHomeRoute: AuthenticatedStaffHomeRoute,
   AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
 }
