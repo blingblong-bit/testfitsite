@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft, CalendarDays, CreditCard, DollarSign, Gift, LogOut, Star, Ticket, UserPlus, Check, Copy,
+  ArrowLeft, CalendarDays, CreditCard, DollarSign, Gift, LogOut, Star, Ticket, UserPlus, Check,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { submitLead } from "@/lib/leads";
