@@ -21,6 +21,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClassesIndexRouteImport } from './routes/classes.index'
 import { Route as ClassesScheduleRouteImport } from './routes/classes.schedule'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -82,6 +83,11 @@ const ClassesScheduleRoute = ClassesScheduleRouteImport.update({
   path: '/schedule',
   getParentRoute: () => ClassesRoute,
 } as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
   id: '/admin/leads',
   path: '/admin/leads',
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/login': typeof AdminLoginRoute
   '/classes/schedule': typeof ClassesScheduleRoute
   '/classes/': typeof ClassesIndexRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/login': typeof AdminLoginRoute
   '/classes/schedule': typeof ClassesScheduleRoute
   '/classes': typeof ClassesIndexRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/login': typeof AdminLoginRoute
   '/classes/schedule': typeof ClassesScheduleRoute
   '/classes/': typeof ClassesIndexRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/admin/login'
     | '/classes/schedule'
     | '/classes/'
     | '/admin/leads'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/admin/login'
     | '/classes/schedule'
     | '/classes'
     | '/admin/leads'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/admin/login'
     | '/classes/schedule'
     | '/classes/'
     | '/_authenticated/admin/leads'
@@ -187,6 +199,7 @@ export interface RootRouteChildren {
   MembershipsRoute: typeof MembershipsRoute
   PersonalTrainingRoute: typeof PersonalTrainingRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  AdminLoginRoute: typeof AdminLoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -275,6 +288,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClassesScheduleRouteImport
       parentRoute: typeof ClassesRoute
     }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/leads': {
       id: '/_authenticated/admin/leads'
       path: '/admin/leads'
@@ -320,17 +340,8 @@ const rootRouteChildren: RootRouteChildren = {
   MembershipsRoute: MembershipsRoute,
   PersonalTrainingRoute: PersonalTrainingRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  AdminLoginRoute: AdminLoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
