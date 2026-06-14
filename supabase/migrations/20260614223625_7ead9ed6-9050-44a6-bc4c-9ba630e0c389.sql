@@ -1,0 +1,4 @@
+ALTER TABLE public.leads
+  ADD COLUMN IF NOT EXISTS referral_code TEXT,
+  ADD COLUMN IF NOT EXISTS referred_by TEXT,
+  ADD COLUMN IF NOT EXISTS notes TEXT;
