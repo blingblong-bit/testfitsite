@@ -54,18 +54,23 @@ export async function createReferral(input: {
 }): Promise<{ ok: true; code: string } | { ok: false; error: string }> {
   const referrer_name = titleCase(input.referrer_name);
   const friend_name = titleCase(input.friend_name);
-  const referrer_email_raw = input.referrer_email.trim();
-  const friend_email_raw = input.friend_email.trim();
+  const referrer_email_raw = normalizeEmail(input.referrer_email);
+  const friend_email_raw = normalizeEmail(input.friend_email);
+
+  // Stricter email regex: local@domain.tld with no whitespace, valid tld 2+ chars
+  const emailRe = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
   if (!referrer_name) return { ok: false, error: "Referrer name is required." };
   if (!friend_name) return { ok: false, error: "Friend name is required." };
-  if (!referrer_email_raw || !/.+@.+\..+/.test(referrer_email_raw))
-    return { ok: false, error: "A valid referrer email is required." };
-  if (!friend_email_raw || !/.+@.+\..+/.test(friend_email_raw))
-    return { ok: false, error: "A valid friend email is required." };
+  if (!referrer_email_raw || !emailRe.test(referrer_email_raw))
+    return { ok: false, error: "Please enter a valid referrer email address." };
+  if (!friend_email_raw || !emailRe.test(friend_email_raw))
+    return { ok: false, error: "Please enter a valid friend email address." };
+  if (referrer_email_raw === friend_email_raw)
+    return { ok: false, error: "Referrer and friend emails must be different." };
 
-  const normalized_referrer_email = normalizeEmail(referrer_email_raw);
-  const normalized_friend_email = normalizeEmail(friend_email_raw);
+  const normalized_referrer_email = referrer_email_raw;
+  const normalized_friend_email = friend_email_raw;
 
   // Duplicate check on friend email
   const { data: existing, error: dupErr } = await supabase
@@ -92,6 +97,7 @@ export async function createReferral(input: {
       status: "sent",
       email_sent: false,
       email_sent_at: null,
+      email_status: "pending",
     });
     if (!error) return { ok: true, code };
     if (!/duplicate|unique/i.test(error.message)) {
