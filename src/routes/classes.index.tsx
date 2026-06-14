@@ -7,6 +7,11 @@ import trxAsset from "@/assets/trx.jpg.asset.json";
 import fitHiitAsset from "@/assets/fit-hiit.jpg.asset.json";
 import kickboxingAsset from "@/assets/kickboxing.jpg.asset.json";
 import yogaAsset from "@/assets/yoga.jpg.asset.json";
+import kickboxingKidsAsset from "@/assets/kickboxing-kids.jpg.asset.json";
+import kickboxingAdultAsset from "@/assets/kickboxing-adult.jpg.asset.json";
+import bjjKidsAsset from "@/assets/bjj-kids.jpg.asset.json";
+import bjjAdultAsset from "@/assets/bjj-adult.jpg.asset.json";
+import { Phone, Mail } from "lucide-react";
 
 export const Route = createFileRoute("/classes/")({
   head: () => ({
@@ -47,6 +52,58 @@ function ClassesIndex() {
               </figcaption>
             </figure>
           ))}
+        </div>
+      </section>
+
+      <section className="container-page pt-20">
+        <div className="text-center max-w-3xl mx-auto">
+          <p className="text-xs tracking-[0.3em] text-primary">SPECIALTY PROGRAMS</p>
+          <h2 className="mt-3 text-3xl md:text-4xl">Combat Sports — Separate Programs</h2>
+          <p className="mt-4 text-muted-foreground">
+            Kickboxing and Brazilian Jiu-Jitsu are coached programs run independently and{" "}
+            <span className="text-foreground font-semibold">are not included with a FIT Beyond Plus membership</span>.
+            Contact the program directly for schedules, pricing, and to get started.
+          </p>
+        </div>
+
+        <div className="mt-10 grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { src: kickboxingKidsAsset.url, label: "KIDS KICKBOXING", caption: "Discipline, focus, and confidence through striking fundamentals.", alt: "Kids kickboxing class" },
+            { src: kickboxingAdultAsset.url, label: "ADULT KICKBOXING", caption: "Technique, conditioning, and pad work for all skill levels.", alt: "Adult kickboxing class" },
+            { src: bjjKidsAsset.url, label: "KIDS BRAZILIAN JIU-JITSU", caption: "Grappling, self-defense, and respect on the mats.", alt: "Kids Brazilian Jiu-Jitsu class" },
+            { src: bjjAdultAsset.url, label: "ADULT BRAZILIAN JIU-JITSU", caption: "Gi training for beginners to advanced practitioners.", alt: "Adult Brazilian Jiu-Jitsu class" },
+          ].map((c) => (
+            <figure key={c.label} className="overflow-hidden rounded-lg border border-border bg-card">
+              <img src={c.src} alt={c.alt} className="w-full h-72 object-cover" loading="lazy" />
+              <figcaption className="px-5 py-3 text-sm">
+                <span className="text-xs tracking-[0.3em] text-primary">{c.label}</span>
+                <p className="mt-1 text-muted-foreground">{c.caption}</p>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+
+        <div className="mt-10 rounded-lg border border-border bg-card p-8 text-center">
+          <p className="text-xs tracking-[0.3em] text-primary">CONTACT — KICKBOXING & BJJ</p>
+          <h3 className="mt-3 text-2xl">Ask about Combat Sports</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            For Kickboxing and Brazilian Jiu-Jitsu inquiries, reach out directly:
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <a
+              href="tel:9318418272"
+              className="inline-flex h-12 items-center gap-2 rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
+              style={{ boxShadow: "var(--shadow-glow)" }}
+            >
+              <Phone className="h-4 w-4" /> (931) 841-8272
+            </a>
+            <a
+              href="mailto:station.6.fitness@gmail.com"
+              className="inline-flex h-12 items-center gap-2 rounded-md border border-border px-6 text-sm font-bold uppercase tracking-wide hover:bg-secondary transition"
+            >
+              <Mail className="h-4 w-4" /> station.6.fitness@gmail.com
+            </a>
+          </div>
         </div>
       </section>
 
