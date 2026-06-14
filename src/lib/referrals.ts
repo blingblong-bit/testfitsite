@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { sendReferralEmail } from "@/lib/send-referral-email.functions";
 
 export type Referral = {
   id: string;
