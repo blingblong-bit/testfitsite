@@ -99,10 +99,26 @@ function CombatContactForm() {
 
   return (
     <div className="rounded-lg border border-border bg-card p-8">
-      <h3 className="text-xl text-center">Send us a message about Combat Sports</h3>
+      <p className="text-xs tracking-[0.3em] text-primary text-center">CONTACT — KICKBOXING & BJJ</p>
+      <h3 className="mt-3 text-2xl text-center">Ask about Combat Sports</h3>
       <p className="mt-2 text-sm text-center text-muted-foreground">
-        Questions about Kickboxing or Brazilian Jiu-Jitsu? Fill out the form below.
+        For Kickboxing and Brazilian Jiu-Jitsu inquiries, reach out directly or fill out the form below.
       </p>
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <a
+          href="tel:9318418272"
+          className="inline-flex h-12 items-center gap-2 rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
+          style={{ boxShadow: "var(--shadow-glow)" }}
+        >
+          <Phone className="h-4 w-4" /> (931) 841-8272
+        </a>
+        <a
+          href="mailto:station.6.fitness@gmail.com"
+          className="inline-flex h-12 items-center gap-2 rounded-md border border-border px-6 text-sm font-bold uppercase tracking-wide hover:bg-secondary transition"
+        >
+          <Mail className="h-4 w-4" /> station.6.fitness@gmail.com
+        </a>
+      </div>
       {sent ? (
         <div className="mt-6 rounded-lg border border-primary bg-primary/10 p-8 text-center">
           <p className="text-lg">Thanks — we'll be in touch shortly.</p>
