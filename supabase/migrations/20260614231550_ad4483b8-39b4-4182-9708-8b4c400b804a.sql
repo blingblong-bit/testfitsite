@@ -1,0 +1,1 @@
+ALTER TABLE public.referrals ADD COLUMN IF NOT EXISTS email_status TEXT NOT NULL DEFAULT 'pending' CHECK (email_status IN ('pending','sent','failed'));

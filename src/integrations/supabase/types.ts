@@ -106,6 +106,7 @@ export type Database = {
           created_at: string
           email_sent: boolean
           email_sent_at: string | null
+          email_status: string
           friend_contact: string | null
           friend_email: string | null
           friend_name: string
@@ -123,6 +124,7 @@ export type Database = {
           created_at?: string
           email_sent?: boolean
           email_sent_at?: string | null
+          email_status?: string
           friend_contact?: string | null
           friend_email?: string | null
           friend_name: string
@@ -140,6 +142,7 @@ export type Database = {
           created_at?: string
           email_sent?: boolean
           email_sent_at?: string | null
+          email_status?: string
           friend_contact?: string | null
           friend_email?: string | null
           friend_name?: string
