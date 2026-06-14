@@ -28,6 +28,7 @@ function AdminLeads() {
   const [leads, setLeads] = useState<Lead[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   async function load() {
     setError(null);
@@ -44,12 +45,56 @@ function AdminLeads() {
   }
 
   useEffect(() => {
-    load();
+    (async () => {
+      const { data: userRes } = await supabase.auth.getUser();
+      const uid = userRes.user?.id;
+      if (!uid) {
+        setIsAdmin(false);
+        return;
+      }
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", uid);
+      const admin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
+      setIsAdmin(admin);
+      if (admin) load();
+    })();
   }, []);
 
   async function signOut() {
     await supabase.auth.signOut();
-    navigate({ to: "/auth" });
+    navigate({ to: "/admin/login" });
+  }
+
+  if (isAdmin === false) {
+    return (
+      <section className="container-page py-20 max-w-lg">
+        <p className="text-xs tracking-[0.3em] text-primary">ADMIN</p>
+        <h1 className="mt-2 text-3xl">Access denied</h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Your account is not approved for admin access. Contact an administrator if you believe this is a mistake.
+        </p>
+        <div className="mt-6 flex gap-3">
+          <button
+            onClick={signOut}
+            className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary"
+          >
+            Sign out
+          </button>
+          <button
+            onClick={() => navigate({ to: "/" })}
+            className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground"
+          >
+            Back to homepage
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  if (isAdmin === null) {
+    return <section className="container-page py-20"><p className="text-muted-foreground">Checking access…</p></section>;
   }
 
   const visible = leads?.filter((l) => filter === "all" || l.source === filter) ?? [];
