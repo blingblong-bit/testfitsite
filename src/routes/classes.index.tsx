@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { PageHero } from "@/components/PageHero";
 import { ClassesCTA } from "@/components/ClassesCTA";
 import barreAbsAsset from "@/assets/barre-abs.jpg.asset.json";
