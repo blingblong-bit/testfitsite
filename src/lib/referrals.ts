@@ -90,5 +90,24 @@ export async function redeemReferral(
     .select("*")
     .single();
   if (upErr) return { ok: false, error: upErr.message };
+
+  // Create a lead record for the friend so staff can follow up later.
+  const contact = data.friend_contact?.trim() ?? "";
+  const isEmail = /@/.test(contact);
+  await supabase.from("leads").insert({
+    source: "referral_day_pass",
+    status: "checked_in",
+    name: data.friend_name,
+    email: isEmail ? contact : "",
+    phone: isEmail ? null : contact || null,
+    referral_code: data.referral_code,
+    referred_by: data.referrer_name,
+    notes: "Redeemed free day pass from referral code.",
+    lead_type: "customer_lead",
+    lead_score: 100,
+    should_notify: false,
+    spam_reason: null,
+  });
+
   return { ok: true, referral: updated as Referral };
 }

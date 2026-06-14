@@ -46,9 +46,12 @@ export type Database = {
           lead_type: string
           message: string | null
           name: string
+          notes: string | null
           payment_method: string | null
           payment_status: string | null
           phone: string | null
+          referral_code: string | null
+          referred_by: string | null
           should_notify: boolean
           source: string
           spam_reason: string | null
@@ -64,9 +67,12 @@ export type Database = {
           lead_type?: string
           message?: string | null
           name: string
+          notes?: string | null
           payment_method?: string | null
           payment_status?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           should_notify?: boolean
           source: string
           spam_reason?: string | null
@@ -82,9 +88,12 @@ export type Database = {
           lead_type?: string
           message?: string | null
           name?: string
+          notes?: string | null
           payment_method?: string | null
           payment_status?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           should_notify?: boolean
           source?: string
           spam_reason?: string | null
