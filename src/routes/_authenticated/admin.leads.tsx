@@ -1,0 +1,160 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+type Lead = {
+  id: string;
+  source: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  interest: string | null;
+  message: string | null;
+  created_at: string;
+};
+
+export const Route = createFileRoute("/_authenticated/admin/leads")({
+  head: () => ({
+    meta: [
+      { title: "Leads — FIT Beyond Plus Admin" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: AdminLeads,
+});
+
+function AdminLeads() {
+  const navigate = useNavigate();
+  const [leads, setLeads] = useState<Lead[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>("all");
+
+  async function load() {
+    setError(null);
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) {
+      setError(error.message);
+      setLeads([]);
+      return;
+    }
+    setLeads(data as Lead[]);
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    navigate({ to: "/auth" });
+  }
+
+  const visible = leads?.filter((l) => filter === "all" || l.source === filter) ?? [];
+  const sources = Array.from(new Set((leads ?? []).map((l) => l.source)));
+
+  return (
+    <section className="container-page py-16">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-xs tracking-[0.3em] text-primary">ADMIN</p>
+          <h1 className="mt-2 text-3xl md:text-4xl">Leads Inbox</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            All contact form submissions, most recent first.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={load}
+            className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary"
+          >
+            Refresh
+          </button>
+          <button
+            onClick={signOut}
+            className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+
+      {sources.length > 0 && (
+        <div className="mt-6 flex flex-wrap gap-2">
+          <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
+            All ({leads?.length ?? 0})
+          </FilterChip>
+          {sources.map((s) => (
+            <FilterChip key={s} active={filter === s} onClick={() => setFilter(s)}>
+              {s} ({leads?.filter((l) => l.source === s).length})
+            </FilterChip>
+          ))}
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-8 rounded-md border border-destructive bg-destructive/10 p-4 text-sm">
+          {error}. You may not have admin/staff access yet — an admin must grant your account a role.
+        </div>
+      )}
+
+      {leads === null && !error && (
+        <p className="mt-10 text-muted-foreground">Loading leads…</p>
+      )}
+
+      {leads !== null && visible.length === 0 && !error && (
+        <p className="mt-10 text-muted-foreground">No leads yet.</p>
+      )}
+
+      <div className="mt-8 space-y-4">
+        {visible.map((lead) => (
+          <article key={lead.id} className="rounded-lg border border-border bg-card p-6">
+            <header className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg">{lead.name}</h2>
+                <p className="text-sm text-muted-foreground">
+                  <a href={`mailto:${lead.email}`} className="hover:text-primary">{lead.email}</a>
+                  {lead.phone && (
+                    <> · <a href={`tel:${lead.phone}`} className="hover:text-primary">{lead.phone}</a></>
+                  )}
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="inline-block rounded-full bg-primary/15 text-primary px-3 py-1 text-xs uppercase tracking-widest">
+                  {lead.source}
+                </span>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {new Date(lead.created_at).toLocaleString()}
+                </p>
+              </div>
+            </header>
+            {lead.interest && (
+              <p className="mt-3 text-sm"><span className="text-muted-foreground">Interested in:</span> {lead.interest}</p>
+            )}
+            {lead.message && (
+              <p className="mt-3 whitespace-pre-wrap text-sm text-muted-foreground">{lead.message}</p>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        "h-9 rounded-full border px-4 text-xs uppercase tracking-widest transition " +
+        (active
+          ? "border-primary bg-primary/15 text-primary"
+          : "border-border text-muted-foreground hover:bg-secondary")
+      }
+    >
+      {children}
+    </button>
+  );
+}

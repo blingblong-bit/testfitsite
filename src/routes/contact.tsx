@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { submitLead } from "@/lib/leads";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 
@@ -17,6 +18,31 @@ export const Route = createFileRoute("/contact")({
 
 function Contact() {
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    try {
+      await submitLead({
+        source: "general_contact",
+        name: String(data.get("name") ?? ""),
+        email: String(data.get("email") ?? ""),
+        phone: String(data.get("phone") ?? ""),
+        interest: String(data.get("interest") ?? ""),
+        message: String(data.get("message") ?? ""),
+      });
+      setSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <>
@@ -31,16 +57,10 @@ function Contact() {
           <h2 className="text-2xl md:text-3xl">Send us a message</h2>
           {sent ? (
             <div className="mt-8 rounded-lg border border-primary bg-primary/10 p-8 text-center">
-              <p className="text-lg">Thanks — we'll be in touch shortly.</p>
+              <p className="text-lg">Thanks — your message was received. We'll be in touch shortly.</p>
             </div>
           ) : (
-            <form
-              className="mt-8 space-y-5"
-              onSubmit={(e) => {
-                e.preventDefault();
-                setSent(true);
-              }}
-            >
+            <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
               <div className="grid sm:grid-cols-2 gap-5">
                 <Field label="Name" name="name" required />
                 <Field label="Email" name="email" type="email" required />
@@ -48,8 +68,13 @@ function Contact() {
               <div className="grid sm:grid-cols-2 gap-5">
                 <Field label="Phone" name="phone" type="tel" />
                 <div>
-                  <label className="block text-xs uppercase tracking-widest mb-2">Interested in</label>
-                  <select className="w-full h-11 rounded-md bg-secondary border border-border px-3 text-sm focus:outline-none focus:border-primary">
+                  <label htmlFor="interest" className="block text-xs uppercase tracking-widest mb-2">Interested in</label>
+                  <select
+                    id="interest"
+                    name="interest"
+                    defaultValue="Book a tour"
+                    className="w-full h-11 rounded-md bg-secondary border border-border px-3 text-sm focus:outline-none focus:border-primary"
+                  >
                     <option>Book a tour</option>
                     <option>Membership question</option>
                     <option>Personal training</option>
@@ -58,19 +83,23 @@ function Contact() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs uppercase tracking-widest mb-2">Message</label>
+                <label htmlFor="message" className="block text-xs uppercase tracking-widest mb-2">Message</label>
                 <textarea
+                  id="message"
+                  name="message"
                   rows={5}
                   className="w-full rounded-md bg-secondary border border-border px-3 py-2 text-sm focus:outline-none focus:border-primary"
                   placeholder="Tell us a bit about your goals or what you're looking for."
                 />
               </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
               <button
                 type="submit"
-                className="inline-flex h-12 items-center rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
+                disabled={submitting}
+                className="inline-flex h-12 items-center rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition disabled:opacity-60"
                 style={{ boxShadow: "var(--shadow-glow)" }}
               >
-                Send Message
+                {submitting ? "Sending..." : "Send Message"}
               </button>
             </form>
           )}
