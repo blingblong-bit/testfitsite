@@ -138,18 +138,33 @@ function AdminLeads() {
 
       {sources.length > 0 && (
         <div className="mt-6 flex flex-wrap gap-2">
+      <div className="mt-6 flex flex-wrap gap-2">
+        <FilterChip active={typeFilter === "customer_lead"} onClick={() => { setTypeFilter("customer_lead"); setFilter("all"); }}>
+          Customer Leads ({count("customer_lead")})
+        </FilterChip>
+        <FilterChip active={typeFilter === "vendor_solicitation"} onClick={() => { setTypeFilter("vendor_solicitation"); setFilter("all"); }}>
+          Vendor Solicitations ({count("vendor_solicitation")})
+        </FilterChip>
+        <FilterChip active={typeFilter === "spam"} onClick={() => { setTypeFilter("spam"); setFilter("all"); }}>
+          Spam ({count("spam")})
+        </FilterChip>
+        <FilterChip active={typeFilter === "all"} onClick={() => { setTypeFilter("all"); setFilter("all"); }}>
+          All ({count("all")})
+        </FilterChip>
+      </div>
+
+      {sources.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
           <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
-            All ({leads?.length ?? 0})
+            All sources ({byType.length})
           </FilterChip>
           {sources.map((s) => (
             <FilterChip key={s} active={filter === s} onClick={() => setFilter(s)}>
-              {s} ({leads?.filter((l) => l.source === s).length})
+              {s} ({byType.filter((l) => l.source === s).length})
             </FilterChip>
           ))}
         </div>
       )}
-
-      {error && (
         <div className="mt-8 rounded-md border border-destructive bg-destructive/10 p-4 text-sm">
           {error}. You may not have admin/staff access yet — an admin must grant your account a role.
         </div>
