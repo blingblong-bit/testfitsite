@@ -121,6 +121,36 @@ export const notifyNewLead = createServerFn({ method: "POST" })
       const messageId = crypto.randomUUID();
       const idempotencyKey = `lead-${data.source}-${data.email.toLowerCase()}-${submittedAt.getTime()}`;
 
+      // Unsubscribe token (required by email API for transactional sends)
+      const recipientLower = NOTIFY_TO.toLowerCase();
+      let unsubscribeToken: string;
+      const { data: existingTok } = await supabaseAdmin
+        .from("email_unsubscribe_tokens")
+        .select("token, used_at")
+        .eq("email", recipientLower)
+        .maybeSingle();
+      if (existingTok && !existingTok.used_at) {
+        unsubscribeToken = existingTok.token;
+      } else {
+        const bytes = new Uint8Array(32);
+        crypto.getRandomValues(bytes);
+        unsubscribeToken = Array.from(bytes)
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        await supabaseAdmin
+          .from("email_unsubscribe_tokens")
+          .upsert(
+            { token: unsubscribeToken, email: recipientLower },
+            { onConflict: "email", ignoreDuplicates: true },
+          );
+        const { data: stored } = await supabaseAdmin
+          .from("email_unsubscribe_tokens")
+          .select("token")
+          .eq("email", recipientLower)
+          .maybeSingle();
+        if (stored?.token) unsubscribeToken = stored.token;
+      }
+
       await supabaseAdmin.from("email_send_log").insert({
         message_id: messageId,
         template_name: "lead-notification",
@@ -139,6 +169,7 @@ export const notifyNewLead = createServerFn({ method: "POST" })
           subject,
           html,
           text,
+          unsubscribe_token: unsubscribeToken,
           purpose: "transactional",
           label: "lead-notification",
           idempotency_key: idempotencyKey,
