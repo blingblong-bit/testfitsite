@@ -376,8 +376,12 @@ function DayPassScreen({ onDone }: { onDone: () => void }) {
       <form onSubmit={handlePaySubmit} className="space-y-6">
         <div className="rounded-2xl border border-border bg-card p-6 text-center">
           <p className="text-xs uppercase tracking-widest text-primary">Venmo</p>
-          <div className="mt-4 mx-auto h-56 w-56 rounded-lg border-2 border-dashed border-border bg-secondary flex items-center justify-center">
-            <span className="text-xs text-muted-foreground text-center px-4">Venmo QR code<br/>(add image here)</span>
+          <div className="mt-4 mx-auto h-64 w-64 rounded-lg border border-border bg-white flex items-center justify-center overflow-hidden">
+            <img
+              src={venmoQrAsset.url}
+              alt="Scan to pay FIT Beyond Plus on Venmo"
+              className="h-full w-full object-contain"
+            />
           </div>
           <p className="mt-4 text-sm text-foreground font-semibold">
             Scan to pay $10 through Venmo, or pay at the front desk.
