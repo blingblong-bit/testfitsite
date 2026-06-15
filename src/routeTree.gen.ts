@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PersonalTrainingRouteImport } from './routes/personal-training'
 import { Route as MembershipsRouteImport } from './routes/memberships'
@@ -31,6 +32,11 @@ import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lova
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
@@ -194,6 +202,7 @@ export interface FileRoutesById {
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/_authenticated/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/_authenticated/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
@@ -218,6 +227,7 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/unsubscribe'
     | '/frontdesk'
     | '/staff-home'
     | '/admin/login'
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/unsubscribe'
     | '/frontdesk'
     | '/staff-home'
     | '/admin/login'
@@ -262,6 +273,7 @@ export interface FileRouteTypes {
     | '/memberships'
     | '/personal-training'
     | '/sitemap.xml'
+    | '/unsubscribe'
     | '/_authenticated/frontdesk'
     | '/_authenticated/staff-home'
     | '/admin/login'
@@ -286,6 +298,7 @@ export interface RootRouteChildren {
   MembershipsRoute: typeof MembershipsRoute
   PersonalTrainingRoute: typeof PersonalTrainingRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   AdminLoginRoute: typeof AdminLoginRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
@@ -296,6 +309,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -485,6 +505,7 @@ const rootRouteChildren: RootRouteChildren = {
   MembershipsRoute: MembershipsRoute,
   PersonalTrainingRoute: PersonalTrainingRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   AdminLoginRoute: AdminLoginRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
