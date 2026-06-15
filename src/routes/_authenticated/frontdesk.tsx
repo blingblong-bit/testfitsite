@@ -411,6 +411,8 @@ function DayPassScreen({ onDone }: { onDone: () => void }) {
           </div>
         </div>
 
+        <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
+
         {error && <p className="text-sm text-destructive">{error}</p>}
         <SubmitButton submitting={submitting} label="Confirm Payment & Check In" />
         <button
