@@ -11,80 +11,157 @@ const LeadSchema = z.object({
   submitted_at: z.string().optional(),
 });
 
+const NOTIFY_TO = "info@fitbeyondplus.com";
+const SITE_NAME = "FIT Beyond Plus";
+const SENDER_DOMAIN = "notify.fitbeyondplus.com";
+const FROM_DOMAIN = "fitbeyondplus.com";
+
+const SOURCE_LABELS: Record<string, string> = {
+  general_contact: "Contact form",
+  book_a_tour: "Book a Tour",
+  membership_inquiry: "Membership inquiry",
+  personal_training_inquiry: "Personal Training inquiry",
+  classes_inquiry: "Classes inquiry",
+  frontdesk: "Front desk",
+};
+
+function esc(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 export const notifyNewLead = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => LeadSchema.parse(data))
   .handler(async ({ data }) => {
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-    const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
-      console.error("[notifyNewLead] Missing API keys");
-      return { ok: false, error: "email_not_configured" };
-    }
-
-    const submittedAt = data.submitted_at
-      ? new Date(data.submitted_at)
-      : new Date();
-
-    const esc = (s: string) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-    const rows: Array<[string, string]> = [
-      ["Name", data.name],
-      ["Email", data.email],
-      ["Phone", data.phone || "—"],
-      ["Interested in", data.interest || "—"],
-      ["Source page", data.source],
-      ["Submitted at", submittedAt.toLocaleString("en-US", { timeZone: "America/Chicago" }) + " (CT)"],
-    ];
-
-    const html = `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#111">
-        <h2 style="margin:0 0 16px">New lead from FIT Beyond Plus</h2>
-        <table style="width:100%;border-collapse:collapse">
-          ${rows
-            .map(
-              ([k, v]) =>
-                `<tr><td style="padding:8px 12px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:600;width:140px">${esc(k)}</td><td style="padding:8px 12px;border:1px solid #e5e7eb">${esc(v)}</td></tr>`,
-            )
-            .join("")}
-        </table>
-        ${
-          data.message
-            ? `<h3 style="margin:20px 0 8px">Message</h3>
-               <div style="padding:12px;border:1px solid #e5e7eb;border-radius:6px;white-space:pre-wrap">${esc(data.message)}</div>`
-            : ""
-        }
-      </div>
-    `;
-
-    const text = rows.map(([k, v]) => `${k}: ${v}`).join("\n") +
-      (data.message ? `\n\nMessage:\n${data.message}` : "");
-
     try {
-      const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "X-Connection-Api-Key": RESEND_API_KEY,
-        },
-        body: JSON.stringify({
-          from: "FIT Beyond Plus <onboarding@resend.dev>",
-          to: ["hjalen218@gmail.com"],
+      const { supabaseAdmin } = await import(
+        "@/integrations/supabase/client.server"
+      );
+
+      const submittedAt = data.submitted_at
+        ? new Date(data.submitted_at)
+        : new Date();
+      const submittedFmt =
+        submittedAt.toLocaleString("en-US", {
+          timeZone: "America/Chicago",
+        }) + " CT";
+
+      const sourceLabel = SOURCE_LABELS[data.source] ?? data.source;
+      const interest = data.interest?.trim() || null;
+      const phone = data.phone?.trim() || null;
+      const message = data.message?.trim() || null;
+
+      // Body is intentionally clean and customer-friendly.
+      // When staff hit Reply, the quoted content is safe for the
+      // customer to see — no internal scoring, source codes, or CRM data.
+      const greeting = `Hi ${esc(data.name)},`;
+      const introHtml = `Thanks for reaching out to ${SITE_NAME}. We received your inquiry${
+        interest ? ` about <strong>${esc(interest)}</strong>` : ""
+      } and will be in touch shortly.`;
+      const introText = `Thanks for reaching out to ${SITE_NAME}. We received your inquiry${
+        interest ? ` about ${interest}` : ""
+      } and will be in touch shortly.`;
+
+      const messageBlockHtml = message
+        ? `<p style="margin:16px 0 6px;color:#555;font-size:13px;text-transform:uppercase;letter-spacing:0.05em">Your message</p>
+           <div style="padding:14px 16px;border-left:3px solid #111;background:#f6f6f6;white-space:pre-wrap;font-size:15px;line-height:1.5">${esc(
+             message,
+           )}</div>`
+        : "";
+
+      const html = `<!doctype html>
+<html><body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111">
+  <div style="max-width:600px;margin:0 auto;padding:28px 24px">
+    <h2 style="margin:0 0 16px;font-size:20px">New inquiry from ${esc(data.name)}</h2>
+    <p style="margin:0 0 8px;font-size:15px">${greeting}</p>
+    <p style="margin:8px 0 12px;font-size:15px;line-height:1.5">${introHtml}</p>
+    ${messageBlockHtml}
+    <div style="margin-top:20px;padding-top:14px;border-top:1px solid #e5e7eb;font-size:14px;color:#333">
+      <div><strong>Name:</strong> ${esc(data.name)}</div>
+      <div><strong>Email:</strong> <a href="mailto:${esc(data.email)}" style="color:#111">${esc(data.email)}</a></div>
+      ${phone ? `<div><strong>Phone:</strong> <a href="tel:${esc(phone)}" style="color:#111">${esc(phone)}</a></div>` : ""}
+      ${interest ? `<div><strong>Interested in:</strong> ${esc(interest)}</div>` : ""}
+    </div>
+    <p style="margin-top:18px;font-size:13px;color:#777">
+      Reply directly to this email to respond to ${esc(data.name)}.
+    </p>
+    <p style="margin-top:4px;font-size:11px;color:#aaa">
+      ${esc(sourceLabel)} · ${esc(submittedFmt)}
+    </p>
+  </div>
+</body></html>`;
+
+      const textLines = [
+        `New inquiry from ${data.name}`,
+        "",
+        greeting,
+        introText,
+      ];
+      if (message) {
+        textLines.push("", "Your message:", message);
+      }
+      textLines.push(
+        "",
+        "---",
+        `Name: ${data.name}`,
+        `Email: ${data.email}`,
+      );
+      if (phone) textLines.push(`Phone: ${phone}`);
+      if (interest) textLines.push(`Interested in: ${interest}`);
+      textLines.push(
+        "",
+        `Reply directly to this email to respond to ${data.name}.`,
+        `(${sourceLabel} · ${submittedFmt})`,
+      );
+      const text = textLines.join("\n");
+
+      const subject = `New inquiry from ${data.name}`;
+      const messageId = crypto.randomUUID();
+      const idempotencyKey = `lead-${data.source}-${data.email.toLowerCase()}-${submittedAt.getTime()}`;
+
+      await supabaseAdmin.from("email_send_log").insert({
+        message_id: messageId,
+        template_name: "lead-notification",
+        recipient_email: NOTIFY_TO,
+        status: "pending",
+      });
+
+      const { error: enqueueError } = await supabaseAdmin.rpc("enqueue_email", {
+        queue_name: "transactional_emails",
+        payload: {
+          message_id: messageId,
+          to: NOTIFY_TO,
+          from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
           reply_to: data.email,
-          subject: `New lead: ${data.name} (${data.source})`,
+          sender_domain: SENDER_DOMAIN,
+          subject,
           html,
           text,
-        }),
+          purpose: "transactional",
+          label: "lead-notification",
+          idempotency_key: idempotencyKey,
+          queued_at: new Date().toISOString(),
+        },
       });
-      if (!res.ok) {
-        const body = await res.text();
-        console.error("[notifyNewLead] Resend failed", res.status, body);
-        return { ok: false, error: `resend_${res.status}` };
+
+      if (enqueueError) {
+        await supabaseAdmin.from("email_send_log").insert({
+          message_id: messageId,
+          template_name: "lead-notification",
+          recipient_email: NOTIFY_TO,
+          status: "failed",
+          error_message: enqueueError.message.slice(0, 1000),
+        });
+        console.error("[notifyNewLead] enqueue failed", enqueueError);
+        return { ok: false as const, error: "enqueue_failed" };
       }
-      return { ok: true };
+
+      return { ok: true as const };
     } catch (err) {
-      console.error("[notifyNewLead] error", err);
-      return { ok: false, error: "send_exception" };
+      const msg = err instanceof Error ? err.message : "send_exception";
+      console.error("[notifyNewLead] error", msg);
+      return { ok: false as const, error: msg };
     }
   });
