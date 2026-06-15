@@ -330,6 +330,7 @@ function DayPassScreen({ onDone }: { onDone: () => void }) {
   async function handlePaySubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!method) { setError("Please select a payment method."); return; }
+    if (!waiverAccepted) { setError("Please accept the liability waiver to continue."); return; }
     setSubmitting(true); setError(null);
     try {
       await submitLead({
