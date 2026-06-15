@@ -6,6 +6,29 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { submitLead } from "@/lib/leads";
 import { createReferral, redeemReferral, lookupReferral } from "@/lib/referrals";
+import venmoQrAsset from "@/assets/venmo-qr.jpeg.asset.json";
+
+const WAIVER_TEXT =
+  "I have read and understood the foregoing assumption of risk and release of liability and I understand that by signing this document it obligates me to indemnify FIT Beyond Plus for any liability for injury or death of any person and damage of property caused by negligent or intentional act or omission. I understand that by signing, I am waiving my valuable legal rights.";
+
+function WaiverCheckbox({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-start gap-3 rounded-xl border border-border bg-card p-5 cursor-pointer">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-1 h-5 w-5 shrink-0 accent-primary"
+      />
+      <span className="text-sm leading-relaxed text-foreground">
+        <span className="block text-xs uppercase tracking-widest text-primary mb-2">
+          Liability waiver
+        </span>
+        {WAIVER_TEXT}
+      </span>
+    </label>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/frontdesk")({
   head: () => ({
