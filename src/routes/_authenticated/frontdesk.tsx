@@ -434,6 +434,7 @@ function RedeemScreen({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState<"code" | "checkin">("code");
   const [code, setCode] = useState("");
   const [referrerName, setReferrerName] = useState<string | null>(null);
+  const [waiverAccepted, setWaiverAccepted] = useState(false);
 
   async function handleCodeSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
