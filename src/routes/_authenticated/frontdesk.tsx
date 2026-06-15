@@ -502,6 +502,7 @@ function RedeemScreen({ onDone }: { onDone: () => void }) {
         <KioskField label="Full name" name="name" required />
         <KioskField label="Phone" name="phone" type="tel" required />
         <KioskField label="Email" name="email" type="email" required />
+        <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
         {error && <p className="text-sm text-destructive">{error}</p>}
         <SubmitButton submitting={submitting} label="Complete Check-In" />
         <button
