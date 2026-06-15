@@ -451,6 +451,7 @@ function RedeemScreen({ onDone }: { onDone: () => void }) {
 
   async function handleCheckinSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!waiverAccepted) { setError("Please accept the liability waiver to continue."); return; }
     setSubmitting(true); setError(null);
     const d = new FormData(e.currentTarget);
     const result = await redeemReferral(code, {
