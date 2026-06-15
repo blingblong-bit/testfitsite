@@ -8,64 +8,127 @@ const Schema = z.object({
   referral_code: z.string().min(1).max(40),
 });
 
+const TEMPLATE_NAME = "referral-day-pass";
+const SITE_NAME = "FIT Beyond Plus";
+const SENDER_DOMAIN = "notify.fitbeyondplus.com";
+const FROM_DOMAIN = "fitbeyondplus.com";
+
+function generateToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 export const sendReferralEmail = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => Schema.parse(data))
   .handler(async ({ data }) => {
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-    const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
-      return { ok: false as const, error: "email_not_configured" };
-    }
-
-    const esc = (s: string) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-    const text =
-      `Hey ${data.friend_name},\n\n` +
-      `${data.referrer_name} referred you to FIT Beyond Plus!\n\n` +
-      `Here is your free day pass code:\n\n` +
-      `${data.referral_code}\n\n` +
-      `Show this code at the front desk to redeem your free day pass.\n\n` +
-      `We look forward to seeing you!`;
-
-    const html = `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#111">
-        <p>Hey ${esc(data.friend_name)},</p>
-        <p><strong>${esc(data.referrer_name)}</strong> referred you to FIT Beyond Plus!</p>
-        <p>Here is your free day pass code:</p>
-        <div style="margin:20px 0;padding:18px;border:2px solid #111;border-radius:8px;text-align:center;font-size:28px;letter-spacing:6px;font-weight:bold;font-family:monospace">
-          ${esc(data.referral_code)}
-        </div>
-        <p>Show this code at the front desk to redeem your free day pass.</p>
-        <p>We look forward to seeing you!</p>
-      </div>
-    `;
-
     try {
-      const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "X-Connection-Api-Key": RESEND_API_KEY,
-        },
-        body: JSON.stringify({
-          from: "FIT Beyond Plus <onboarding@resend.dev>",
-          to: [data.friend_email],
-          subject: "Your Free Day Pass to FIT Beyond Plus",
+      const [{ supabaseAdmin }, React, { render }, { TEMPLATES }] =
+        await Promise.all([
+          import("@/integrations/supabase/client.server"),
+          import("react"),
+          import("@react-email/components"),
+          import("@/lib/email-templates/registry"),
+        ]);
+
+      const entry = TEMPLATES[TEMPLATE_NAME];
+      if (!entry) {
+        return { ok: false as const, error: "template_not_registered" };
+      }
+
+      const recipient = data.friend_email.toLowerCase();
+      const messageId = crypto.randomUUID();
+
+      // Suppression check
+      const { data: suppressed } = await supabaseAdmin
+        .from("suppressed_emails")
+        .select("id")
+        .eq("email", recipient)
+        .maybeSingle();
+      if (suppressed) {
+        return { ok: false as const, error: "email_suppressed" };
+      }
+
+      // Unsubscribe token (one per address)
+      let unsubscribeToken: string;
+      const { data: existing } = await supabaseAdmin
+        .from("email_unsubscribe_tokens")
+        .select("token, used_at")
+        .eq("email", recipient)
+        .maybeSingle();
+
+      if (existing && !existing.used_at) {
+        unsubscribeToken = existing.token;
+      } else {
+        unsubscribeToken = generateToken();
+        await supabaseAdmin
+          .from("email_unsubscribe_tokens")
+          .upsert(
+            { token: unsubscribeToken, email: recipient },
+            { onConflict: "email", ignoreDuplicates: true },
+          );
+        const { data: stored } = await supabaseAdmin
+          .from("email_unsubscribe_tokens")
+          .select("token")
+          .eq("email", recipient)
+          .maybeSingle();
+        if (stored?.token) unsubscribeToken = stored.token;
+      }
+
+      const element = React.createElement(entry.component, {
+        friend_name: data.friend_name,
+        referrer_name: data.referrer_name,
+        referral_code: data.referral_code,
+      });
+      const html = await render(element);
+      const text = await render(element, { plainText: true });
+      const subject =
+        typeof entry.subject === "function"
+          ? entry.subject({})
+          : entry.subject;
+
+      await supabaseAdmin.from("email_send_log").insert({
+        message_id: messageId,
+        template_name: TEMPLATE_NAME,
+        recipient_email: recipient,
+        status: "pending",
+      });
+
+      const { error: enqueueError } = await supabaseAdmin.rpc("enqueue_email", {
+        queue_name: "transactional_emails",
+        payload: {
+          message_id: messageId,
+          to: recipient,
+          from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+          sender_domain: SENDER_DOMAIN,
+          subject,
           html,
           text,
-        }),
+          purpose: "transactional",
+          label: TEMPLATE_NAME,
+          idempotency_key: `referral-${data.referral_code}`,
+          unsubscribe_token: unsubscribeToken,
+          queued_at: new Date().toISOString(),
+        },
       });
-      if (!res.ok) {
-        const body = await res.text();
-        console.error("[sendReferralEmail] Resend failed", res.status, body);
-        return { ok: false as const, error: `resend_${res.status}: ${body.slice(0, 200)}` };
+
+      if (enqueueError) {
+        await supabaseAdmin.from("email_send_log").insert({
+          message_id: messageId,
+          template_name: TEMPLATE_NAME,
+          recipient_email: recipient,
+          status: "failed",
+          error_message: enqueueError.message.slice(0, 1000),
+        });
+        return { ok: false as const, error: "enqueue_failed" };
       }
+
       return { ok: true as const };
     } catch (err) {
-      console.error("[sendReferralEmail] error", err);
       const msg = err instanceof Error ? err.message : "send_exception";
+      console.error("[sendReferralEmail] error", msg);
       return { ok: false as const, error: msg };
     }
   });
