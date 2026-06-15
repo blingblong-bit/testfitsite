@@ -6,6 +6,29 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { submitLead } from "@/lib/leads";
 import { createReferral, redeemReferral, lookupReferral } from "@/lib/referrals";
+import venmoQrAsset from "@/assets/venmo-qr.jpeg.asset.json";
+
+const WAIVER_TEXT =
+  "I have read and understood the foregoing assumption of risk and release of liability and I understand that by signing this document it obligates me to indemnify FIT Beyond Plus for any liability for injury or death of any person and damage of property caused by negligent or intentional act or omission. I understand that by signing, I am waiving my valuable legal rights.";
+
+function WaiverCheckbox({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-start gap-3 rounded-xl border border-border bg-card p-5 cursor-pointer">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-1 h-5 w-5 shrink-0 accent-primary"
+      />
+      <span className="text-sm leading-relaxed text-foreground">
+        <span className="block text-xs uppercase tracking-widest text-primary mb-2">
+          Liability waiver
+        </span>
+        {WAIVER_TEXT}
+      </span>
+    </label>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/frontdesk")({
   head: () => ({
@@ -291,6 +314,7 @@ function DayPassScreen({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState<"info" | "pay">("info");
   const [guest, setGuest] = useState({ name: "", email: "", phone: "" });
   const [method, setMethod] = useState<PaymentMethod | null>(null);
+  const [waiverAccepted, setWaiverAccepted] = useState(false);
 
   function handleInfoSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -306,6 +330,7 @@ function DayPassScreen({ onDone }: { onDone: () => void }) {
   async function handlePaySubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!method) { setError("Please select a payment method."); return; }
+    if (!waiverAccepted) { setError("Please accept the liability waiver to continue."); return; }
     setSubmitting(true); setError(null);
     try {
       await submitLead({
@@ -351,8 +376,12 @@ function DayPassScreen({ onDone }: { onDone: () => void }) {
       <form onSubmit={handlePaySubmit} className="space-y-6">
         <div className="rounded-2xl border border-border bg-card p-6 text-center">
           <p className="text-xs uppercase tracking-widest text-primary">Venmo</p>
-          <div className="mt-4 mx-auto h-56 w-56 rounded-lg border-2 border-dashed border-border bg-secondary flex items-center justify-center">
-            <span className="text-xs text-muted-foreground text-center px-4">Venmo QR code<br/>(add image here)</span>
+          <div className="mt-4 mx-auto h-64 w-64 rounded-lg border border-border bg-white flex items-center justify-center overflow-hidden">
+            <img
+              src={venmoQrAsset.url}
+              alt="Scan to pay FIT Beyond Plus on Venmo"
+              className="h-full w-full object-contain"
+            />
           </div>
           <p className="mt-4 text-sm text-foreground font-semibold">
             Scan to pay $10 through Venmo, or pay at the front desk.
@@ -382,6 +411,8 @@ function DayPassScreen({ onDone }: { onDone: () => void }) {
           </div>
         </div>
 
+        <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
+
         {error && <p className="text-sm text-destructive">{error}</p>}
         <SubmitButton submitting={submitting} label="Confirm Payment & Check In" />
         <button
@@ -403,6 +434,7 @@ function RedeemScreen({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState<"code" | "checkin">("code");
   const [code, setCode] = useState("");
   const [referrerName, setReferrerName] = useState<string | null>(null);
+  const [waiverAccepted, setWaiverAccepted] = useState(false);
 
   async function handleCodeSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -419,6 +451,7 @@ function RedeemScreen({ onDone }: { onDone: () => void }) {
 
   async function handleCheckinSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!waiverAccepted) { setError("Please accept the liability waiver to continue."); return; }
     setSubmitting(true); setError(null);
     const d = new FormData(e.currentTarget);
     const result = await redeemReferral(code, {
@@ -469,6 +502,7 @@ function RedeemScreen({ onDone }: { onDone: () => void }) {
         <KioskField label="Full name" name="name" required />
         <KioskField label="Phone" name="phone" type="tel" required />
         <KioskField label="Email" name="email" type="email" required />
+        <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
         {error && <p className="text-sm text-destructive">{error}</p>}
         <SubmitButton submitting={submitting} label="Complete Check-In" />
         <button
