@@ -314,6 +314,7 @@ function DayPassScreen({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState<"info" | "pay">("info");
   const [guest, setGuest] = useState({ name: "", email: "", phone: "" });
   const [method, setMethod] = useState<PaymentMethod | null>(null);
+  const [waiverAccepted, setWaiverAccepted] = useState(false);
 
   function handleInfoSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
