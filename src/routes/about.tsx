@@ -28,19 +28,23 @@ function About() {
         <img src={weightsImg.url} alt="FIT Beyond Plus owner" loading="lazy" width={1280} height={1536} className="rounded-lg border border-border" />
         <div>
           <p className="text-xs tracking-[0.3em] text-primary">OUR STORY</p>
-          <h2 className="mt-3 text-3xl md:text-4xl">More than a room full of equipment.</h2>
+          <h2 className="mt-3 text-3xl md:text-4xl">More than a gym.</h2>
           <p className="mt-5 text-muted-foreground leading-relaxed">
-            We are here for the person starting from zero, the athlete preparing for competition, the lifter chasing strength, and the adult who simply wants to feel better and live healthier.
+            FIT Beyond Plus was built around a simple idea: fitness should not stop when physical therapy ends, and performance should not come at the expense of long-term health.
           </p>
           <p className="mt-4 text-muted-foreground leading-relaxed">
-            We wanted to build a facility where people could train hard without feeling judged, where beginners could ask questions without feeling embarrassed, and where serious lifters and athletes could still find the equipment and environment they need to push themselves.
+            Our name comes from the principles that guide everything we do: Functional Training, Injury Prevention, and Technique. Through our connection with FIT Beyond Therapy, we have created an environment where rehabilitation, fitness, and performance work together—not as separate services, but as part of the same journey.
           </p>
           <p className="mt-4 text-muted-foreground leading-relaxed">
-            Too many gyms fall into one of two extremes. Some are so casual that training does not feel serious. Others feel so intense that new members feel like they do not belong. FIT Beyond Plus exists in the middle.
+            Whether you're recovering from an injury, beginning your fitness journey, training for a sport, or simply looking to improve your quality of life, our goal is to provide the equipment, coaching, and support needed to help you succeed.
           </p>
           <p className="mt-4 text-muted-foreground leading-relaxed">
-            We are serious about training, but we are not here for ego. We are welcoming to beginners, but we are not watered down. We believe everyone deserves a clean, well-equipped, supportive place to improve.
+            We believe fitness should be accessible to everyone without sacrificing quality. That's why FIT Beyond Plus combines a welcoming atmosphere with serious training opportunities, including strength and cardio equipment, personal training, group fitness classes, kickboxing, Brazilian Jiu-Jitsu, athlete performance training, and recovery-focused services.
           </p>
+          <p className="mt-4 text-muted-foreground leading-relaxed">
+            At FIT Beyond Plus, we are more than a gym. We are a place where people come to move better, get stronger, prevent injuries, and achieve goals they once thought were out of reach.
+          </p>
+
         </div>
       </section>
 
