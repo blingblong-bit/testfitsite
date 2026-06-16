@@ -18,11 +18,6 @@ export const Route = createFileRoute("/about")({
 function About() {
   return (
     <>
-      <PageHero
-        eyebrow="ABOUT US"
-        title="More than a gym. A standard."
-        description="FIT Beyond Plus was built around a simple belief: Tullahoma deserves a gym that is serious about training, welcoming to every fitness level, and committed to doing things the right way."
-      />
 
       <section className="container-page py-20 grid md:grid-cols-2 gap-12 items-start">
         <img src={weightsImg.url} alt="FIT Beyond Plus owner" loading="lazy" width={1280} height={1536} className="rounded-lg border border-border" />
