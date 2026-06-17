@@ -117,7 +117,7 @@ function Contact() {
             <a href="mailto:Info@fitbeyondplus.com" className="hover:text-primary">Info@fitbeyondplus.com</a>
           </InfoCard>
           <InfoCard icon={Clock} title="Hours">
-            Staffed: Mon–Fri 6a–8p · Sat 8a–4p<br />
+            Staffed: Mon–Fri 9a–8p · Sat 9a–6p · Sun 10a–5p<br />
             Member access: 24/7
           </InfoCard>
         </aside>
