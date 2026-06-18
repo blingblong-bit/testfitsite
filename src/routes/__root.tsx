@@ -90,6 +90,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "FIT Beyond Plus | Gym, Fitness Classes & Training in Tullahoma, TN" },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/jqENWZ4ZZDRMrCPTaFQeFYFDY1p1/social-images/social-1781665667447-logo.webp" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/jqENWZ4ZZDRMrCPTaFQeFYFDY1p1/social-images/social-1781665667447-logo.webp" },
+      { name: "google-site-verification", content: "LkNAj6QnBq0j7hICS65jW6dsrBr9_VQmafJKu6Vl2RU" },
     ],
     links: [
       { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
