@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-const BASE_URL = "";
+const BASE_URL = "https://fitbeyondplus.com";
 
 const paths = ["/", "/about", "/memberships", "/personal-training", "/classes", "/facility", "/contact"];
 
