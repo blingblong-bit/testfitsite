@@ -14,6 +14,9 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "FIT Beyond Plus — More Than A Gym" },
       { property: "og:description", content: "A serious gym in Tullahoma, TN. Train with intent." },
     ],
+    links: [
+      { rel: "preload", as: "image", href: heroImg, fetchpriority: "high" },
+    ],
   }),
   component: Home,
 });
@@ -30,6 +33,8 @@ function Home() {
           style={{ objectPosition: "center 65%" }}
           width={1920}
           height={1080}
+          // @ts-expect-error fetchpriority is valid HTML
+          fetchpriority="high"
         />
         {/* Subtle base darkening so the whole image stays visible */}
         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, oklch(0.15 0.04 250 / 0.35) 0%, oklch(0.12 0.03 250 / 0.45) 100%)" }} />

@@ -12,6 +12,33 @@ export const Route = createFileRoute("/contact")({
       { property: "og:title", content: "Contact FIT Beyond Plus" },
       { property: "og:description", content: "Book a tour. Visit the facility. Start training." },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "HealthClub",
+          "@id": "https://fitbeyondplus.com/#business",
+          name: "FIT Beyond Plus",
+          description: "A serious gym and training facility in Tullahoma, Tennessee.",
+          url: "https://fitbeyondplus.com",
+          telephone: "+1-931-222-4449",
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "449 W Lincoln St",
+            addressLocality: "Tullahoma",
+            addressRegion: "TN",
+            postalCode: "37388",
+            addressCountry: "US",
+          },
+          openingHoursSpecification: [
+            { "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], opens: "09:00", closes: "20:00" },
+            { "@type": "OpeningHoursSpecification", dayOfWeek: "Saturday", opens: "09:00", closes: "18:00" },
+            { "@type": "OpeningHoursSpecification", dayOfWeek: "Sunday", opens: "10:00", closes: "17:00" },
+          ],
+        }),
+      },
+    ],
   }),
   component: Contact,
 });

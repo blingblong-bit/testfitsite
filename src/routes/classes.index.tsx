@@ -19,7 +19,7 @@ export const Route = createFileRoute("/classes/")({
   head: () => ({
     meta: [
       { title: "Fitness Classes — FIT Beyond Plus" },
-      { name: "description", content: "Group fitness classes at FIT Beyond Plus in Tullahoma, TN. HIIT, TRX, Barre, Yoga, Cardio, Kickboxing, and Pilates — included with FIT membership or $10 drop-in." },
+      { name: "description", content: "Group fitness classes in Tullahoma, TN: HIIT, TRX, Barre, Yoga, Cardio, Kickboxing, Pilates. Included with FIT membership or $10 drop-in." },
       { property: "og:title", content: "Fitness Classes — FIT Beyond Plus" },
       { property: "og:description", content: "Included with FIT membership or $10 drop-in." },
     ],

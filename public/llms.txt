@@ -1,0 +1,16 @@
+# FIT Beyond Plus
+
+> A serious gym and training facility in Tullahoma, Tennessee. Premium equipment, expert coaching, group classes, personal training, and 24/7 member access.
+
+FIT Beyond Plus is a 13,500 sq ft training facility at 449 W Lincoln St, Tullahoma, TN. Memberships include access to strength and cardio equipment, group fitness classes (HIIT, TRX, Barre, Yoga, Cardio, Kickboxing, Pilates), and 24/7 member entry. Personal training is available.
+
+## Pages
+
+- [Home](/): Overview of the gym, what we offer, and how to get started.
+- [About](/about): Our story, philosophy, and the people behind FIT Beyond Plus.
+- [Memberships](/memberships): Plans, pricing, and what's included.
+- [Personal Training](/personal-training): 1:1 coaching options and trainers.
+- [Classes](/classes): Group fitness class lineup — HIIT, TRX, Barre, Yoga, Cardio, Kickboxing, Pilates.
+- [Class Schedule](/classes/schedule): Weekly class times.
+- [Facility](/facility): Equipment, layout, and amenities.
+- [Contact](/contact): Address, phone, hours, and tour booking.
