@@ -99,6 +99,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap" },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "@id": "https://fitbeyondplus.com/#organization",
+          name: "FIT Beyond Plus",
+          url: "https://fitbeyondplus.com",
+          logo: "https://storage.googleapis.com/gpt-engineer-file-uploads/jqENWZ4ZZDRMrCPTaFQeFYFDY1p1/social-images/social-1781665667447-logo.webp",
+        }),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
