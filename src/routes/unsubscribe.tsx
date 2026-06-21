@@ -2,6 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/unsubscribe")({
+  head: () => ({
+    meta: [
+      { title: "Unsubscribe — FIT Beyond Plus" },
+      { name: "description", content: "Unsubscribe from FIT Beyond Plus emails." },
+      { name: "robots", content: "noindex, nofollow" },
+      { property: "og:title", content: "Unsubscribe — FIT Beyond Plus" },
+      { property: "og:description", content: "Manage your email preferences and unsubscribe from FIT Beyond Plus communications." },
+      { property: "og:url", content: "https://fitbeyondplus.com/unsubscribe" },
+    ],
+  }),
   component: UnsubscribePage,
 });
 

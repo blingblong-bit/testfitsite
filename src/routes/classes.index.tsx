@@ -21,8 +21,10 @@ export const Route = createFileRoute("/classes/")({
       { title: "Fitness Classes — FIT Beyond Plus" },
       { name: "description", content: "Group fitness classes in Tullahoma, TN: HIIT, TRX, Barre, Yoga, Cardio, Kickboxing, Pilates. Included with FIT membership or $10 drop-in." },
       { property: "og:title", content: "Fitness Classes — FIT Beyond Plus" },
-      { property: "og:description", content: "Included with FIT membership or $10 drop-in." },
+      { property: "og:description", content: "HIIT, TRX, Barre, Yoga, Cardio, Kickboxing, and Pilates in Tullahoma, TN. Included with FIT membership or $10 drop-in." },
+      { property: "og:url", content: "https://fitbeyondplus.com/classes" },
     ],
+    links: [{ rel: "canonical", href: "https://fitbeyondplus.com/classes" }],
   }),
   component: ClassesIndex,
 });
