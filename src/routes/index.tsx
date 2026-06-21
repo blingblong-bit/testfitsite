@@ -13,9 +13,38 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "A serious gym in Tullahoma, TN. Premium equipment, expert coaching, 24/7 access. Join today or book a tour." },
       { property: "og:title", content: "FIT Beyond Plus — More Than A Gym" },
       { property: "og:description", content: "A serious gym in Tullahoma, TN. Train with intent." },
+      { property: "og:url", content: "https://fitbeyondplus.com/" },
     ],
     links: [
       { rel: "preload", as: "image", href: heroImg, fetchpriority: "high" },
+      { rel: "canonical", href: "https://fitbeyondplus.com/" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          "@id": "https://fitbeyondplus.com/#business",
+          name: "FIT Beyond Plus",
+          description: "A serious gym and training facility in Tullahoma, Tennessee.",
+          url: "https://fitbeyondplus.com",
+          telephone: "+1-931-222-4449",
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "449 W Lincoln St",
+            addressLocality: "Tullahoma",
+            addressRegion: "TN",
+            postalCode: "37388",
+            addressCountry: "US",
+          },
+          openingHoursSpecification: [
+            { "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], opens: "09:00", closes: "20:00" },
+            { "@type": "OpeningHoursSpecification", dayOfWeek: "Saturday", opens: "09:00", closes: "18:00" },
+            { "@type": "OpeningHoursSpecification", dayOfWeek: "Sunday", opens: "10:00", closes: "17:00" },
+          ],
+        }),
+      },
     ],
   }),
   component: Home,

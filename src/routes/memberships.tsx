@@ -10,6 +10,53 @@ export const Route = createFileRoute("/memberships")({
       { name: "description", content: "Monthly and paid-in-full membership options at FIT Beyond Plus in Tullahoma, TN. 24/7 access, no contracts on monthly plans." },
       { property: "og:title", content: "FIT Beyond Plus Memberships" },
       { property: "og:description", content: "Monthly and paid-in-full options. Train your way." },
+      { property: "og:url", content: "https://fitbeyondplus.com/memberships" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://fitbeyondplus.com/memberships" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: [
+            {
+              "@type": "Question",
+              name: "What does a FIT Beyond Plus membership include?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Membership includes 24/7 keycard access, all equipment and facilities, all fitness classes, sauna and tanning beds, locker rooms and showers, and a free orientation session.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "What membership options are available?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "We offer monthly memberships (Single, Duo, Duo +1, Family, and Tanning) as well as paid-in-full options ranging from 1 week to 1 year. Active military and first responders receive 15% off.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Is there a contract for monthly memberships?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Monthly memberships have no contract. There is a $49.99 annual fee billed on July 1st. Paid-in-full memberships have no annual fee and offer the best value for committed training.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Who is FIT Beyond Plus for?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "FIT Beyond Plus is for beginners who want a comfortable place to start, adults who want to get stronger and healthier, athletes who need a facility that supports performance, lifters who want quality equipment, and anyone tired of crowded or unserious gyms.",
+              },
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: Memberships,
