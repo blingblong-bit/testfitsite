@@ -9,9 +9,11 @@ export const Route = createFileRoute("/contact")({
     meta: [
       { title: "Contact & Book a Tour — FIT Beyond Plus" },
       { name: "description", content: "Visit FIT Beyond Plus in Tullahoma, TN. Book a free tour, ask a question, or sign up for a membership." },
-      { property: "og:title", content: "Contact FIT Beyond Plus" },
-      { property: "og:description", content: "Book a tour. Visit the facility. Start training." },
+      { property: "og:title", content: "Contact & Book a Tour — FIT Beyond Plus" },
+      { property: "og:description", content: "Visit FIT Beyond Plus at 449 W Lincoln St, Tullahoma, TN. Book a free tour, ask a question, or start your membership today." },
+      { property: "og:url", content: "https://fitbeyondplus.com/contact" },
     ],
+    links: [{ rel: "canonical", href: "https://fitbeyondplus.com/contact" }],
     scripts: [
       {
         type: "application/ld+json",
