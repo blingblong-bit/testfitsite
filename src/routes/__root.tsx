@@ -10,6 +10,10 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import faviconIco from "../assets/favicon.ico.asset.json";
+import favicon16 from "../assets/favicon-16x16.png.asset.json";
+import favicon32 from "../assets/favicon-32x32.png.asset.json";
+import appleTouchIcon from "../assets/apple-touch-icon.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
