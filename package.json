@@ -91,9 +91,16 @@
     "typescript-eslint": "^8.56.1",
     "vite": "^7.3.1"
   },
+  "overrides": {
+    "undici": "^8.5.0",
+    "ws": "^8.21.0"
+  },
   "pnpm": {
     "overrides": {
-      "entities": "4.5.0"
+      "entities": "4.5.0",
+      "undici": "^8.5.0",
+      "ws": "^8.21.0"
     }
   }
 }
+
