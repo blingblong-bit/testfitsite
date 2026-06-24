@@ -10,6 +10,10 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import faviconIco from "../assets/favicon.ico.asset.json";
+import favicon16 from "../assets/favicon-16x16.png.asset.json";
+import favicon32 from "../assets/favicon-32x32.png.asset.json";
+import appleTouchIcon from "../assets/apple-touch-icon.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
@@ -93,7 +97,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "google-site-verification", content: "LkNAj6QnBq0j7hICS65jW6dsrBr9_VQmafJKu6Vl2RU" },
     ],
     links: [
-      { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
+      { rel: "icon", type: "image/png", sizes: "16x16", href: favicon16.url },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: favicon32.url },
+      { rel: "icon", type: "image/x-icon", href: faviconIco.url },
+      { rel: "apple-touch-icon", sizes: "180x180", href: appleTouchIcon.url },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
