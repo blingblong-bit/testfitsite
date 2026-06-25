@@ -51,6 +51,12 @@ export const confirmLeadToCustomer = createServerFn({ method: "POST" })
       <a href="mailto:${BUSINESS_EMAIL}" style="color:#111">${BUSINESS_EMAIL}</a>.
     </p>
     ${messageBlockHtml}
+    <div style="margin-top:22px;padding:14px 16px;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa;font-size:14px;line-height:1.6;color:#333">
+      <div style="font-weight:700;margin-bottom:4px">Visit us</div>
+      <div>449 W Lincoln St</div>
+      <div>Tullahoma, TN 37388</div>
+      <div style="margin-top:6px"><a href="tel:9312224449" style="color:#111">(931) 222-4449</a></div>
+    </div>
     <p style="margin-top:24px;font-size:15px;line-height:1.6">
       Talk soon,<br/>
       The ${SITE_NAME} Team
@@ -65,6 +71,11 @@ export const confirmLeadToCustomer = createServerFn({ method: "POST" })
         "",
         `If you need anything right away, just reply to this email or reach us at ${BUSINESS_EMAIL}.`,
         message ? `\nYour message:\n${message}` : "",
+        "",
+        "Visit us:",
+        "449 W Lincoln St",
+        "Tullahoma, TN 37388",
+        "(931) 222-4449",
         "",
         `Talk soon,`,
         `The ${SITE_NAME} Team`,
