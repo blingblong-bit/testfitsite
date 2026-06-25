@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { notifyNewLead } from "./notify-lead.functions";
+import { confirmLeadToCustomer } from "./confirm-lead.functions";
 import { classifyLead } from "./lead-classifier";
 
 export type LeadInput = {
@@ -50,14 +51,26 @@ export async function submitLead(input: LeadInput) {
   });
   if (error) throw error;
 
-  // Only notify admin for real customer leads.
+  // Only notify admin + send customer confirmation for real customer leads.
   if (classification.should_notify) {
+    const submitted_at = new Date().toISOString();
     try {
-      await notifyNewLead({
-        data: { ...payload, submitted_at: new Date().toISOString() },
-      });
+      await notifyNewLead({ data: { ...payload, submitted_at } });
     } catch (e) {
       console.error("Lead notification failed:", e);
+    }
+    try {
+      await confirmLeadToCustomer({
+        data: {
+          name: payload.name,
+          email: payload.email,
+          interest: payload.interest,
+          message: payload.message,
+          submitted_at,
+        },
+      });
+    } catch (e) {
+      console.error("Lead confirmation email failed:", e);
     }
   }
 }
