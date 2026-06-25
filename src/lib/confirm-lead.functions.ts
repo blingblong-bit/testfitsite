@@ -72,6 +72,11 @@ export const confirmLeadToCustomer = createServerFn({ method: "POST" })
         `If you need anything right away, just reply to this email or reach us at ${BUSINESS_EMAIL}.`,
         message ? `\nYour message:\n${message}` : "",
         "",
+        "Visit us:",
+        "449 W Lincoln St",
+        "Tullahoma, TN 37388",
+        "(931) 222-4449",
+        "",
         `Talk soon,`,
         `The ${SITE_NAME} Team`,
       ]
