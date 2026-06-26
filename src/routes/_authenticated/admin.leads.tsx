@@ -167,6 +167,25 @@ function AdminLeads() {
             <Home className="h-4 w-4" /> Admin Homescreen
           </button>
           <button onClick={load} className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary">Refresh</button>
+          {browserNotify !== "granted" && browserNotify !== "unsupported" && (
+            <button
+              onClick={enableBrowserNotifications}
+              className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm hover:bg-secondary"
+              title="Enable browser notifications for new leads"
+            >
+              <Bell className="h-4 w-4" /> Enable alerts
+            </button>
+          )}
+          {browserNotify === "granted" && (
+            <span className="inline-flex h-10 items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 text-xs uppercase tracking-widest text-primary">
+              <Bell className="h-4 w-4" /> Alerts on
+            </span>
+          )}
+          {browserNotify === "unsupported" && (
+            <span className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-xs uppercase tracking-widest text-muted-foreground">
+              <BellOff className="h-4 w-4" /> No alerts
+            </span>
+          )}
           <button onClick={signOut} className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary">Sign out</button>
         </div>
       </div>
