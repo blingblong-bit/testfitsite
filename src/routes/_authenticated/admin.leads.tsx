@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Home } from "lucide-react";
+import { Bell, BellOff, Home } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 type Lead = {
@@ -84,6 +85,47 @@ function AdminLeads() {
     })();
   }, []);
 
+  // Realtime subscription: notify admins when a new lead arrives
+  const [browserNotify, setBrowserNotify] = useState<NotificationPermission | "unsupported">(
+    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported"
+  );
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const channel = supabase
+      .channel("admin-leads-feed")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        (payload) => {
+          const lead = payload.new as Lead;
+          setLeads((prev) => (prev ? [lead, ...prev] : [lead]));
+          const title = `New lead: ${lead.name}`;
+          const body = `${lead.source}${lead.interest ? " · " + lead.interest : ""}`;
+          toast.success(title, { description: body, duration: 8000 });
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+            try {
+              const n = new Notification(title, { body, tag: lead.id });
+              n.onclick = () => window.focus();
+            } catch { /* noop */ }
+          }
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAdmin]);
+
+  async function enableBrowserNotifications() {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      toast.error("Browser notifications are not supported here.");
+      return;
+    }
+    const perm = await Notification.requestPermission();
+    setBrowserNotify(perm);
+    if (perm === "granted") toast.success("Browser notifications enabled");
+    else if (perm === "denied") toast.error("Notifications blocked. Enable in browser settings.");
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/admin/login" });
@@ -125,6 +167,25 @@ function AdminLeads() {
             <Home className="h-4 w-4" /> Admin Homescreen
           </button>
           <button onClick={load} className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary">Refresh</button>
+          {browserNotify !== "granted" && browserNotify !== "unsupported" && (
+            <button
+              onClick={enableBrowserNotifications}
+              className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm hover:bg-secondary"
+              title="Enable browser notifications for new leads"
+            >
+              <Bell className="h-4 w-4" /> Enable alerts
+            </button>
+          )}
+          {browserNotify === "granted" && (
+            <span className="inline-flex h-10 items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-4 text-xs uppercase tracking-widest text-primary">
+              <Bell className="h-4 w-4" /> Alerts on
+            </span>
+          )}
+          {browserNotify === "unsupported" && (
+            <span className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-xs uppercase tracking-widest text-muted-foreground">
+              <BellOff className="h-4 w-4" /> No alerts
+            </span>
+          )}
           <button onClick={signOut} className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary">Sign out</button>
         </div>
       </div>
