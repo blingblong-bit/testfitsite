@@ -226,6 +226,7 @@ function AdminLeads() {
   const [sortBy, setSortBy] = useState<SortKey>("priority");
   const [query, setQuery] = useState("");
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [showAddLead, setShowAddLead] = useState(false);
 
   async function load() {
     setError(null);
