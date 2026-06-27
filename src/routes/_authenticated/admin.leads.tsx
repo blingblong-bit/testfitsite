@@ -738,12 +738,11 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
       {/* Header (always visible) */}
       <header className="flex flex-wrap items-start justify-between gap-3 p-5">
         <div className="flex-1 min-w-[240px]">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-semibold">{lead.name}</h2>
             <PriorityBadge p={priority} />
-            <span className="inline-block rounded-full bg-secondary text-foreground px-3 py-1 text-xs uppercase tracking-widest">
-              {lead.crm_status ?? "New Lead"}
-            </span>
+            <CrmStatusBadge status={(lead.crm_status ?? "New Lead") as CrmStatus} />
+            <LastContactBadge iso={lead.last_contacted_at} />
           </div>
           <p className="mt-2 text-sm text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
             <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 hover:text-primary">
@@ -760,13 +759,12 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
             <span className="text-xs uppercase tracking-widest text-primary">{lead.source}</span>
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Last contact: <span className="text-foreground">{relativeDays(lead.last_contacted_at)}</span>
-            {sinceContact !== null && <> · <span className="text-foreground">{sinceContact} {sinceContact === 1 ? "day" : "days"} since contact</span></>}
-            {lead.last_contact_method && <> · Method: <span className="text-foreground">{lead.last_contact_method}</span></>}
-            {lead.last_response_at && <> · Last response: <span className="text-foreground">{relativeDays(lead.last_response_at)}</span></>}
-            {lead.next_follow_up_date && <> · Follow up: <span className="text-foreground">{new Date(lead.next_follow_up_date + "T00:00:00").toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span></>}
-            {lead.next_action && <> · Next: <span className="text-foreground">{lead.next_action}</span></>}
+            {lead.last_contact_method && <>Method: <span className="text-foreground">{lead.last_contact_method}</span></>}
+            {lead.last_response_at && <>{lead.last_contact_method ? " · " : ""}Last response: <span className="text-foreground">{relativeDays(lead.last_response_at)}</span></>}
+            {lead.next_follow_up_date && <>{(lead.last_contact_method || lead.last_response_at) ? " · " : ""}Follow up: <span className="text-foreground">{new Date(lead.next_follow_up_date + "T00:00:00").toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span></>}
+            {lead.next_action && <>{(lead.last_contact_method || lead.last_response_at || lead.next_follow_up_date) ? " · " : ""}Next: <span className="text-foreground">{lead.next_action}</span></>}
           </p>
+
 
         </div>
         <div className="flex flex-col items-end gap-2">
