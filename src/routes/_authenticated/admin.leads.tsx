@@ -502,8 +502,9 @@ function LeadsView({
   return (
     <>
       {/* Dashboard stats */}
-      <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
         <Stat label="New Leads" value={stats.newLeads} />
+        <Stat label="Follow-Ups Due Today" value={stats.followUpsDueToday} accent={stats.followUpsDueToday > 0 ? "destructive" : undefined} />
         <Stat label="High Priority" value={stats.highPriority} accent="destructive" />
         <Stat label="Tours Scheduled" value={stats.toursScheduled} />
         <Stat label="Tours Completed" value={stats.toursCompleted} />
