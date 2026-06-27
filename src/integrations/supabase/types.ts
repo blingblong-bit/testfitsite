@@ -124,13 +124,18 @@ export type Database = {
       }
       leads: {
         Row: {
+          became_member: boolean
           created_at: string
+          crm_status: string | null
           day_pass_price: number | null
           email: string
           id: string
           interest: string | null
+          last_contacted_at: string | null
+          last_response_at: string | null
           lead_score: number
           lead_type: string
+          membership_start_date: string | null
           message: string | null
           name: string
           notes: string | null
@@ -143,15 +148,23 @@ export type Database = {
           source: string
           spam_reason: string | null
           status: string | null
+          tour_completed: boolean
+          tour_date: string | null
+          tour_scheduled: boolean
         }
         Insert: {
+          became_member?: boolean
           created_at?: string
+          crm_status?: string | null
           day_pass_price?: number | null
           email: string
           id?: string
           interest?: string | null
+          last_contacted_at?: string | null
+          last_response_at?: string | null
           lead_score?: number
           lead_type?: string
+          membership_start_date?: string | null
           message?: string | null
           name: string
           notes?: string | null
@@ -164,15 +177,23 @@ export type Database = {
           source: string
           spam_reason?: string | null
           status?: string | null
+          tour_completed?: boolean
+          tour_date?: string | null
+          tour_scheduled?: boolean
         }
         Update: {
+          became_member?: boolean
           created_at?: string
+          crm_status?: string | null
           day_pass_price?: number | null
           email?: string
           id?: string
           interest?: string | null
+          last_contacted_at?: string | null
+          last_response_at?: string | null
           lead_score?: number
           lead_type?: string
+          membership_start_date?: string | null
           message?: string | null
           name?: string
           notes?: string | null
@@ -185,6 +206,9 @@ export type Database = {
           source?: string
           spam_reason?: string | null
           status?: string | null
+          tour_completed?: boolean
+          tour_date?: string | null
+          tour_scheduled?: boolean
         }
         Relationships: []
       }
