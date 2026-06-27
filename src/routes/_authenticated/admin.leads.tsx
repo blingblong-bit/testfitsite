@@ -34,6 +34,40 @@ const LEAD_SOURCE_OPTIONS = [
   "Other",
 ];
 
+type ContactMethod = "Email" | "Phone Call" | "Text Message" | "In Person";
+const CONTACT_METHODS: ContactMethod[] = ["Email", "Phone Call", "Text Message", "In Person"];
+
+const PRIMARY_GOALS = [
+  "Lose Weight",
+  "Build Muscle",
+  "General Fitness",
+  "Athlete Performance",
+  "Injury Recovery",
+  "Improve Health",
+  "Other",
+];
+
+type NextAction =
+  | "Waiting for Response"
+  | "Email Follow-Up"
+  | "Phone Follow-Up"
+  | "Text Follow-Up"
+  | "Schedule Tour"
+  | "Waiting for Tour"
+  | "Ready to Join"
+  | "No Further Follow-Up";
+
+const NEXT_ACTIONS: NextAction[] = [
+  "Waiting for Response",
+  "Email Follow-Up",
+  "Phone Follow-Up",
+  "Text Follow-Up",
+  "Schedule Tour",
+  "Waiting for Tour",
+  "Ready to Join",
+  "No Further Follow-Up",
+];
+
 type Lead = {
   id: string;
   source: string;
@@ -51,12 +85,17 @@ type Lead = {
   crm_status: CrmStatus | null;
   last_contacted_at: string | null;
   last_response_at: string | null;
+  last_contact_method: ContactMethod | null;
+  primary_goal: string | null;
+  next_action: NextAction | null;
+  next_follow_up_date: string | null;
   tour_scheduled: boolean;
   tour_completed: boolean;
   tour_date: string | null;
   became_member: boolean;
   membership_start_date: string | null;
 };
+
 
 type Referral = {
   id: string;
@@ -592,8 +631,12 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
           <p className="mt-2 text-xs text-muted-foreground">
             Last contact: <span className="text-foreground">{relativeDays(lead.last_contacted_at)}</span>
             {sinceContact !== null && <> · <span className="text-foreground">{sinceContact} {sinceContact === 1 ? "day" : "days"} since contact</span></>}
+            {lead.last_contact_method && <> · Method: <span className="text-foreground">{lead.last_contact_method}</span></>}
             {lead.last_response_at && <> · Last response: <span className="text-foreground">{relativeDays(lead.last_response_at)}</span></>}
+            {lead.next_follow_up_date && <> · Follow up: <span className="text-foreground">{new Date(lead.next_follow_up_date + "T00:00:00").toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span></>}
+            {lead.next_action && <> · Next: <span className="text-foreground">{lead.next_action}</span></>}
           </p>
+
         </div>
         <div className="flex flex-col items-end gap-2">
           <div className="flex gap-2">
@@ -666,7 +709,46 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
             <Field label="Date Submitted">
               <div className="h-10 flex items-center text-sm text-muted-foreground">{new Date(lead.created_at).toLocaleString()}</div>
             </Field>
+            <Field label="Last Contact Method">
+              <select
+                value={lead.last_contact_method ?? ""}
+                onChange={(e) => updateLead(lead.id, { last_contact_method: (e.target.value || null) as ContactMethod | null })}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              >
+                <option value="">— Not set —</option>
+                {CONTACT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </Field>
+            <Field label="Primary Goal">
+              <select
+                value={lead.primary_goal ?? ""}
+                onChange={(e) => updateLead(lead.id, { primary_goal: e.target.value || null })}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              >
+                <option value="">— Not set —</option>
+                {PRIMARY_GOALS.map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </Field>
+            <Field label="Next Action">
+              <select
+                value={lead.next_action ?? ""}
+                onChange={(e) => updateLead(lead.id, { next_action: (e.target.value || null) as NextAction | null })}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              >
+                <option value="">— Not set —</option>
+                {NEXT_ACTIONS.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </Field>
+            <Field label="Next Follow-Up Date">
+              <input
+                type="date"
+                defaultValue={lead.next_follow_up_date ?? ""}
+                onBlur={(e) => { const v = e.target.value || null; if (v !== (lead.next_follow_up_date ?? null)) updateLead(lead.id, { next_follow_up_date: v }); }}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              />
+            </Field>
           </div>
+
 
           {/* Tour + Membership */}
           <div className="grid md:grid-cols-2 gap-4">
