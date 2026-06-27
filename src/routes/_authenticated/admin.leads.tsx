@@ -417,7 +417,186 @@ function AdminLeads() {
         <AnalyticsView leads={leads} referrals={referrals} isAdmin={isAdmin === true} />
       )}
       {tab === "settings" && <SettingsView />}
+
+      {showAddLead && (
+        <AddLeadModal
+          onClose={() => setShowAddLead(false)}
+          onCreated={(lead) => {
+            setLeads((prev) => {
+              if (!prev) return [lead];
+              if (prev.some((l) => l.id === lead.id)) return prev;
+              return [lead, ...prev];
+            });
+            setShowAddLead(false);
+            toast.success("Lead added");
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: (lead: Lead) => void }) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [source, setSource] = useState("");
+  const [primaryGoal, setPrimaryGoal] = useState("");
+  const [message, setMessage] = useState("");
+  const [crmStatus, setCrmStatus] = useState<CrmStatus>("New Lead");
+  const [saving, setSaving] = useState(false);
+
+  const sourceOptions = [
+    "Website", "Walk-In", "Phone Call", "Google Business",
+    "Facebook", "Instagram", "Referral", "Day Pass", "Other",
+  ];
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) { toast.error("Name is required"); return; }
+    if (!source) { toast.error("Lead source is required"); return; }
+    setSaving(true);
+    const { data, error } = await supabase
+      .from("leads")
+      .insert({
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim() || null,
+        source,
+        message: message.trim() || null,
+        primary_goal: primaryGoal || null,
+        crm_status: crmStatus,
+        lead_type: "customer_lead",
+        lead_score: 10,
+        should_notify: false,
+        interest: primaryGoal || null,
+      })
+      .select()
+      .single();
+    setSaving(false);
+    if (error) { toast.error("Save failed: " + error.message); return; }
+    onCreated(data as Lead);
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-3 top-3 rounded-md p-1 text-muted-foreground hover:bg-secondary"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <h2 className="text-xl font-semibold">Add Lead</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Manually log a phone call, walk-in, referral, or social media inquiry.</p>
+
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <Field label="Name" required>
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+            />
+          </Field>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Phone">
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              />
+            </Field>
+            <Field label="Email">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              />
+            </Field>
+          </div>
+
+          <Field label="Lead Source" required>
+            <select
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+            >
+              <option value="">Select a source…</option>
+              {sourceOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </Field>
+
+          <Field label="Primary Goal">
+            <select
+              value={primaryGoal}
+              onChange={(e) => setPrimaryGoal(e.target.value)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+            >
+              <option value="">— None —</option>
+              {PRIMARY_GOALS.map((g) => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </Field>
+
+          <Field label="Original Inquiry / Notes">
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={3}
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            />
+          </Field>
+
+          <Field label="Status">
+            <select
+              value={crmStatus}
+              onChange={(e) => setCrmStatus(e.target.value as CrmStatus)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+            >
+              {CRM_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </Field>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            >
+              {saving ? "Saving…" : "Save Lead"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs uppercase tracking-widest text-muted-foreground">
+        {label}{required && <span className="text-destructive"> *</span>}
+      </span>
+      {children}
+    </label>
   );
 }
 
