@@ -131,6 +131,7 @@ export type Database = {
           email: string
           id: string
           interest: string | null
+          last_contact_method: string | null
           last_contacted_at: string | null
           last_response_at: string | null
           lead_score: number
@@ -138,10 +139,13 @@ export type Database = {
           membership_start_date: string | null
           message: string | null
           name: string
+          next_action: string | null
+          next_follow_up_date: string | null
           notes: string | null
           payment_method: string | null
           payment_status: string | null
           phone: string | null
+          primary_goal: string | null
           referral_code: string | null
           referred_by: string | null
           should_notify: boolean
@@ -160,6 +164,7 @@ export type Database = {
           email: string
           id?: string
           interest?: string | null
+          last_contact_method?: string | null
           last_contacted_at?: string | null
           last_response_at?: string | null
           lead_score?: number
@@ -167,10 +172,13 @@ export type Database = {
           membership_start_date?: string | null
           message?: string | null
           name: string
+          next_action?: string | null
+          next_follow_up_date?: string | null
           notes?: string | null
           payment_method?: string | null
           payment_status?: string | null
           phone?: string | null
+          primary_goal?: string | null
           referral_code?: string | null
           referred_by?: string | null
           should_notify?: boolean
@@ -189,6 +197,7 @@ export type Database = {
           email?: string
           id?: string
           interest?: string | null
+          last_contact_method?: string | null
           last_contacted_at?: string | null
           last_response_at?: string | null
           lead_score?: number
@@ -196,10 +205,13 @@ export type Database = {
           membership_start_date?: string | null
           message?: string | null
           name?: string
+          next_action?: string | null
+          next_follow_up_date?: string | null
           notes?: string | null
           payment_method?: string | null
           payment_status?: string | null
           phone?: string | null
+          primary_goal?: string | null
           referral_code?: string | null
           referred_by?: string | null
           should_notify?: boolean
