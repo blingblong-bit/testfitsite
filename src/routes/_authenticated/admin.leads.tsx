@@ -119,8 +119,19 @@ type Referral = {
 type TypeFilter = "customer_lead" | "vendor_solicitation" | "spam" | "all";
 type Tab = "leads" | "referrals";
 type SortKey = "priority" | "newest" | "oldest" | "tour_date" | "last_contact" | "source";
+type QuickFilter = "none" | "new" | "high_priority" | "due_today" | "tours_scheduled" | "tours_completed" | "joined_this_month";
 
 type Priority = "high" | "medium" | "low";
+
+function notificationForLead(lead: Lead): { title: string; body: string } {
+  const src = (lead.source ?? "").toLowerCase();
+  let kind = "New Website Lead";
+  if (src.includes("referral")) kind = "New Referral Redemption";
+  else if (src.includes("day pass") || src.includes("day_pass") || src.includes("paid_day_pass")) kind = "New Day Pass Submission";
+  else if (src.includes("walk")) kind = "New Walk-In Lead";
+  const interest = lead.interest ? `\nInterested in:\n${lead.interest}` : "";
+  return { title: `${kind}\n${lead.name}`, body: interest.trim() || (lead.message ?? lead.email ?? "") };
+}
 
 export const Route = createFileRoute("/_authenticated/admin/leads")({
   head: () => ({
@@ -260,13 +271,18 @@ function AdminLeads() {
         (payload) => {
           const lead = payload.new as Lead;
           setLeads((prev) => (prev ? [lead, ...prev] : [lead]));
-          const title = `New lead: ${lead.name}`;
-          const body = `${lead.source}${lead.interest ? " · " + lead.interest : ""}`;
-          toast.success(title, { description: body, duration: 8000 });
+          const { title, body } = notificationForLead(lead);
+          toast.success(title.replace("\n", " — "), { description: body, duration: 8000 });
           if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
             try {
-              const n = new Notification(title, { body, tag: lead.id });
-              n.onclick = () => window.focus();
+              const n = new Notification(title, { body, tag: lead.id, requireInteraction: true });
+              n.onclick = () => {
+                window.focus();
+                if (window.location.pathname !== "/admin/leads") {
+                  window.location.href = "/admin/leads";
+                }
+                n.close();
+              };
             } catch { /* noop */ }
           }
         }
@@ -431,6 +447,11 @@ function LeadsView({
   query: string; setQuery: (q: string) => void;
   updateLead: (id: string, patch: Partial<Lead>) => Promise<void>;
 }) {
+  const monthStart = useMemo(() => {
+    const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1);
+  }, []);
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("none");
+
   const byType = useMemo(
     () => leads?.filter((l) => typeFilter === "all" || (l.lead_type ?? "customer_lead") === typeFilter) ?? [],
     [leads, typeFilter]
@@ -444,13 +465,19 @@ function LeadsView({
     return byType.filter((l) => {
       if (statusFilter !== "all" && (l.crm_status ?? "New Lead") !== statusFilter) return false;
       if (sourceFilter !== "all" && l.source !== sourceFilter) return false;
+      if (quickFilter === "new" && (l.crm_status ?? "New Lead") !== "New Lead") return false;
+      if (quickFilter === "high_priority" && (computePriority(l) !== "high" || l.crm_status === "Joined" || l.crm_status === "Lost Lead")) return false;
+      if (quickFilter === "due_today" && !isFollowUpDueToday(l)) return false;
+      if (quickFilter === "tours_scheduled" && !(l.tour_scheduled && !l.tour_completed)) return false;
+      if (quickFilter === "tours_completed" && !l.tour_completed) return false;
+      if (quickFilter === "joined_this_month" && !(l.became_member && l.membership_start_date && new Date(l.membership_start_date) >= monthStart)) return false;
       if (q) {
         const hay = `${l.name} ${l.email} ${l.phone ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [byType, statusFilter, sourceFilter, query]);
+  }, [byType, statusFilter, sourceFilter, query, quickFilter, monthStart]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
@@ -482,8 +509,6 @@ function LeadsView({
 
   // Dashboard stats (over byType — customer leads view)
   const stats = useMemo(() => {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const newLeads = byType.filter((l) => (l.crm_status ?? "New Lead") === "New Lead").length;
     const highPriority = byType.filter((l) => computePriority(l) === "high" && l.crm_status !== "Joined" && l.crm_status !== "Lost Lead").length;
     const followUpsDueToday = byType.filter((l) => isFollowUpDueToday(l)).length;
@@ -494,23 +519,37 @@ function LeadsView({
     const totalJoined = byType.filter((l) => l.became_member).length;
     const conversionRate = totalForConversion === 0 ? 0 : Math.round((totalJoined / totalForConversion) * 100);
     return { newLeads, highPriority, followUpsDueToday, toursScheduled, toursCompleted, joinedThisMonth, conversionRate };
-  }, [byType]);
+  }, [byType, monthStart]);
+
+  function toggleQuick(q: QuickFilter) {
+    setQuickFilter((prev) => (prev === q ? "none" : q));
+  }
 
   const count = (t: TypeFilter) =>
     t === "all" ? (leads?.length ?? 0) : (leads?.filter((l) => (l.lead_type ?? "customer_lead") === t).length ?? 0);
 
   return (
     <>
-      {/* Dashboard stats */}
+      {/* Dashboard stats — click to filter */}
       <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
-        <Stat label="New Leads" value={stats.newLeads} />
-        <Stat label="Follow-Ups Due Today" value={stats.followUpsDueToday} accent={stats.followUpsDueToday > 0 ? "destructive" : undefined} />
-        <Stat label="High Priority" value={stats.highPriority} accent="destructive" />
-        <Stat label="Tours Scheduled" value={stats.toursScheduled} />
-        <Stat label="Tours Completed" value={stats.toursCompleted} />
-        <Stat label="Joined This Month" value={stats.joinedThisMonth} accent="primary" />
+        <Stat label="New Leads" value={stats.newLeads} active={quickFilter === "new"} onClick={() => toggleQuick("new")} />
+        <Stat label="Follow-Ups Due Today" value={stats.followUpsDueToday} accent={stats.followUpsDueToday > 0 ? "destructive" : undefined} active={quickFilter === "due_today"} onClick={() => toggleQuick("due_today")} />
+        <Stat label="High Priority" value={stats.highPriority} accent="destructive" active={quickFilter === "high_priority"} onClick={() => toggleQuick("high_priority")} />
+        <Stat label="Tours Scheduled" value={stats.toursScheduled} active={quickFilter === "tours_scheduled"} onClick={() => toggleQuick("tours_scheduled")} />
+        <Stat label="Tours Completed" value={stats.toursCompleted} active={quickFilter === "tours_completed"} onClick={() => toggleQuick("tours_completed")} />
+        <Stat label="Joined This Month" value={stats.joinedThisMonth} accent="primary" active={quickFilter === "joined_this_month"} onClick={() => toggleQuick("joined_this_month")} />
         <Stat label="Conversion Rate" value={`${stats.conversionRate}%`} accent="primary" />
       </div>
+      {quickFilter !== "none" && (
+        <div className="mt-3">
+          <button
+            onClick={() => setQuickFilter("none")}
+            className="inline-flex h-8 items-center gap-2 rounded-full border border-primary bg-primary/15 px-3 text-xs uppercase tracking-widest text-primary hover:bg-primary/25"
+          >
+            Quick filter active · Clear ✕
+          </button>
+        </div>
+      )}
 
       {/* Type filter */}
       <div className="mt-6 flex flex-wrap gap-2">
@@ -573,11 +612,23 @@ function LeadsView({
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: number | string; accent?: "primary" | "destructive" }) {
+function Stat({ label, value, accent, active, onClick }: { label: string; value: number | string; accent?: "primary" | "destructive"; active?: boolean; onClick?: () => void }) {
   const color =
     accent === "destructive" ? "text-destructive" : accent === "primary" ? "text-primary" : "text-foreground";
+  const base = "text-left w-full rounded-lg border p-4 transition";
+  const interactive = onClick ? " cursor-pointer hover:border-primary/60 hover:bg-secondary/40" : "";
+  const activeCls = active ? " border-primary ring-2 ring-primary/30 bg-primary/5" : " border-border bg-card";
+  const cls = base + interactive + activeCls;
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={cls} aria-pressed={active}>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+        <p className={"mt-1 text-2xl font-bold " + color}>{value}</p>
+      </button>
+    );
+  }
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <div className={cls}>
       <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
       <p className={"mt-1 text-2xl font-bold " + color}>{value}</p>
     </div>
@@ -587,11 +638,36 @@ function Stat({ label, value, accent }: { label: string; value: number | string;
 function PriorityBadge({ p }: { p: Priority }) {
   const map: Record<Priority, { label: string; cls: string }> = {
     high: { label: "🔴 High Priority", cls: "bg-destructive/15 text-destructive border-destructive/40" },
-    medium: { label: "🟡 Medium Priority", cls: "bg-yellow-500/15 text-yellow-600 border-yellow-500/40" },
-    low: { label: "🟢 Up To Date", cls: "bg-primary/15 text-primary border-primary/40" },
+    medium: { label: "🟡 Medium Priority", cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40" },
+    low: { label: "🟢 Up To Date", cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40" },
   };
   const { label, cls } = map[p];
   return <span className={"inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest " + cls}>{label}</span>;
+}
+
+function CrmStatusBadge({ status }: { status: CrmStatus }) {
+  const map: Record<CrmStatus, { label: string; cls: string }> = {
+    "New Lead":           { label: "🔴 New Lead",            cls: "bg-destructive/15 text-destructive border-destructive/40" },
+    "Contacted":          { label: "🟡 Contacted",           cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40" },
+    "Waiting on Response":{ label: "🟡 Waiting on Response", cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40" },
+    "Tour Scheduled":     { label: "🔵 Tour Scheduled",      cls: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40" },
+    "Tour Completed":     { label: "🔵 Tour Completed",      cls: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40" },
+    "Joined":             { label: "🟢 Joined",              cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40" },
+    "Lost Lead":          { label: "⚪ Lost Lead",           cls: "bg-muted text-muted-foreground border-border" },
+  };
+  const { label, cls } = map[status];
+  return <span className={"inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest " + cls}>{label}</span>;
+}
+
+function LastContactBadge({ iso }: { iso: string | null }) {
+  const d = daysSince(iso);
+  let label: string; let cls: string;
+  if (d === null)      { label = "🔴 Never Contacted"; cls = "bg-destructive/15 text-destructive border-destructive/40"; }
+  else if (d === 0)    { label = "🟢 Contacted Today"; cls = "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40"; }
+  else if (d <= 2)     { label = `🟢 Contacted ${d === 1 ? "Yesterday" : d + " Days Ago"}`; cls = "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40"; }
+  else if (d <= 6)     { label = `🟡 Contacted ${d} Days Ago`; cls = "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40"; }
+  else                 { label = `🔴 Contacted ${d}+ Days Ago`; cls = "bg-destructive/15 text-destructive border-destructive/40"; }
+  return <span className={"inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest " + cls}>{label}</span>;
 }
 
 function relativeDays(iso: string | null): string {
@@ -607,7 +683,7 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
   const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
   const priority = computePriority(lead);
-  const sinceContact = daysSince(lead.last_contacted_at);
+
 
   async function markContactedToday() {
     const iso = new Date().toISOString();
@@ -662,12 +738,11 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
       {/* Header (always visible) */}
       <header className="flex flex-wrap items-start justify-between gap-3 p-5">
         <div className="flex-1 min-w-[240px]">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-semibold">{lead.name}</h2>
             <PriorityBadge p={priority} />
-            <span className="inline-block rounded-full bg-secondary text-foreground px-3 py-1 text-xs uppercase tracking-widest">
-              {lead.crm_status ?? "New Lead"}
-            </span>
+            <CrmStatusBadge status={(lead.crm_status ?? "New Lead") as CrmStatus} />
+            <LastContactBadge iso={lead.last_contacted_at} />
           </div>
           <p className="mt-2 text-sm text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
             <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 hover:text-primary">
@@ -684,13 +759,12 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
             <span className="text-xs uppercase tracking-widest text-primary">{lead.source}</span>
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Last contact: <span className="text-foreground">{relativeDays(lead.last_contacted_at)}</span>
-            {sinceContact !== null && <> · <span className="text-foreground">{sinceContact} {sinceContact === 1 ? "day" : "days"} since contact</span></>}
-            {lead.last_contact_method && <> · Method: <span className="text-foreground">{lead.last_contact_method}</span></>}
-            {lead.last_response_at && <> · Last response: <span className="text-foreground">{relativeDays(lead.last_response_at)}</span></>}
-            {lead.next_follow_up_date && <> · Follow up: <span className="text-foreground">{new Date(lead.next_follow_up_date + "T00:00:00").toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span></>}
-            {lead.next_action && <> · Next: <span className="text-foreground">{lead.next_action}</span></>}
+            {lead.last_contact_method && <>Method: <span className="text-foreground">{lead.last_contact_method}</span></>}
+            {lead.last_response_at && <>{lead.last_contact_method ? " · " : ""}Last response: <span className="text-foreground">{relativeDays(lead.last_response_at)}</span></>}
+            {lead.next_follow_up_date && <>{(lead.last_contact_method || lead.last_response_at) ? " · " : ""}Follow up: <span className="text-foreground">{new Date(lead.next_follow_up_date + "T00:00:00").toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span></>}
+            {lead.next_action && <>{(lead.last_contact_method || lead.last_response_at || lead.next_follow_up_date) ? " · " : ""}Next: <span className="text-foreground">{lead.next_action}</span></>}
           </p>
+
 
         </div>
         <div className="flex flex-col items-end gap-2">
