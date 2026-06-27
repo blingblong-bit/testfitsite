@@ -612,11 +612,23 @@ function LeadsView({
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: number | string; accent?: "primary" | "destructive" }) {
+function Stat({ label, value, accent, active, onClick }: { label: string; value: number | string; accent?: "primary" | "destructive"; active?: boolean; onClick?: () => void }) {
   const color =
     accent === "destructive" ? "text-destructive" : accent === "primary" ? "text-primary" : "text-foreground";
+  const base = "text-left w-full rounded-lg border p-4 transition";
+  const interactive = onClick ? " cursor-pointer hover:border-primary/60 hover:bg-secondary/40" : "";
+  const activeCls = active ? " border-primary ring-2 ring-primary/30 bg-primary/5" : " border-border bg-card";
+  const cls = base + interactive + activeCls;
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={cls} aria-pressed={active}>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+        <p className={"mt-1 text-2xl font-bold " + color}>{value}</p>
+      </button>
+    );
+  }
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    <div className={cls}>
       <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
       <p className={"mt-1 text-2xl font-bold " + color}>{value}</p>
     </div>
@@ -626,11 +638,36 @@ function Stat({ label, value, accent }: { label: string; value: number | string;
 function PriorityBadge({ p }: { p: Priority }) {
   const map: Record<Priority, { label: string; cls: string }> = {
     high: { label: "🔴 High Priority", cls: "bg-destructive/15 text-destructive border-destructive/40" },
-    medium: { label: "🟡 Medium Priority", cls: "bg-yellow-500/15 text-yellow-600 border-yellow-500/40" },
-    low: { label: "🟢 Up To Date", cls: "bg-primary/15 text-primary border-primary/40" },
+    medium: { label: "🟡 Medium Priority", cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40" },
+    low: { label: "🟢 Up To Date", cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40" },
   };
   const { label, cls } = map[p];
   return <span className={"inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest " + cls}>{label}</span>;
+}
+
+function CrmStatusBadge({ status }: { status: CrmStatus }) {
+  const map: Record<CrmStatus, { label: string; cls: string }> = {
+    "New Lead":           { label: "🔴 New Lead",            cls: "bg-destructive/15 text-destructive border-destructive/40" },
+    "Contacted":          { label: "🟡 Contacted",           cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40" },
+    "Waiting on Response":{ label: "🟡 Waiting on Response", cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40" },
+    "Tour Scheduled":     { label: "🔵 Tour Scheduled",      cls: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40" },
+    "Tour Completed":     { label: "🔵 Tour Completed",      cls: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40" },
+    "Joined":             { label: "🟢 Joined",              cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40" },
+    "Lost Lead":          { label: "⚪ Lost Lead",           cls: "bg-muted text-muted-foreground border-border" },
+  };
+  const { label, cls } = map[status];
+  return <span className={"inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest " + cls}>{label}</span>;
+}
+
+function LastContactBadge({ iso }: { iso: string | null }) {
+  const d = daysSince(iso);
+  let label: string; let cls: string;
+  if (d === null)      { label = "🔴 Never Contacted"; cls = "bg-destructive/15 text-destructive border-destructive/40"; }
+  else if (d === 0)    { label = "🟢 Contacted Today"; cls = "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40"; }
+  else if (d <= 2)     { label = `🟢 Contacted ${d === 1 ? "Yesterday" : d + " Days Ago"}`; cls = "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40"; }
+  else if (d <= 6)     { label = `🟡 Contacted ${d} Days Ago`; cls = "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40"; }
+  else                 { label = `🔴 Contacted ${d}+ Days Ago`; cls = "bg-destructive/15 text-destructive border-destructive/40"; }
+  return <span className={"inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest " + cls}>{label}</span>;
 }
 
 function relativeDays(iso: string | null): string {
