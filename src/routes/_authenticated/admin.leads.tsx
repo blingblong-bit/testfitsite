@@ -683,7 +683,7 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
   const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
   const priority = computePriority(lead);
-  const sinceContact = daysSince(lead.last_contacted_at);
+
 
   async function markContactedToday() {
     const iso = new Date().toISOString();
