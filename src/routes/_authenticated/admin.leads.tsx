@@ -796,6 +796,7 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
             </Field>
             <Field label="Next Follow-Up Date">
               <input
+                key={lead.next_follow_up_date ?? "empty"}
                 type="date"
                 defaultValue={lead.next_follow_up_date ?? ""}
                 onBlur={(e) => { const v = e.target.value || null; if (v !== (lead.next_follow_up_date ?? null)) updateLead(lead.id, { next_follow_up_date: v }); }}
