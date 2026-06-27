@@ -631,8 +631,12 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
           <p className="mt-2 text-xs text-muted-foreground">
             Last contact: <span className="text-foreground">{relativeDays(lead.last_contacted_at)}</span>
             {sinceContact !== null && <> · <span className="text-foreground">{sinceContact} {sinceContact === 1 ? "day" : "days"} since contact</span></>}
+            {lead.last_contact_method && <> · Method: <span className="text-foreground">{lead.last_contact_method}</span></>}
             {lead.last_response_at && <> · Last response: <span className="text-foreground">{relativeDays(lead.last_response_at)}</span></>}
+            {lead.next_follow_up_date && <> · Follow up: <span className="text-foreground">{new Date(lead.next_follow_up_date + "T00:00:00").toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span></>}
+            {lead.next_action && <> · Next: <span className="text-foreground">{lead.next_action}</span></>}
           </p>
+
         </div>
         <div className="flex flex-col items-end gap-2">
           <div className="flex gap-2">
