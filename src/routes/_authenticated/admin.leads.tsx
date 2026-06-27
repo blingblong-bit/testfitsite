@@ -486,13 +486,14 @@ function LeadsView({
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const newLeads = byType.filter((l) => (l.crm_status ?? "New Lead") === "New Lead").length;
     const highPriority = byType.filter((l) => computePriority(l) === "high" && l.crm_status !== "Joined" && l.crm_status !== "Lost Lead").length;
+    const followUpsDueToday = byType.filter((l) => isFollowUpDueToday(l)).length;
     const toursScheduled = byType.filter((l) => l.tour_scheduled && !l.tour_completed).length;
     const toursCompleted = byType.filter((l) => l.tour_completed).length;
     const joinedThisMonth = byType.filter((l) => l.became_member && l.membership_start_date && new Date(l.membership_start_date) >= monthStart).length;
     const totalForConversion = byType.length;
     const totalJoined = byType.filter((l) => l.became_member).length;
     const conversionRate = totalForConversion === 0 ? 0 : Math.round((totalJoined / totalForConversion) * 100);
-    return { newLeads, highPriority, toursScheduled, toursCompleted, joinedThisMonth, conversionRate };
+    return { newLeads, highPriority, followUpsDueToday, toursScheduled, toursCompleted, joinedThisMonth, conversionRate };
   }, [byType]);
 
   const count = (t: TypeFilter) =>
