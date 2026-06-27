@@ -119,8 +119,19 @@ type Referral = {
 type TypeFilter = "customer_lead" | "vendor_solicitation" | "spam" | "all";
 type Tab = "leads" | "referrals";
 type SortKey = "priority" | "newest" | "oldest" | "tour_date" | "last_contact" | "source";
+type QuickFilter = "none" | "new" | "high_priority" | "due_today" | "tours_scheduled" | "tours_completed" | "joined_this_month";
 
 type Priority = "high" | "medium" | "low";
+
+function notificationForLead(lead: Lead): { title: string; body: string } {
+  const src = (lead.source ?? "").toLowerCase();
+  let kind = "New Website Lead";
+  if (src.includes("referral")) kind = "New Referral Redemption";
+  else if (src.includes("day pass") || src.includes("day_pass") || src.includes("paid_day_pass")) kind = "New Day Pass Submission";
+  else if (src.includes("walk")) kind = "New Walk-In Lead";
+  const interest = lead.interest ? `\nInterested in:\n${lead.interest}` : "";
+  return { title: `${kind}\n${lead.name}`, body: interest.trim() || (lead.message ?? lead.email ?? "") };
+}
 
 export const Route = createFileRoute("/_authenticated/admin/leads")({
   head: () => ({
