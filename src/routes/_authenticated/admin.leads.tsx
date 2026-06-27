@@ -1003,7 +1003,7 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
         <div className="border-t border-border p-5 space-y-5 bg-background/40">
           {/* Editable fields grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <AddLeadField label="Status">
+            <Field label="Status">
               <select
                 value={lead.crm_status ?? "New Lead"}
                 onChange={(e) => updateLead(lead.id, { crm_status: e.target.value as CrmStatus })}
@@ -1022,14 +1022,14 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
                 {!LEAD_SOURCE_OPTIONS.includes(lead.source) && <option value={lead.source}>{lead.source}</option>}
               </select>
             </Field>
-            <AddLeadField label="Phone">
+            <Field label="Phone">
               <input
                 defaultValue={lead.phone ?? ""}
                 onBlur={(e) => { if (e.target.value !== (lead.phone ?? "")) updateLead(lead.id, { phone: e.target.value || null }); }}
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               />
             </Field>
-            <AddLeadField label="Email">
+            <Field label="Email">
               <input
                 defaultValue={lead.email}
                 onBlur={(e) => { if (e.target.value !== lead.email && e.target.value) updateLead(lead.id, { email: e.target.value }); }}
@@ -1056,7 +1056,7 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
                 {CONTACT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </Field>
-            <AddLeadField label="Primary Goal">
+            <Field label="Primary Goal">
               <select
                 value={lead.primary_goal ?? ""}
                 onChange={(e) => updateLead(lead.id, { primary_goal: e.target.value || null })}
