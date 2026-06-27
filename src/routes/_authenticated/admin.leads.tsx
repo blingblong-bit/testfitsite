@@ -505,7 +505,7 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
               onChange={(e) => setName(e.target.value)}
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
             />
-          </Field>
+          </AddLeadField>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AddLeadField label="Phone">
@@ -515,7 +515,7 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
                 onChange={(e) => setPhone(e.target.value)}
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               />
-            </Field>
+            </AddLeadField>
             <AddLeadField label="Email">
               <input
                 type="email"
@@ -523,7 +523,7 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               />
-            </Field>
+            </AddLeadField>
           </div>
 
           <AddLeadField label="Lead Source" required>
@@ -535,7 +535,7 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
               <option value="">Select a source…</option>
               {sourceOptions.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
-          </Field>
+          </AddLeadField>
 
           <AddLeadField label="Primary Goal">
             <select
@@ -546,7 +546,7 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
               <option value="">— None —</option>
               {PRIMARY_GOALS.map((g) => <option key={g} value={g}>{g}</option>)}
             </select>
-          </Field>
+          </AddLeadField>
 
           <AddLeadField label="Original Inquiry / Notes">
             <textarea
@@ -555,7 +555,7 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
               rows={3}
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
             />
-          </Field>
+          </AddLeadField>
 
           <AddLeadField label="Status">
             <select
@@ -565,7 +565,7 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
             >
               {CRM_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
-          </Field>
+          </AddLeadField>
 
           <div className="flex justify-end gap-2 pt-2">
             <button
