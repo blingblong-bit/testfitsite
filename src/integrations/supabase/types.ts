@@ -224,6 +224,30 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_snapshots: {
+        Row: {
+          generated_at: string
+          generated_by: string | null
+          id: string
+          metrics: Json
+          month: string
+        }
+        Insert: {
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          metrics?: Json
+          month: string
+        }
+        Update: {
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          metrics?: Json
+          month?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           created_at: string
