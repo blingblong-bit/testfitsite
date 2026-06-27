@@ -613,6 +613,9 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
     const iso = new Date().toISOString();
     const patch: Partial<Lead> = { last_contacted_at: iso };
     if ((lead.crm_status ?? "New Lead") === "New Lead") patch.crm_status = "Contacted";
+    const suggested = suggestNextFollowUp(lead);
+    if (suggested === null) patch.next_follow_up_date = null;
+    else if (suggested !== "keep") patch.next_follow_up_date = suggested;
     await updateLead(lead.id, patch);
     toast.success("Marked as contacted today");
   }
