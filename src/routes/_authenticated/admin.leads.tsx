@@ -34,6 +34,40 @@ const LEAD_SOURCE_OPTIONS = [
   "Other",
 ];
 
+type ContactMethod = "Email" | "Phone Call" | "Text Message" | "In Person";
+const CONTACT_METHODS: ContactMethod[] = ["Email", "Phone Call", "Text Message", "In Person"];
+
+const PRIMARY_GOALS = [
+  "Lose Weight",
+  "Build Muscle",
+  "General Fitness",
+  "Athlete Performance",
+  "Injury Recovery",
+  "Improve Health",
+  "Other",
+];
+
+type NextAction =
+  | "Waiting for Response"
+  | "Email Follow-Up"
+  | "Phone Follow-Up"
+  | "Text Follow-Up"
+  | "Schedule Tour"
+  | "Waiting for Tour"
+  | "Ready to Join"
+  | "No Further Follow-Up";
+
+const NEXT_ACTIONS: NextAction[] = [
+  "Waiting for Response",
+  "Email Follow-Up",
+  "Phone Follow-Up",
+  "Text Follow-Up",
+  "Schedule Tour",
+  "Waiting for Tour",
+  "Ready to Join",
+  "No Further Follow-Up",
+];
+
 type Lead = {
   id: string;
   source: string;
@@ -51,12 +85,17 @@ type Lead = {
   crm_status: CrmStatus | null;
   last_contacted_at: string | null;
   last_response_at: string | null;
+  last_contact_method: ContactMethod | null;
+  primary_goal: string | null;
+  next_action: NextAction | null;
+  next_follow_up_date: string | null;
   tour_scheduled: boolean;
   tour_completed: boolean;
   tour_date: string | null;
   became_member: boolean;
   membership_start_date: string | null;
 };
+
 
 type Referral = {
   id: string;
