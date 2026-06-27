@@ -31,6 +31,7 @@ import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authentic
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicHooksSnapshotMonthRouteImport } from './routes/api/public/hooks/snapshot-month'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -144,6 +145,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksSnapshotMonthRoute =
+  ApiPublicHooksSnapshotMonthRouteImport.update({
+    id: '/api/public/hooks/snapshot-month',
+    path: '/api/public/hooks/snapshot-month',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/classes/': typeof ClassesIndexRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -186,6 +194,7 @@ export interface FileRoutesByTo {
   '/classes': typeof ClassesIndexRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -211,6 +220,7 @@ export interface FileRoutesById {
   '/classes/': typeof ClassesIndexRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/classes/'
     | '/admin/leads'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/snapshot-month'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -258,6 +269,7 @@ export interface FileRouteTypes {
     | '/classes'
     | '/admin/leads'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/snapshot-month'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -282,6 +294,7 @@ export interface FileRouteTypes {
     | '/classes/'
     | '/_authenticated/admin/leads'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/snapshot-month'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -302,6 +315,7 @@ export interface RootRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicHooksSnapshotMonthRoute: typeof ApiPublicHooksSnapshotMonthRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
@@ -463,6 +477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/snapshot-month': {
+      id: '/api/public/hooks/snapshot-month'
+      path: '/api/public/hooks/snapshot-month'
+      fullPath: '/api/public/hooks/snapshot-month'
+      preLoaderRoute: typeof ApiPublicHooksSnapshotMonthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -509,6 +530,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicHooksSnapshotMonthRoute: ApiPublicHooksSnapshotMonthRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
