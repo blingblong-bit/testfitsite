@@ -530,16 +530,26 @@ function LeadsView({
 
   return (
     <>
-      {/* Dashboard stats */}
+      {/* Dashboard stats — click to filter */}
       <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
-        <Stat label="New Leads" value={stats.newLeads} />
-        <Stat label="Follow-Ups Due Today" value={stats.followUpsDueToday} accent={stats.followUpsDueToday > 0 ? "destructive" : undefined} />
-        <Stat label="High Priority" value={stats.highPriority} accent="destructive" />
-        <Stat label="Tours Scheduled" value={stats.toursScheduled} />
-        <Stat label="Tours Completed" value={stats.toursCompleted} />
-        <Stat label="Joined This Month" value={stats.joinedThisMonth} accent="primary" />
+        <Stat label="New Leads" value={stats.newLeads} active={quickFilter === "new"} onClick={() => toggleQuick("new")} />
+        <Stat label="Follow-Ups Due Today" value={stats.followUpsDueToday} accent={stats.followUpsDueToday > 0 ? "destructive" : undefined} active={quickFilter === "due_today"} onClick={() => toggleQuick("due_today")} />
+        <Stat label="High Priority" value={stats.highPriority} accent="destructive" active={quickFilter === "high_priority"} onClick={() => toggleQuick("high_priority")} />
+        <Stat label="Tours Scheduled" value={stats.toursScheduled} active={quickFilter === "tours_scheduled"} onClick={() => toggleQuick("tours_scheduled")} />
+        <Stat label="Tours Completed" value={stats.toursCompleted} active={quickFilter === "tours_completed"} onClick={() => toggleQuick("tours_completed")} />
+        <Stat label="Joined This Month" value={stats.joinedThisMonth} accent="primary" active={quickFilter === "joined_this_month"} onClick={() => toggleQuick("joined_this_month")} />
         <Stat label="Conversion Rate" value={`${stats.conversionRate}%`} accent="primary" />
       </div>
+      {quickFilter !== "none" && (
+        <div className="mt-3">
+          <button
+            onClick={() => setQuickFilter("none")}
+            className="inline-flex h-8 items-center gap-2 rounded-full border border-primary bg-primary/15 px-3 text-xs uppercase tracking-widest text-primary hover:bg-primary/25"
+          >
+            Quick filter active · Clear ✕
+          </button>
+        </div>
+      )}
 
       {/* Type filter */}
       <div className="mt-6 flex flex-wrap gap-2">
