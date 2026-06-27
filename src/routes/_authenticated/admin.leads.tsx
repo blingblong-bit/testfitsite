@@ -509,8 +509,6 @@ function LeadsView({
 
   // Dashboard stats (over byType — customer leads view)
   const stats = useMemo(() => {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const newLeads = byType.filter((l) => (l.crm_status ?? "New Lead") === "New Lead").length;
     const highPriority = byType.filter((l) => computePriority(l) === "high" && l.crm_status !== "Joined" && l.crm_status !== "Lost Lead").length;
     const followUpsDueToday = byType.filter((l) => isFollowUpDueToday(l)).length;
@@ -521,7 +519,11 @@ function LeadsView({
     const totalJoined = byType.filter((l) => l.became_member).length;
     const conversionRate = totalForConversion === 0 ? 0 : Math.round((totalJoined / totalForConversion) * 100);
     return { newLeads, highPriority, followUpsDueToday, toursScheduled, toursCompleted, joinedThisMonth, conversionRate };
-  }, [byType]);
+  }, [byType, monthStart]);
+
+  function toggleQuick(q: QuickFilter) {
+    setQuickFilter((prev) => (prev === q ? "none" : q));
+  }
 
   const count = (t: TypeFilter) =>
     t === "all" ? (leads?.length ?? 0) : (leads?.filter((l) => (l.lead_type ?? "customer_lead") === t).length ?? 0);
