@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Bell, BellOff, Home, ChevronDown, ChevronUp, Phone, Mail, Calendar, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AnalyticsView } from "@/components/AnalyticsView";
 
 type CrmStatus =
   | "New Lead"
@@ -117,7 +118,7 @@ type Referral = {
 };
 
 type TypeFilter = "customer_lead" | "vendor_solicitation" | "spam" | "all";
-type Tab = "leads" | "referrals";
+type Tab = "leads" | "referrals" | "analytics" | "settings";
 type SortKey = "priority" | "newest" | "oldest" | "tour_date" | "last_contact" | "source";
 type QuickFilter = "none" | "new" | "high_priority" | "due_today" | "tours_scheduled" | "tours_completed" | "joined_this_month";
 
@@ -375,9 +376,11 @@ function AdminLeads() {
         </div>
       </div>
 
-      <div className="mt-6 flex gap-2 border-b border-border">
-        <TabBtn active={tab === "leads"} onClick={() => setTab("leads")}>Leads</TabBtn>
-        <TabBtn active={tab === "referrals"} onClick={() => setTab("referrals")}>Referrals</TabBtn>
+      <div className="mt-6 flex gap-2 border-b border-border overflow-x-auto">
+        <TabBtn active={tab === "leads"} onClick={() => setTab("leads")}>Lead Tracker</TabBtn>
+        <TabBtn active={tab === "referrals"} onClick={() => setTab("referrals")}>Referral Tracker</TabBtn>
+        <TabBtn active={tab === "analytics"} onClick={() => setTab("analytics")}>Business Analytics</TabBtn>
+        <TabBtn active={tab === "settings"} onClick={() => setTab("settings")}>Settings</TabBtn>
       </div>
 
       {error && (
@@ -403,7 +406,26 @@ function AdminLeads() {
         />
       )}
       {tab === "referrals" && <ReferralsView referrals={referrals} />}
+      {tab === "analytics" && (
+        <AnalyticsView leads={leads} referrals={referrals} isAdmin={isAdmin === true} />
+      )}
+      {tab === "settings" && <SettingsView />}
     </section>
+  );
+}
+
+function SettingsView() {
+  return (
+    <div className="mt-8 max-w-2xl">
+      <div className="rounded-lg border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold">Settings</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Settings will live here in a future update — staff accounts, notification preferences,
+          referral program rules, and snapshot scheduling.
+        </p>
+        <p className="mt-4 text-xs uppercase tracking-widest text-muted-foreground">Coming soon</p>
+      </div>
+    </div>
   );
 }
 
