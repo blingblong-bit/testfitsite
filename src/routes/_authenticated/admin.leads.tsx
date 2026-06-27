@@ -271,13 +271,18 @@ function AdminLeads() {
         (payload) => {
           const lead = payload.new as Lead;
           setLeads((prev) => (prev ? [lead, ...prev] : [lead]));
-          const title = `New lead: ${lead.name}`;
-          const body = `${lead.source}${lead.interest ? " · " + lead.interest : ""}`;
-          toast.success(title, { description: body, duration: 8000 });
+          const { title, body } = notificationForLead(lead);
+          toast.success(title.replace("\n", " — "), { description: body, duration: 8000 });
           if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
             try {
-              const n = new Notification(title, { body, tag: lead.id });
-              n.onclick = () => window.focus();
+              const n = new Notification(title, { body, tag: lead.id, requireInteraction: true });
+              n.onclick = () => {
+                window.focus();
+                if (window.location.pathname !== "/admin/leads") {
+                  window.location.href = "/admin/leads";
+                }
+                n.close();
+              };
             } catch { /* noop */ }
           }
         }
