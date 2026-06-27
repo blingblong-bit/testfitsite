@@ -709,7 +709,46 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
             <Field label="Date Submitted">
               <div className="h-10 flex items-center text-sm text-muted-foreground">{new Date(lead.created_at).toLocaleString()}</div>
             </Field>
+            <Field label="Last Contact Method">
+              <select
+                value={lead.last_contact_method ?? ""}
+                onChange={(e) => updateLead(lead.id, { last_contact_method: (e.target.value || null) as ContactMethod | null })}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              >
+                <option value="">— Not set —</option>
+                {CONTACT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </Field>
+            <Field label="Primary Goal">
+              <select
+                value={lead.primary_goal ?? ""}
+                onChange={(e) => updateLead(lead.id, { primary_goal: e.target.value || null })}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              >
+                <option value="">— Not set —</option>
+                {PRIMARY_GOALS.map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </Field>
+            <Field label="Next Action">
+              <select
+                value={lead.next_action ?? ""}
+                onChange={(e) => updateLead(lead.id, { next_action: (e.target.value || null) as NextAction | null })}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              >
+                <option value="">— Not set —</option>
+                {NEXT_ACTIONS.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </Field>
+            <Field label="Next Follow-Up Date">
+              <input
+                type="date"
+                defaultValue={lead.next_follow_up_date ?? ""}
+                onBlur={(e) => { const v = e.target.value || null; if (v !== (lead.next_follow_up_date ?? null)) updateLead(lead.id, { next_follow_up_date: v }); }}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              />
+            </Field>
           </div>
+
 
           {/* Tour + Membership */}
           <div className="grid md:grid-cols-2 gap-4">
