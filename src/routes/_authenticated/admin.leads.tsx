@@ -138,14 +138,64 @@ function daysSince(iso: string | null): number | null {
   return Math.max(0, Math.floor(ms / 86400000));
 }
 
+function addDaysISODate(n: number): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+// Returns the YYYY-MM-DD date to set; null = clear; "keep" = do not change.
+function suggestNextFollowUp(lead: Lead): string | null | "keep" {
+  const tourDate = lead.tour_date ? new Date(lead.tour_date).toISOString().slice(0, 10) : null;
+  switch (lead.next_action) {
+    case "Waiting for Response": return addDaysISODate(3);
+    case "Email Follow-Up": return addDaysISODate(3);
+    case "Phone Follow-Up": return addDaysISODate(1);
+    case "Text Follow-Up": return addDaysISODate(1);
+    case "Schedule Tour": return tourDate ?? addDaysISODate(1);
+    case "Waiting for Tour": return tourDate ?? "keep";
+    case "Ready to Join": return addDaysISODate(2);
+    case "No Further Follow-Up": return null;
+  }
+  if ((lead.crm_status ?? "New Lead") === "New Lead") return addDaysISODate(2);
+  return "keep";
+}
+
+// Whole days the follow-up is past due (today counts as 0, not overdue).
+function followUpOverdueDays(lead: Lead): number | null {
+  if (!lead.next_follow_up_date) return null;
+  if (lead.crm_status === "Joined" || lead.crm_status === "Lost Lead") return null;
+  const due = new Date(lead.next_follow_up_date + "T00:00:00").getTime();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const diff = Math.floor((today.getTime() - due) / 86400000);
+  return diff > 0 ? diff : null;
+}
+
+function isFollowUpDueToday(lead: Lead): boolean {
+  if (!lead.next_follow_up_date) return false;
+  if (lead.crm_status === "Joined" || lead.crm_status === "Lost Lead") return false;
+  const due = new Date(lead.next_follow_up_date + "T00:00:00").getTime();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return due <= today.getTime();
+}
+
 function computePriority(lead: Lead): Priority {
   if (lead.crm_status === "Joined" || lead.crm_status === "Lost Lead") return "low";
   const since = daysSince(lead.last_contacted_at);
-  if (lead.crm_status === "New Lead" && since === null) return "high";
-  if (since !== null && since > 5) return "high";
-  if (since !== null && since >= 3) return "medium";
-  if (since === null) return "high";
-  return "low";
+  let base: Priority = "low";
+  if (lead.crm_status === "New Lead" && since === null) base = "high";
+  else if (since !== null && since > 5) base = "high";
+  else if (since !== null && since >= 3) base = "medium";
+  else if (since === null) base = "high";
+
+  // Overdue follow-up bumps priority (works with, not against, the base logic).
+  const overdue = followUpOverdueDays(lead);
+  if (overdue !== null) {
+    if (overdue >= 3) return "high";
+    if (overdue >= 1 && base === "low") return "medium";
+  }
+  return base;
 }
 
 function priorityRank(p: Priority): number {
