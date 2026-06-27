@@ -1,8 +1,38 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Bell, BellOff, Home } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Bell, BellOff, Home, ChevronDown, ChevronUp, Phone, Mail, Calendar, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
+type CrmStatus =
+  | "New Lead"
+  | "Contacted"
+  | "Waiting on Response"
+  | "Tour Scheduled"
+  | "Tour Completed"
+  | "Joined"
+  | "Lost Lead";
+
+const CRM_STATUSES: CrmStatus[] = [
+  "New Lead",
+  "Contacted",
+  "Waiting on Response",
+  "Tour Scheduled",
+  "Tour Completed",
+  "Joined",
+  "Lost Lead",
+];
+
+const LEAD_SOURCE_OPTIONS = [
+  "Website",
+  "Walk-In",
+  "Day Pass",
+  "Referral",
+  "Phone Call",
+  "Google Business",
+  "Social Media",
+  "Other",
+];
 
 type Lead = {
   id: string;
@@ -12,11 +42,20 @@ type Lead = {
   phone: string | null;
   interest: string | null;
   message: string | null;
+  notes: string | null;
   created_at: string;
   lead_type: string;
   lead_score: number;
   should_notify: boolean;
   spam_reason: string | null;
+  crm_status: CrmStatus | null;
+  last_contacted_at: string | null;
+  last_response_at: string | null;
+  tour_scheduled: boolean;
+  tour_completed: boolean;
+  tour_date: string | null;
+  became_member: boolean;
+  membership_start_date: string | null;
 };
 
 type Referral = {
@@ -40,6 +79,9 @@ type Referral = {
 
 type TypeFilter = "customer_lead" | "vendor_solicitation" | "spam" | "all";
 type Tab = "leads" | "referrals";
+type SortKey = "priority" | "newest" | "oldest" | "tour_date" | "last_contact" | "source";
+
+type Priority = "high" | "medium" | "low";
 
 export const Route = createFileRoute("/_authenticated/admin/leads")({
   head: () => ({
@@ -51,14 +93,37 @@ export const Route = createFileRoute("/_authenticated/admin/leads")({
   component: AdminLeads,
 });
 
+function daysSince(iso: string | null): number | null {
+  if (!iso) return null;
+  const ms = Date.now() - new Date(iso).getTime();
+  return Math.max(0, Math.floor(ms / 86400000));
+}
+
+function computePriority(lead: Lead): Priority {
+  if (lead.crm_status === "Joined" || lead.crm_status === "Lost Lead") return "low";
+  const since = daysSince(lead.last_contacted_at);
+  if (lead.crm_status === "New Lead" && since === null) return "high";
+  if (since !== null && since > 5) return "high";
+  if (since !== null && since >= 3) return "medium";
+  if (since === null) return "high";
+  return "low";
+}
+
+function priorityRank(p: Priority): number {
+  return p === "high" ? 0 : p === "medium" ? 1 : 2;
+}
+
 function AdminLeads() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("leads");
   const [leads, setLeads] = useState<Lead[] | null>(null);
   const [referrals, setReferrals] = useState<Referral[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("customer_lead");
+  const [statusFilter, setStatusFilter] = useState<CrmStatus | "all">("all");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<SortKey>("priority");
+  const [query, setQuery] = useState("");
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   async function load() {
@@ -85,7 +150,13 @@ function AdminLeads() {
     })();
   }, []);
 
-  // Realtime subscription: notify admins when a new lead arrives
+  // Re-render every minute so "days since" stays current without a page reload.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
   const [browserNotify, setBrowserNotify] = useState<NotificationPermission | "unsupported">(
     typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported"
   );
@@ -131,6 +202,16 @@ function AdminLeads() {
     navigate({ to: "/admin/login" });
   }
 
+  async function updateLead(id: string, patch: Partial<Lead>) {
+    // Optimistic UI
+    setLeads((prev) => prev ? prev.map((l) => l.id === id ? { ...l, ...patch } as Lead : l) : prev);
+    const { error } = await supabase.from("leads").update(patch).eq("id", id);
+    if (error) {
+      toast.error("Save failed: " + error.message);
+      load();
+    }
+  }
+
   if (isAdmin === false) {
     return (
       <section className="container-page py-20 max-w-lg">
@@ -157,9 +238,9 @@ function AdminLeads() {
         <div>
           <p className="text-xs tracking-[0.3em] text-primary">ADMIN</p>
           <h1 className="mt-2 text-3xl md:text-4xl">Lead Tracker</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Submissions and referrals, most recent first.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Submissions, follow-ups, and referrals.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={() => navigate({ to: "/staff-home" })}
             className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm hover:bg-secondary"
@@ -171,7 +252,6 @@ function AdminLeads() {
             <button
               onClick={enableBrowserNotifications}
               className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm hover:bg-secondary"
-              title="Enable browser notifications for new leads"
             >
               <Bell className="h-4 w-4" /> Enable alerts
             </button>
@@ -197,17 +277,24 @@ function AdminLeads() {
 
       {error && (
         <div className="mt-8 rounded-md border border-destructive bg-destructive/10 p-4 text-sm">
-          {error}. You may not have admin/staff access yet — an admin must grant your account a role.
+          {error}
         </div>
       )}
 
       {tab === "leads" && (
         <LeadsView
           leads={leads}
-          filter={filter}
-          setFilter={setFilter}
           typeFilter={typeFilter}
           setTypeFilter={setTypeFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          sourceFilter={sourceFilter}
+          setSourceFilter={setSourceFilter}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          query={query}
+          setQuery={setQuery}
+          updateLead={updateLead}
         />
       )}
       {tab === "referrals" && <ReferralsView referrals={referrals} />}
@@ -244,67 +331,427 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
 }
 
 function LeadsView({
-  leads, filter, setFilter, typeFilter, setTypeFilter,
+  leads, typeFilter, setTypeFilter, statusFilter, setStatusFilter,
+  sourceFilter, setSourceFilter, sortBy, setSortBy, query, setQuery, updateLead,
 }: {
   leads: Lead[] | null;
-  filter: string; setFilter: (s: string) => void;
   typeFilter: TypeFilter; setTypeFilter: (t: TypeFilter) => void;
+  statusFilter: CrmStatus | "all"; setStatusFilter: (s: CrmStatus | "all") => void;
+  sourceFilter: string; setSourceFilter: (s: string) => void;
+  sortBy: SortKey; setSortBy: (s: SortKey) => void;
+  query: string; setQuery: (q: string) => void;
+  updateLead: (id: string, patch: Partial<Lead>) => Promise<void>;
 }) {
-  const byType = leads?.filter((l) => typeFilter === "all" || (l.lead_type ?? "customer_lead") === typeFilter) ?? [];
-  const visible = byType.filter((l) => filter === "all" || l.source === filter);
-  const sources = Array.from(new Set(byType.map((l) => l.source)));
+  const byType = useMemo(
+    () => leads?.filter((l) => typeFilter === "all" || (l.lead_type ?? "customer_lead") === typeFilter) ?? [],
+    [leads, typeFilter]
+  );
+
+  const sources = useMemo(() => Array.from(new Set(byType.map((l) => l.source))), [byType]);
+
+  // Search + filters
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return byType.filter((l) => {
+      if (statusFilter !== "all" && (l.crm_status ?? "New Lead") !== statusFilter) return false;
+      if (sourceFilter !== "all" && l.source !== sourceFilter) return false;
+      if (q) {
+        const hay = `${l.name} ${l.email} ${l.phone ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [byType, statusFilter, sourceFilter, query]);
+
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    arr.sort((a, b) => {
+      switch (sortBy) {
+        case "priority": {
+          const pa = priorityRank(computePriority(a));
+          const pb = priorityRank(computePriority(b));
+          if (pa !== pb) return pa - pb;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        }
+        case "newest": return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "oldest": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "tour_date": {
+          const ta = a.tour_date ? new Date(a.tour_date).getTime() : Infinity;
+          const tb = b.tour_date ? new Date(b.tour_date).getTime() : Infinity;
+          return ta - tb;
+        }
+        case "last_contact": {
+          const ta = a.last_contacted_at ? new Date(a.last_contacted_at).getTime() : 0;
+          const tb = b.last_contacted_at ? new Date(b.last_contacted_at).getTime() : 0;
+          return tb - ta;
+        }
+        case "source": return a.source.localeCompare(b.source);
+      }
+    });
+    return arr;
+  }, [filtered, sortBy]);
+
+  // Dashboard stats (over byType — customer leads view)
+  const stats = useMemo(() => {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const newLeads = byType.filter((l) => (l.crm_status ?? "New Lead") === "New Lead").length;
+    const highPriority = byType.filter((l) => computePriority(l) === "high" && l.crm_status !== "Joined" && l.crm_status !== "Lost Lead").length;
+    const toursScheduled = byType.filter((l) => l.tour_scheduled && !l.tour_completed).length;
+    const toursCompleted = byType.filter((l) => l.tour_completed).length;
+    const joinedThisMonth = byType.filter((l) => l.became_member && l.membership_start_date && new Date(l.membership_start_date) >= monthStart).length;
+    const totalForConversion = byType.length;
+    const totalJoined = byType.filter((l) => l.became_member).length;
+    const conversionRate = totalForConversion === 0 ? 0 : Math.round((totalJoined / totalForConversion) * 100);
+    return { newLeads, highPriority, toursScheduled, toursCompleted, joinedThisMonth, conversionRate };
+  }, [byType]);
+
   const count = (t: TypeFilter) =>
     t === "all" ? (leads?.length ?? 0) : (leads?.filter((l) => (l.lead_type ?? "customer_lead") === t).length ?? 0);
 
   return (
     <>
-      <div className="mt-6 flex flex-wrap gap-2">
-        <FilterChip active={typeFilter === "customer_lead"} onClick={() => { setTypeFilter("customer_lead"); setFilter("all"); }}>Customer Leads ({count("customer_lead")})</FilterChip>
-        <FilterChip active={typeFilter === "vendor_solicitation"} onClick={() => { setTypeFilter("vendor_solicitation"); setFilter("all"); }}>Vendor Solicitations ({count("vendor_solicitation")})</FilterChip>
-        <FilterChip active={typeFilter === "spam"} onClick={() => { setTypeFilter("spam"); setFilter("all"); }}>Spam ({count("spam")})</FilterChip>
-        <FilterChip active={typeFilter === "all"} onClick={() => { setTypeFilter("all"); setFilter("all"); }}>All ({count("all")})</FilterChip>
+      {/* Dashboard stats */}
+      <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <Stat label="New Leads" value={stats.newLeads} />
+        <Stat label="High Priority" value={stats.highPriority} accent="destructive" />
+        <Stat label="Tours Scheduled" value={stats.toursScheduled} />
+        <Stat label="Tours Completed" value={stats.toursCompleted} />
+        <Stat label="Joined This Month" value={stats.joinedThisMonth} accent="primary" />
+        <Stat label="Conversion Rate" value={`${stats.conversionRate}%`} accent="primary" />
       </div>
 
-      {sources.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>All sources ({byType.length})</FilterChip>
-          {sources.map((s) => (
-            <FilterChip key={s} active={filter === s} onClick={() => setFilter(s)}>
-              {s} ({byType.filter((l) => l.source === s).length})
-            </FilterChip>
-          ))}
+      {/* Type filter */}
+      <div className="mt-6 flex flex-wrap gap-2">
+        <FilterChip active={typeFilter === "customer_lead"} onClick={() => setTypeFilter("customer_lead")}>Customer Leads ({count("customer_lead")})</FilterChip>
+        <FilterChip active={typeFilter === "vendor_solicitation"} onClick={() => setTypeFilter("vendor_solicitation")}>Vendor Solicitations ({count("vendor_solicitation")})</FilterChip>
+        <FilterChip active={typeFilter === "spam"} onClick={() => setTypeFilter("spam")}>Spam ({count("spam")})</FilterChip>
+        <FilterChip active={typeFilter === "all"} onClick={() => setTypeFilter("all")}>All ({count("all")})</FilterChip>
+      </div>
+
+      {/* Search + sort + filters */}
+      <div className="mt-4 flex flex-wrap gap-3 items-center">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search name, phone, or email…"
+            className="h-10 w-full rounded-md border border-border bg-background pl-9 pr-3 text-sm"
+          />
         </div>
-      )}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as SortKey)}
+          className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+        >
+          <option value="priority">Sort: Highest Priority</option>
+          <option value="newest">Sort: Newest</option>
+          <option value="oldest">Sort: Oldest</option>
+          <option value="tour_date">Sort: Tour Date</option>
+          <option value="last_contact">Sort: Last Contact</option>
+          <option value="source">Sort: Lead Source</option>
+        </select>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as CrmStatus | "all")}
+          className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+        >
+          <option value="all">All Statuses</option>
+          {CRM_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select
+          value={sourceFilter}
+          onChange={(e) => setSourceFilter(e.target.value)}
+          className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+        >
+          <option value="all">All Sources</option>
+          {sources.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
 
       {leads === null && <p className="mt-10 text-muted-foreground">Loading leads…</p>}
-      {leads !== null && visible.length === 0 && <p className="mt-10 text-muted-foreground">No leads yet.</p>}
+      {leads !== null && sorted.length === 0 && <p className="mt-10 text-muted-foreground">No leads match your filters.</p>}
 
-      <div className="mt-8 space-y-4">
-        {visible.map((lead) => (
-          <article key={lead.id} className="rounded-lg border border-border bg-card p-6">
-            <header className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-lg">{lead.name}</h2>
-                <p className="text-sm text-muted-foreground">
-                  <a href={`mailto:${lead.email}`} className="hover:text-primary">{lead.email}</a>
-                  {lead.phone && (<> · <a href={`tel:${lead.phone}`} className="hover:text-primary">{lead.phone}</a></>)}
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="inline-block rounded-full bg-primary/15 text-primary px-3 py-1 text-xs uppercase tracking-widest">{lead.source}</span>
-                {lead.lead_type && lead.lead_type !== "customer_lead" && (
-                  <span className="ml-2 inline-block rounded-full bg-destructive/15 text-destructive px-3 py-1 text-xs uppercase tracking-widest">{lead.lead_type.replace("_", " ")}</span>
-                )}
-                <p className="mt-1 text-xs text-muted-foreground">{new Date(lead.created_at).toLocaleString()}</p>
-                {lead.spam_reason && <p className="mt-1 text-xs text-muted-foreground italic">{lead.spam_reason}</p>}
-              </div>
-            </header>
-            {lead.interest && <p className="mt-3 text-sm"><span className="text-muted-foreground">Interested in:</span> {lead.interest}</p>}
-            {lead.message && <p className="mt-3 whitespace-pre-wrap text-sm text-muted-foreground">{lead.message}</p>}
-          </article>
+      <div className="mt-6 space-y-3">
+        {sorted.map((lead) => (
+          <LeadCard key={lead.id} lead={lead} updateLead={updateLead} />
         ))}
       </div>
     </>
+  );
+}
+
+function Stat({ label, value, accent }: { label: string; value: number | string; accent?: "primary" | "destructive" }) {
+  const color =
+    accent === "destructive" ? "text-destructive" : accent === "primary" ? "text-primary" : "text-foreground";
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className={"mt-1 text-2xl font-bold " + color}>{value}</p>
+    </div>
+  );
+}
+
+function PriorityBadge({ p }: { p: Priority }) {
+  const map: Record<Priority, { label: string; cls: string }> = {
+    high: { label: "🔴 High Priority", cls: "bg-destructive/15 text-destructive border-destructive/40" },
+    medium: { label: "🟡 Medium Priority", cls: "bg-yellow-500/15 text-yellow-600 border-yellow-500/40" },
+    low: { label: "🟢 Up To Date", cls: "bg-primary/15 text-primary border-primary/40" },
+  };
+  const { label, cls } = map[p];
+  return <span className={"inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest " + cls}>{label}</span>;
+}
+
+function relativeDays(iso: string | null): string {
+  const d = daysSince(iso);
+  if (d === null) return "Never";
+  if (d === 0) return "Today";
+  if (d === 1) return "1 day ago";
+  return `${d} days ago`;
+}
+
+function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void> }) {
+  const [expanded, setExpanded] = useState(false);
+  const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
+  const [savingNotes, setSavingNotes] = useState(false);
+  const priority = computePriority(lead);
+  const sinceContact = daysSince(lead.last_contacted_at);
+
+  async function markContactedToday() {
+    const iso = new Date().toISOString();
+    const patch: Partial<Lead> = { last_contacted_at: iso };
+    if ((lead.crm_status ?? "New Lead") === "New Lead") patch.crm_status = "Contacted";
+    await updateLead(lead.id, patch);
+    toast.success("Marked as contacted today");
+  }
+
+  async function markResponded() {
+    await updateLead(lead.id, { last_response_at: new Date().toISOString() });
+    toast.success("Response logged");
+  }
+
+  async function saveNotes() {
+    setSavingNotes(true);
+    await updateLead(lead.id, { notes: notesDraft });
+    setSavingNotes(false);
+    toast.success("Notes saved");
+  }
+
+  async function toggleTourScheduled(v: boolean) {
+    const patch: Partial<Lead> = { tour_scheduled: v };
+    if (v && (lead.crm_status === "New Lead" || lead.crm_status === "Contacted" || lead.crm_status === "Waiting on Response")) {
+      patch.crm_status = "Tour Scheduled";
+    }
+    await updateLead(lead.id, patch);
+  }
+
+  async function toggleTourCompleted(v: boolean) {
+    const patch: Partial<Lead> = { tour_completed: v };
+    if (v) patch.crm_status = "Tour Completed";
+    await updateLead(lead.id, patch);
+  }
+
+  async function toggleMember(v: boolean) {
+    const patch: Partial<Lead> = { became_member: v };
+    if (v) {
+      patch.crm_status = "Joined";
+      if (!lead.membership_start_date) patch.membership_start_date = new Date().toISOString().slice(0, 10);
+    } else {
+      patch.membership_start_date = null;
+    }
+    await updateLead(lead.id, patch);
+  }
+
+  return (
+    <article className="rounded-lg border border-border bg-card overflow-hidden">
+      {/* Header (always visible) */}
+      <header className="flex flex-wrap items-start justify-between gap-3 p-5">
+        <div className="flex-1 min-w-[240px]">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h2 className="text-lg font-semibold">{lead.name}</h2>
+            <PriorityBadge p={priority} />
+            <span className="inline-block rounded-full bg-secondary text-foreground px-3 py-1 text-xs uppercase tracking-widest">
+              {lead.crm_status ?? "New Lead"}
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
+            <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 hover:text-primary">
+              <Mail className="h-3.5 w-3.5" /> {lead.email}
+            </a>
+            {lead.phone && (
+              <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1.5 hover:text-primary">
+                <Phone className="h-3.5 w-3.5" /> {lead.phone}
+              </a>
+            )}
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5" /> {new Date(lead.created_at).toLocaleDateString()}
+            </span>
+            <span className="text-xs uppercase tracking-widest text-primary">{lead.source}</span>
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Last contact: <span className="text-foreground">{relativeDays(lead.last_contacted_at)}</span>
+            {sinceContact !== null && <> · <span className="text-foreground">{sinceContact} {sinceContact === 1 ? "day" : "days"} since contact</span></>}
+            {lead.last_response_at && <> · Last response: <span className="text-foreground">{relativeDays(lead.last_response_at)}</span></>}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={markContactedToday}
+              className="h-9 rounded-md bg-primary px-3 text-xs font-semibold uppercase tracking-widest text-primary-foreground hover:opacity-90"
+            >
+              Contacted Today
+            </button>
+            <button
+              onClick={markResponded}
+              className="h-9 rounded-md border border-primary/40 bg-primary/10 px-3 text-xs font-semibold uppercase tracking-widest text-primary hover:bg-primary/20"
+            >
+              Lead Responded
+            </button>
+          </div>
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="inline-flex items-center gap-1 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
+          >
+            {expanded ? <>Collapse <ChevronUp className="h-3.5 w-3.5" /></> : <>Details <ChevronDown className="h-3.5 w-3.5" /></>}
+          </button>
+        </div>
+      </header>
+
+      {expanded && (
+        <div className="border-t border-border p-5 space-y-5 bg-background/40">
+          {/* Editable fields grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Field label="Status">
+              <select
+                value={lead.crm_status ?? "New Lead"}
+                onChange={(e) => updateLead(lead.id, { crm_status: e.target.value as CrmStatus })}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              >
+                {CRM_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </Field>
+            <Field label="Lead Source">
+              <select
+                value={LEAD_SOURCE_OPTIONS.includes(lead.source) ? lead.source : "Other"}
+                onChange={(e) => updateLead(lead.id, { source: e.target.value })}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              >
+                {LEAD_SOURCE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                {!LEAD_SOURCE_OPTIONS.includes(lead.source) && <option value={lead.source}>{lead.source}</option>}
+              </select>
+            </Field>
+            <Field label="Phone">
+              <input
+                defaultValue={lead.phone ?? ""}
+                onBlur={(e) => { if (e.target.value !== (lead.phone ?? "")) updateLead(lead.id, { phone: e.target.value || null }); }}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              />
+            </Field>
+            <Field label="Email">
+              <input
+                defaultValue={lead.email}
+                onBlur={(e) => { if (e.target.value !== lead.email && e.target.value) updateLead(lead.id, { email: e.target.value }); }}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              />
+            </Field>
+            <Field label="Name">
+              <input
+                defaultValue={lead.name}
+                onBlur={(e) => { if (e.target.value !== lead.name && e.target.value) updateLead(lead.id, { name: e.target.value }); }}
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              />
+            </Field>
+            <Field label="Date Submitted">
+              <div className="h-10 flex items-center text-sm text-muted-foreground">{new Date(lead.created_at).toLocaleString()}</div>
+            </Field>
+          </div>
+
+          {/* Tour + Membership */}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="rounded-md border border-border p-4">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Tour</p>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={lead.tour_scheduled} onChange={(e) => toggleTourScheduled(e.target.checked)} />
+                  Tour Scheduled
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={lead.tour_completed} onChange={(e) => toggleTourCompleted(e.target.checked)} />
+                  Tour Completed
+                </label>
+                <Field label="Tour Date (optional)">
+                  <input
+                    type="datetime-local"
+                    defaultValue={lead.tour_date ? new Date(lead.tour_date).toISOString().slice(0, 16) : ""}
+                    onBlur={(e) => updateLead(lead.id, { tour_date: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                  />
+                </Field>
+              </div>
+            </div>
+
+            <div className="rounded-md border border-border p-4">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Membership</p>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={lead.became_member} onChange={(e) => toggleMember(e.target.checked)} />
+                Became Member
+              </label>
+              {lead.became_member && (
+                <Field label="Membership Start Date">
+                  <input
+                    type="date"
+                    defaultValue={lead.membership_start_date ?? ""}
+                    onBlur={(e) => updateLead(lead.id, { membership_start_date: e.target.value || null })}
+                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                  />
+                </Field>
+              )}
+            </div>
+          </div>
+
+          {/* Original submission */}
+          {(lead.interest || lead.message) && (
+            <div className="rounded-md border border-border p-4 space-y-2">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Original Submission</p>
+              {lead.interest && <p className="text-sm"><span className="text-muted-foreground">Interested in:</span> {lead.interest}</p>}
+              {lead.message && <p className="text-sm whitespace-pre-wrap text-muted-foreground">{lead.message}</p>}
+            </div>
+          )}
+
+          {/* Notes */}
+          <div>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Staff Notes</p>
+            <textarea
+              value={notesDraft}
+              onChange={(e) => setNotesDraft(e.target.value)}
+              rows={4}
+              className="w-full rounded-md border border-border bg-background p-3 text-sm"
+              placeholder="Internal notes about this lead…"
+            />
+            <div className="mt-2 flex justify-end">
+              <button
+                onClick={saveNotes}
+                disabled={savingNotes || notesDraft === (lead.notes ?? "")}
+                className="h-9 rounded-md bg-primary px-4 text-xs font-semibold uppercase tracking-widest text-primary-foreground disabled:opacity-50"
+              >
+                {savingNotes ? "Saving…" : "Save Notes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="block text-xs uppercase tracking-widest text-muted-foreground mb-1">{label}</span>
+      {children}
+    </label>
   );
 }
 
@@ -315,7 +762,6 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
   const redeemed = referrals.filter((r) => r.status === "redeemed").length;
   const rate = total === 0 ? 0 : Math.round((redeemed / total) * 100);
 
-  // Leaderboard: group redeemed referrals by normalized referrer email
   const groups = new Map<string, { name: string; count: number }>();
   for (const r of referrals) {
     if (r.status !== "redeemed") continue;
@@ -327,12 +773,10 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
     else groups.set(key, { name: r.referrer_name.trim(), count: 1 });
   }
   const leaderboard = Array.from(groups.values()).sort((a, b) => b.count - a.count);
-
   const topReferrer = leaderboard[0]?.name ?? "—";
 
   return (
     <div className="mt-8 space-y-10">
-      {/* Metrics */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Metric label="Total Sent" value={String(total)} />
         <Metric label="Total Redeemed" value={String(redeemed)} />
@@ -340,7 +784,6 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
         <Metric label="Top Referrer" value={topReferrer} />
       </div>
 
-      {/* Leaderboard */}
       <div>
         <h2 className="text-xs tracking-[0.3em] text-primary">LEADERBOARD</h2>
         <h3 className="mt-2 text-2xl">Top Referrers (redeemed only)</h3>
@@ -370,7 +813,6 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
         )}
       </div>
 
-      {/* All referrals table */}
       <div>
         <h2 className="text-xs tracking-[0.3em] text-primary">ALL REFERRALS</h2>
         <h3 className="mt-2 text-2xl">Referral History</h3>
@@ -404,9 +846,7 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
                     <td className="px-4 py-3">
                       <span className={
                         "inline-block rounded-full px-3 py-1 text-xs uppercase tracking-widest " +
-                        (r.status === "redeemed"
-                          ? "bg-primary/15 text-primary"
-                          : "bg-secondary text-muted-foreground")
+                        (r.status === "redeemed" ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground")
                       }>
                         {r.status}
                       </span>
@@ -432,11 +872,9 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
 
 function EmailStatusBadge({ status }: { status: "pending" | "sent" | "failed" }) {
   const cls =
-    status === "sent"
-      ? "bg-primary/15 text-primary"
-      : status === "failed"
-        ? "bg-destructive/15 text-destructive"
-        : "bg-secondary text-muted-foreground";
+    status === "sent" ? "bg-primary/15 text-primary"
+    : status === "failed" ? "bg-destructive/15 text-destructive"
+    : "bg-secondary text-muted-foreground";
   return (
     <span className={"inline-block rounded-full px-3 py-1 text-xs uppercase tracking-widest " + cls}>
       {status}
