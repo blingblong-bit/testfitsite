@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Bell, BellOff, Home, ChevronDown, ChevronUp, Phone, Mail, Calendar, Search } from "lucide-react";
+import { Bell, BellOff, Home, ChevronDown, ChevronUp, Phone, Mail, Calendar, Search, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AnalyticsView } from "@/components/AnalyticsView";
