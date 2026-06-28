@@ -146,8 +146,11 @@ export const Route = createFileRoute("/_authenticated/admin/leads")({
 
 function daysSince(iso: string | null): number | null {
   if (!iso) return null;
-  const ms = Date.now() - new Date(iso).getTime();
-  return Math.max(0, Math.floor(ms / 86400000));
+  const then = new Date(iso);
+  const a = new Date(then.getFullYear(), then.getMonth(), then.getDate()).getTime();
+  const now = new Date();
+  const b = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return Math.max(0, Math.round((b - a) / 86400000));
 }
 
 function addDaysISODate(n: number): string {
@@ -867,14 +870,30 @@ function CrmStatusBadge({ status }: { status: CrmStatus }) {
   return <span className={"inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest " + cls}>{label}</span>;
 }
 
+function useDailyTick() {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 60 * 60 * 1000); // hourly
+    const onVis = () => setTick((t) => t + 1);
+    document.addEventListener("visibilitychange", onVis);
+    return () => { clearInterval(id); document.removeEventListener("visibilitychange", onVis); };
+  }, []);
+}
+
 function LastContactBadge({ iso }: { iso: string | null }) {
+  useDailyTick();
   const d = daysSince(iso);
   let label: string; let cls: string;
-  if (d === null)      { label = "🔴 Never Contacted"; cls = "bg-destructive/15 text-destructive border-destructive/40"; }
-  else if (d === 0)    { label = "🟢 Contacted Today"; cls = "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40"; }
-  else if (d <= 2)     { label = `🟢 Contacted ${d === 1 ? "Yesterday" : d + " Days Ago"}`; cls = "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40"; }
-  else if (d <= 6)     { label = `🟡 Contacted ${d} Days Ago`; cls = "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40"; }
-  else                 { label = `🔴 Contacted ${d}+ Days Ago`; cls = "bg-destructive/15 text-destructive border-destructive/40"; }
+  const green = "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40";
+  const yellow = "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40";
+  const orange = "bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/40";
+  const red = "bg-destructive/15 text-destructive border-destructive/40";
+  if (d === null)      { label = "🔴 Never Contacted"; cls = red; }
+  else if (d === 0)    { label = "🟢 Last Contact: Today"; cls = green; }
+  else if (d === 1)    { label = "🟢 Last Contact: Yesterday"; cls = green; }
+  else if (d <= 3)     { label = `🟡 Last Contact: ${d} Days Ago`; cls = yellow; }
+  else if (d <= 6)     { label = `🟠 Last Contact: ${d} Days Ago`; cls = orange; }
+  else                 { label = `🔴 Last Contact: 7+ Days Ago`; cls = red; }
   return <span className={"inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest " + cls}>{label}</span>;
 }
 
