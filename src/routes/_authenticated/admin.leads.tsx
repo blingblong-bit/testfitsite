@@ -146,8 +146,11 @@ export const Route = createFileRoute("/_authenticated/admin/leads")({
 
 function daysSince(iso: string | null): number | null {
   if (!iso) return null;
-  const ms = Date.now() - new Date(iso).getTime();
-  return Math.max(0, Math.floor(ms / 86400000));
+  const then = new Date(iso);
+  const a = new Date(then.getFullYear(), then.getMonth(), then.getDate()).getTime();
+  const now = new Date();
+  const b = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return Math.max(0, Math.round((b - a) / 86400000));
 }
 
 function addDaysISODate(n: number): string {
