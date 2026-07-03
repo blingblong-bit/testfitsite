@@ -147,25 +147,25 @@ function ScreenHeader({ eyebrow, title, sub }: { eyebrow: string; title: string;
 
 function PricingScreen() {
   const monthly = [
-    { name: "Single", price: "37", tagline: "One member. Full access." },
-    { name: "Duo", price: "55", tagline: "Two adults." },
-    { name: "Duo +1", price: "63", tagline: "Three adults." },
-    { name: "Family", price: "72", tagline: "The whole crew." },
+    { name: "Single", price: "39", tagline: "One member. Full access." },
+    { name: "Duo", price: "59", tagline: "Two adults." },
+    { name: "Duo +1", price: "69", tagline: "Three adults." },
+    { name: "Family", price: "82", tagline: "The whole crew." },
     { name: "Tanning", price: "25", tagline: "Unlimited tanning." },
   ];
   const paid = [
     { name: "Single — 1 Week", price: "35" },
     { name: "Single — 1 Month", price: "55" },
-    { name: "Single — 3 Months", price: "111" },
-    { name: "Single — 6 Months", price: "222" },
+    { name: "Single — 3 Months", price: "123" },
+    { name: "Single — 6 Months", price: "234" },
     { name: "Single — 1 Year", price: "399" },
-    { name: "Duo — 1 Year", price: "605" },
-    { name: "Duo +1 — 1 Year", price: "693" },
+    { name: "Duo — 1 Year", price: "610" },
+    { name: "Duo +1 — 1 Year", price: "703" },
     { name: "Family — 1 Year", price: "864" },
   ];
   return (
     <>
-      <ScreenHeader eyebrow="MEMBERSHIPS" title="Membership Pricing" sub="$49.99 annual fee billed July 1st · All memberships include 24/7 access, classes, sauna, & tanning." />
+      <ScreenHeader eyebrow="MEMBERSHIPS" title="Membership Pricing" sub="$49 annual fee billed July 1st · All memberships include 24/7 access, classes, sauna, & tanning." />
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {monthly.map((p) => (
           <div key={p.name} className="rounded-xl border border-border bg-card p-7">
