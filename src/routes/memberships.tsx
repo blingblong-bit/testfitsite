@@ -43,7 +43,7 @@ export const Route = createFileRoute("/memberships")({
               name: "Is there a contract for monthly memberships?",
               acceptedAnswer: {
                 "@type": "Answer",
-                text: "Monthly memberships have no contract. There is a $49.99 annual fee billed on July 1st. Paid-in-full memberships have no annual fee and offer the best value for committed training.",
+                text: "Monthly memberships have no contract. There is a $49 annual fee billed on July 1st. Paid-in-full memberships have no annual fee and offer the best value for committed training.",
               },
             },
             {
