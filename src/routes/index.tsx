@@ -9,11 +9,13 @@ const heroImg = heroAsset.url;
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "FIT Beyond Plus — More Than A Gym | Tullahoma, TN" },
-      { name: "description", content: "A serious gym in Tullahoma, TN. Premium equipment, expert coaching, 24/7 access. Join today or book a tour." },
-      { property: "og:title", content: "FIT Beyond Plus — More Than A Gym" },
-      { property: "og:description", content: "A serious gym in Tullahoma, TN. Train with intent." },
+      { title: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN" },
+      { name: "description", content: "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today." },
+      { property: "og:title", content: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN" },
+      { property: "og:description", content: "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today." },
       { property: "og:url", content: "https://fitbeyondplus.com/" },
+      { name: "twitter:title", content: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN" },
+      { name: "twitter:description", content: "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today." },
     ],
     links: [
       { rel: "preload", as: "image", href: heroImg, fetchpriority: "high" },
