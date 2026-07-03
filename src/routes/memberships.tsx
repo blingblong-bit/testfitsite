@@ -65,27 +65,27 @@ export const Route = createFileRoute("/memberships")({
 const monthlyPlans = [
   {
     name: "Single",
-    price: "37",
+    price: "39",
     tagline: "One member. Full access.",
     features: ["24/7 keycard access", "All equipment & facilities", "All classes", "Sauna & tanning beds", "Locker rooms & showers", "Free orientation session"],
   },
   {
     name: "Duo",
-    price: "55",
+    price: "59",
     tagline: "Train together.",
     features: ["2 adult members", "All equipment & facilities", "All classes", "Sauna & tanning beds", "Shared guest privileges", "Free orientation session"],
   },
   {
     name: "Duo +1",
-    price: "63",
+    price: "69",
     tagline: "Three adult members.",
     features: ["3 adult members", "All equipment & facilities", "All classes", "Sauna & tanning beds", "Shared guest privileges", "Free orientation session"],
   },
   {
     name: "Family",
-    price: "72",
+    price: "82",
     tagline: "The whole crew.",
-    features: ["Family access", "All equipment & facilities", "All classes", "Sauna & tanning beds", "Shared guest privileges", "Free orientation session"],
+    features: ["Up to 5 in the same household", "All equipment & facilities", "All classes", "Sauna & tanning beds", "Shared guest privileges", "Free orientation session"],
   },
   {
     name: "Tanning",
@@ -98,11 +98,11 @@ const monthlyPlans = [
 const paidInFullPlans = [
   { name: "Single — 1 Week", price: "35" },
   { name: "Single — 1 Month", price: "55" },
-  { name: "Single — 3 Months", price: "111" },
-  { name: "Single — 6 Months", price: "222" },
+  { name: "Single — 3 Months", price: "123" },
+  { name: "Single — 6 Months", price: "234" },
   { name: "Single — 1 Year", price: "399" },
-  { name: "Duo — 1 Year", price: "605" },
-  { name: "Duo +1 — 1 Year", price: "693" },
+  { name: "Duo — 1 Year", price: "610" },
+  { name: "Duo +1 — 1 Year", price: "703" },
   { name: "Family — 1 Year", price: "864" },
 ];
 
