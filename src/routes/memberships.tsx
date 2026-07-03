@@ -182,7 +182,7 @@ function Memberships() {
 
       <section className="container-page py-20">
         <p className="text-xs tracking-[0.3em] text-primary">MONTHLY MEMBERSHIPS</p>
-        <p className="mt-2 text-sm text-muted-foreground">$49.99 annual fee billed July 1st</p>
+        <p className="mt-2 text-sm text-muted-foreground">$49 annual fee billed July 1st</p>
 
         <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {monthlyPlans.map((p) => (
