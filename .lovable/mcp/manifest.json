@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "fit-beyond-plus-mcp",
+      "version": "0.1.0",
+      "title": "FIT Beyond Plus"
+    },
+    "tools": [
+      {
+        "name": "get_gym_info",
+        "title": "Get gym info",
+        "description": "Get FIT Beyond Plus overview: address, phone, hours, and website.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_offerings",
+        "title": "List offerings",
+        "description": "List gym offerings at FIT Beyond Plus: memberships, personal training, group classes, class schedule, and facility tour, each with a link.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "filter": {
+              "description": "Optional keyword to filter offerings by title/description.",
+              "type": "string"
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "submit_inquiry",
+        "title": "Submit inquiry",
+        "description": "Submit a new lead / inquiry to FIT Beyond Plus (name, email, optional phone, interest, and message). Use when a prospective member wants the gym to follow up.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Full name of the person."
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+              "description": "Contact email."
+            },
+            "phone": {
+              "description": "Optional phone number.",
+              "type": "string"
+            },
+            "interest": {
+              "description": "What they are interested in (e.g. Membership, Personal Training, Classes).",
+              "type": "string"
+            },
+            "message": {
+              "description": "Message from the person.",
+              "type": "string"
+            },
+            "source": {
+              "description": "Lead source. Defaults to 'MCP' when submitted through an AI assistant.",
+              "type": "string",
+              "enum": [
+                "Website",
+                "Walk-In",
+                "Phone Call",
+                "Google Business",
+                "Facebook",
+                "Instagram",
+                "Referral",
+                "Day Pass",
+                "MCP",
+                "Other"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "email"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
