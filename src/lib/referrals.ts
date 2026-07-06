@@ -204,20 +204,54 @@ export async function redeemReferral(
     .single();
   if (upErr) return { ok: false, error: upErr.message };
 
-  await supabase.from("leads").insert({
-    source: "referral_day_pass",
-    status: "redeemed",
-    name: full_name,
-    email,
-    phone,
-    referral_code: data.referral_code,
-    referred_by: data.referrer_name,
-    notes: "Redeemed free day pass from referral code.",
-    lead_type: "customer_lead",
-    lead_score: 100,
-    should_notify: false,
-    spam_reason: null,
-  });
+  const stamp = new Date().toISOString();
+  const noteEntry = `[${stamp}] Redeemed free day pass at front desk`;
+  const nowIso = stamp;
+
+  const { data: existingLeads, error: findLeadErr } = await supabase
+    .from("leads")
+    .select("id, notes")
+    .ilike("email", email)
+    .limit(1);
+  if (findLeadErr) return { ok: false, error: findLeadErr.message };
+
+  const existingLead = existingLeads?.[0];
+  if (existingLead) {
+    const notes = existingLead.notes
+      ? `${existingLead.notes}\n${noteEntry}`
+      : noteEntry;
+    await supabase
+      .from("leads")
+      .update({
+        tour_completed: true,
+        tour_date: nowIso,
+        crm_status: "Tour Completed",
+        sequence_status: "active",
+        lead_score: 100,
+        notes,
+      })
+      .eq("id", existingLead.id);
+  } else {
+    await supabase.from("leads").insert({
+      source: "referral_day_pass",
+      status: "redeemed",
+      name: full_name,
+      email,
+      phone,
+      referral_code: data.referral_code,
+      referred_by: data.referrer_name,
+      notes: noteEntry,
+      lead_type: "customer_lead",
+      lead_score: 100,
+      should_notify: true,
+      spam_reason: null,
+      crm_status: "Tour Completed",
+      tour_completed: true,
+      tour_date: nowIso,
+      sequence_status: "active",
+    });
+  }
+
 
   return { ok: true, referral: updated as Referral };
 }
