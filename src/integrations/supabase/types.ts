@@ -125,6 +125,7 @@ export type Database = {
       leads: {
         Row: {
           became_member: boolean
+          converted_at: string | null
           created_at: string
           crm_status: string | null
           day_pass_price: number | null
@@ -134,6 +135,7 @@ export type Database = {
           last_contact_method: string | null
           last_contacted_at: string | null
           last_response_at: string | null
+          last_sms_at: string | null
           lead_score: number
           lead_type: string
           membership_start_date: string | null
@@ -148,7 +150,9 @@ export type Database = {
           primary_goal: string | null
           referral_code: string | null
           referred_by: string | null
+          sequence_status: string | null
           should_notify: boolean
+          sms_opted_out: boolean
           source: string
           spam_reason: string | null
           status: string | null
@@ -158,6 +162,7 @@ export type Database = {
         }
         Insert: {
           became_member?: boolean
+          converted_at?: string | null
           created_at?: string
           crm_status?: string | null
           day_pass_price?: number | null
@@ -167,6 +172,7 @@ export type Database = {
           last_contact_method?: string | null
           last_contacted_at?: string | null
           last_response_at?: string | null
+          last_sms_at?: string | null
           lead_score?: number
           lead_type?: string
           membership_start_date?: string | null
@@ -181,7 +187,9 @@ export type Database = {
           primary_goal?: string | null
           referral_code?: string | null
           referred_by?: string | null
+          sequence_status?: string | null
           should_notify?: boolean
+          sms_opted_out?: boolean
           source: string
           spam_reason?: string | null
           status?: string | null
@@ -191,6 +199,7 @@ export type Database = {
         }
         Update: {
           became_member?: boolean
+          converted_at?: string | null
           created_at?: string
           crm_status?: string | null
           day_pass_price?: number | null
@@ -200,6 +209,7 @@ export type Database = {
           last_contact_method?: string | null
           last_contacted_at?: string | null
           last_response_at?: string | null
+          last_sms_at?: string | null
           lead_score?: number
           lead_type?: string
           membership_start_date?: string | null
@@ -214,7 +224,9 @@ export type Database = {
           primary_goal?: string | null
           referral_code?: string | null
           referred_by?: string | null
+          sequence_status?: string | null
           should_notify?: boolean
+          sms_opted_out?: boolean
           source?: string
           spam_reason?: string | null
           status?: string | null
@@ -304,6 +316,56 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      sms_conversation_log: {
+        Row: {
+          body: string
+          created_at: string
+          direction: string
+          from_ai: boolean
+          id: string
+          lead_id: string | null
+          metadata: Json | null
+          phone: string
+          provider_message_id: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          direction: string
+          from_ai?: boolean
+          id?: string
+          lead_id?: string | null
+          metadata?: Json | null
+          phone: string
+          provider_message_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          direction?: string
+          from_ai?: boolean
+          id?: string
+          lead_id?: string | null
+          metadata?: Json | null
+          phone?: string
+          provider_message_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_conversation_log_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppressed_emails: {
         Row: {
