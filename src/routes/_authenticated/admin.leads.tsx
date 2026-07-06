@@ -911,6 +911,19 @@ function relativeDays(iso: string | null): string {
   return `${d} days ago`;
 }
 
+function formatLastSmsAt(iso: string): string {
+  const d = new Date(iso);
+  const str = d.toLocaleString("en-US", {
+    timeZone: "America/Chicago",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+  return str.replace(", ", " at ");
+}
+
 function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void> }) {
   const [expanded, setExpanded] = useState(false);
   const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
