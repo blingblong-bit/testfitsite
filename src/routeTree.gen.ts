@@ -36,6 +36,7 @@ import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lova
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicWebhooksMakeLeadUpdateRouteImport } from './routes/api/public/webhooks/make-lead-update'
+import { Route as ApiPublicWebhooksCalendlyRouteImport } from './routes/api/public/webhooks/calendly'
 import { Route as ApiPublicHooksSnapshotMonthRouteImport } from './routes/api/public/hooks/snapshot-month'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
@@ -179,6 +180,12 @@ const ApiPublicWebhooksMakeLeadUpdateRoute =
     path: '/api/public/webhooks/make-lead-update',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWebhooksCalendlyRoute =
+  ApiPublicWebhooksCalendlyRouteImport.update({
+    id: '/api/public/webhooks/calendly',
+    path: '/api/public/webhooks/calendly',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksSnapshotMonthRoute =
   ApiPublicHooksSnapshotMonthRouteImport.update({
     id: '/api/public/hooks/snapshot-month',
@@ -210,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
+  '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -238,6 +246,7 @@ export interface FileRoutesByTo {
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
+  '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -269,6 +278,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
+  '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/snapshot-month'
+    | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/make-lead-update'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/snapshot-month'
+    | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/make-lead-update'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -358,6 +370,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/snapshot-month'
+    | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/make-lead-update'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -384,6 +397,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksSnapshotMonthRoute: typeof ApiPublicHooksSnapshotMonthRoute
+  ApiPublicWebhooksCalendlyRoute: typeof ApiPublicWebhooksCalendlyRoute
   ApiPublicWebhooksMakeLeadUpdateRoute: typeof ApiPublicWebhooksMakeLeadUpdateRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -581,6 +595,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksMakeLeadUpdateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/webhooks/calendly': {
+      id: '/api/public/webhooks/calendly'
+      path: '/api/public/webhooks/calendly'
+      fullPath: '/api/public/webhooks/calendly'
+      preLoaderRoute: typeof ApiPublicWebhooksCalendlyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/snapshot-month': {
       id: '/api/public/hooks/snapshot-month'
       path: '/api/public/hooks/snapshot-month'
@@ -640,6 +661,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksSnapshotMonthRoute: ApiPublicHooksSnapshotMonthRoute,
+  ApiPublicWebhooksCalendlyRoute: ApiPublicWebhooksCalendlyRoute,
   ApiPublicWebhooksMakeLeadUpdateRoute: ApiPublicWebhooksMakeLeadUpdateRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
