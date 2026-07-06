@@ -1097,6 +1097,7 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
             {lead.last_response_at && <>{lead.last_contact_method ? " · " : ""}Last response: <span className="text-foreground">{relativeDays(lead.last_response_at)}</span></>}
             {lead.next_follow_up_date && <>{(lead.last_contact_method || lead.last_response_at) ? " · " : ""}Follow up: <span className="text-foreground">{new Date(lead.next_follow_up_date + "T00:00:00").toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span></>}
             {lead.next_action && <>{(lead.last_contact_method || lead.last_response_at || lead.next_follow_up_date) ? " · " : ""}Next: <span className="text-foreground">{lead.next_action}</span></>}
+            {lead.last_sms_at && <>{(lead.last_contact_method || lead.last_response_at || lead.next_follow_up_date || lead.next_action) ? " · " : ""}Last text: <span className="text-foreground">{formatLastSmsAt(lead.last_sms_at)}</span></>}
           </p>
 
 
