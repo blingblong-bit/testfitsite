@@ -99,6 +99,8 @@ type Lead = {
   membership_start_date: string | null;
   sequence_status: string | null;
   converted_at: string | null;
+  last_sms_at: string | null;
+  sms_opted_out: boolean;
 };
 
 
