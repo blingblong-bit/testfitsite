@@ -95,6 +95,8 @@ type Lead = {
   tour_date: string | null;
   became_member: boolean;
   membership_start_date: string | null;
+  sequence_status: string | null;
+  converted_at: string | null;
 };
 
 
