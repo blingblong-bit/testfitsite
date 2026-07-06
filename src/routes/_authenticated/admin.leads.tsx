@@ -962,7 +962,7 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
       converted_at: now,
       sequence_status: "completed",
     });
-    if (lead.phone) {
+    if (lead.phone && !lead.sms_opted_out) {
       try {
         const res = await sendWelcome({
           data: { lead_id: lead.id, name: lead.name, phone: lead.phone },
@@ -980,7 +980,8 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
       }
     } else {
       toast.success("Marked as converted");
-      toast.message("No phone on file — welcome text skipped");
+      if (!lead.phone) toast.message("No phone on file — welcome text skipped");
+      else if (lead.sms_opted_out) toast.message("SMS opted out — welcome text skipped");
     }
     setConvertBusy(false);
   }
