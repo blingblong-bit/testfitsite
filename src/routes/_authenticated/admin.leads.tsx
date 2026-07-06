@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Bell, BellOff, Home, ChevronDown, ChevronUp, Phone, Mail, Calendar, Search, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { sendWelcomeSms } from "@/lib/send-welcome-sms.functions";
 import { AnalyticsView } from "@/components/AnalyticsView";
 
 type CrmStatus =
@@ -95,6 +97,8 @@ type Lead = {
   tour_date: string | null;
   became_member: boolean;
   membership_start_date: string | null;
+  sequence_status: string | null;
+  converted_at: string | null;
 };
 
 
@@ -909,7 +913,70 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
   const [expanded, setExpanded] = useState(false);
   const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
+  const [convertBusy, setConvertBusy] = useState(false);
+  const [showLostReason, setShowLostReason] = useState(false);
+  const [lostReason, setLostReason] = useState("");
+  const sendWelcome = useServerFn(sendWelcomeSms);
   const priority = computePriority(lead);
+
+  const canConvert =
+    lead.lead_type === "customer_lead" &&
+    lead.crm_status !== "Joined" &&
+    lead.crm_status !== "Lost Lead";
+
+  async function markConverted() {
+    if (convertBusy) return;
+    setConvertBusy(true);
+    const today = new Date().toISOString().slice(0, 10);
+    const now = new Date().toISOString();
+    await updateLead(lead.id, {
+      became_member: true,
+      crm_status: "Joined",
+      membership_start_date: today,
+      converted_at: now,
+      sequence_status: "completed",
+    });
+    if (lead.phone) {
+      try {
+        const res = await sendWelcome({
+          data: { lead_id: lead.id, name: lead.name, phone: lead.phone },
+        });
+        if (res.ok) {
+          toast.success("Marked as converted — welcome text sent!");
+        } else {
+          toast.success("Marked as converted");
+          toast.error(`Welcome text failed: ${res.error}`);
+        }
+      } catch (e) {
+        toast.success("Marked as converted");
+        toast.error("Welcome text failed to send");
+        console.error(e);
+      }
+    } else {
+      toast.success("Marked as converted");
+      toast.message("No phone on file — welcome text skipped");
+    }
+    setConvertBusy(false);
+  }
+
+  async function markNotConverted(reason: string) {
+    if (convertBusy) return;
+    setConvertBusy(true);
+    const stamp = new Date().toISOString();
+    const entry = `[${stamp}] Not converted — reason: ${reason}`;
+    const nextNotes = lead.notes ? `${lead.notes}\n${entry}` : entry;
+    await updateLead(lead.id, {
+      crm_status: "Lost Lead",
+      sequence_status: "completed",
+      notes: nextNotes,
+    });
+    setNotesDraft(nextNotes);
+    setShowLostReason(false);
+    setLostReason("");
+    toast.success("Lead marked as lost");
+    setConvertBusy(false);
+  }
+
 
 
   async function markContactedToday() {
@@ -1169,7 +1236,25 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
               className="w-full rounded-md border border-border bg-background p-3 text-sm"
               placeholder="Internal notes about this lead…"
             />
-            <div className="mt-2 flex justify-end">
+            <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
+              {canConvert && (
+                <>
+                  <button
+                    onClick={markConverted}
+                    disabled={convertBusy}
+                    className="h-9 rounded-md bg-green-600 px-4 text-xs font-semibold uppercase tracking-widest text-white hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {convertBusy ? "Working…" : "Converted"}
+                  </button>
+                  <button
+                    onClick={() => setShowLostReason((v) => !v)}
+                    disabled={convertBusy}
+                    className="h-9 rounded-md border border-red-500 px-4 text-xs font-semibold uppercase tracking-widest text-red-500 hover:bg-red-500/10 disabled:opacity-50"
+                  >
+                    Not Converted
+                  </button>
+                </>
+              )}
               <button
                 onClick={saveNotes}
                 disabled={savingNotes || notesDraft === (lead.notes ?? "")}
@@ -1178,6 +1263,38 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
                 {savingNotes ? "Saving…" : "Save Notes"}
               </button>
             </div>
+            {showLostReason && canConvert && (
+              <div className="mt-3 flex flex-wrap items-center justify-end gap-2 rounded-md border border-border bg-secondary/40 p-3">
+                <span className="text-xs uppercase tracking-widest text-muted-foreground mr-auto">
+                  Reason
+                </span>
+                <select
+                  value={lostReason}
+                  onChange={(e) => setLostReason(e.target.value)}
+                  className="h-9 rounded-md border border-border bg-background px-3 text-sm"
+                >
+                  <option value="">Select reason…</option>
+                  <option value="No show">No show</option>
+                  <option value="Too expensive">Too expensive</option>
+                  <option value="Not ready">Not ready</option>
+                  <option value="Chose another gym">Chose another gym</option>
+                  <option value="Other">Other</option>
+                </select>
+                <button
+                  onClick={() => lostReason && markNotConverted(lostReason)}
+                  disabled={!lostReason || convertBusy}
+                  className="h-9 rounded-md bg-red-500 px-4 text-xs font-semibold uppercase tracking-widest text-white disabled:opacity-50"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => { setShowLostReason(false); setLostReason(""); }}
+                  className="h-9 rounded-md border border-border px-4 text-xs font-semibold uppercase tracking-widest hover:bg-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
