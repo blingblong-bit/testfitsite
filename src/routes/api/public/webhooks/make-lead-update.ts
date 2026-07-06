@@ -81,7 +81,14 @@ export const Route = createFileRoute("/api/public/webhooks/make-lead-update")({
         if (!lead) return json(404, { ok: false, error: "lead_not_found" });
 
         // Build update payload with only present fields
-        const update: Record<string, unknown> = {};
+        const update: {
+          crm_status?: string;
+          sequence_status?: string;
+          last_contacted_at?: string;
+          last_sms_at?: string;
+          sms_opted_out?: boolean;
+          notes?: string;
+        } = {};
         if (data.crm_status !== undefined) update.crm_status = data.crm_status;
         if (data.sequence_status !== undefined)
           update.sequence_status = data.sequence_status;
