@@ -903,6 +903,17 @@ function LastContactBadge({ iso }: { iso: string | null }) {
   return <span className={"inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest " + cls}>{label}</span>;
 }
 
+function SequenceStatusBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; cls: string }> = {
+    active: { label: "Sequence: Active", cls: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40" },
+    paused: { label: "Sequence: Paused", cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40" },
+    completed: { label: "Sequence: Completed", cls: "bg-gray-500/15 text-gray-700 dark:text-gray-400 border-gray-500/40" },
+    opted_out: { label: "Sequence: Opted Out", cls: "bg-destructive/15 text-destructive border-destructive/40" },
+  };
+  const { label, cls } = map[status] ?? { label: status, cls: "bg-secondary text-muted-foreground border-border" };
+  return <span className={"inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest " + cls}>{label}</span>;
+}
+
 function relativeDays(iso: string | null): string {
   const d = daysSince(iso);
   if (d === null) return "Never";
