@@ -99,6 +99,8 @@ type Lead = {
   membership_start_date: string | null;
   sequence_status: string | null;
   converted_at: string | null;
+  last_sms_at: string | null;
+  sms_opted_out: boolean;
 };
 
 
@@ -901,12 +903,36 @@ function LastContactBadge({ iso }: { iso: string | null }) {
   return <span className={"inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest " + cls}>{label}</span>;
 }
 
+function SequenceStatusBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; cls: string }> = {
+    active: { label: "Sequence: Active", cls: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40" },
+    paused: { label: "Sequence: Paused", cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40" },
+    completed: { label: "Sequence: Completed", cls: "bg-gray-500/15 text-gray-700 dark:text-gray-400 border-gray-500/40" },
+    opted_out: { label: "Sequence: Opted Out", cls: "bg-destructive/15 text-destructive border-destructive/40" },
+  };
+  const { label, cls } = map[status] ?? { label: status, cls: "bg-secondary text-muted-foreground border-border" };
+  return <span className={"inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest " + cls}>{label}</span>;
+}
+
 function relativeDays(iso: string | null): string {
   const d = daysSince(iso);
   if (d === null) return "Never";
   if (d === 0) return "Today";
   if (d === 1) return "1 day ago";
   return `${d} days ago`;
+}
+
+function formatLastSmsAt(iso: string): string {
+  const d = new Date(iso);
+  const str = d.toLocaleString("en-US", {
+    timeZone: "America/Chicago",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+  return str.replace(", ", " at ");
 }
 
 function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void> }) {
@@ -936,7 +962,7 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
       converted_at: now,
       sequence_status: "completed",
     });
-    if (lead.phone) {
+    if (lead.phone && !lead.sms_opted_out) {
       try {
         const res = await sendWelcome({
           data: { lead_id: lead.id, name: lead.name, phone: lead.phone },
@@ -954,7 +980,8 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
       }
     } else {
       toast.success("Marked as converted");
-      toast.message("No phone on file — welcome text skipped");
+      if (!lead.phone) toast.message("No phone on file — welcome text skipped");
+      else if (lead.sms_opted_out) toast.message("SMS opted out — welcome text skipped");
     }
     setConvertBusy(false);
   }
@@ -1034,8 +1061,22 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
         <div className="flex-1 min-w-[240px]">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-semibold">{lead.name}</h2>
-            <PriorityBadge p={priority} />
-            <CrmStatusBadge status={(lead.crm_status ?? "New Lead") as CrmStatus} />
+            {lead.crm_status === "Joined" ? (
+              <span className="inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40">
+                Member
+              </span>
+            ) : (
+              <>
+                <PriorityBadge p={priority} />
+                <CrmStatusBadge status={(lead.crm_status ?? "New Lead") as CrmStatus} />
+              </>
+            )}
+            {lead.sequence_status && <SequenceStatusBadge status={lead.sequence_status} />}
+            {lead.sms_opted_out && (
+              <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-destructive/15 text-destructive border-destructive/40">
+                SMS Opted Out
+              </span>
+            )}
             <LastContactBadge iso={lead.last_contacted_at} />
           </div>
           <p className="mt-2 text-sm text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
@@ -1057,6 +1098,7 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
             {lead.last_response_at && <>{lead.last_contact_method ? " · " : ""}Last response: <span className="text-foreground">{relativeDays(lead.last_response_at)}</span></>}
             {lead.next_follow_up_date && <>{(lead.last_contact_method || lead.last_response_at) ? " · " : ""}Follow up: <span className="text-foreground">{new Date(lead.next_follow_up_date + "T00:00:00").toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span></>}
             {lead.next_action && <>{(lead.last_contact_method || lead.last_response_at || lead.next_follow_up_date) ? " · " : ""}Next: <span className="text-foreground">{lead.next_action}</span></>}
+            {lead.last_sms_at && <>{(lead.last_contact_method || lead.last_response_at || lead.next_follow_up_date || lead.next_action) ? " · " : ""}Last text: <span className="text-foreground">{formatLastSmsAt(lead.last_sms_at)}</span></>}
           </p>
 
 
