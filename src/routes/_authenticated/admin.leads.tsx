@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Bell, BellOff, Home, ChevronDown, ChevronUp, Phone, Mail, Calendar, Search, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { sendWelcomeSms } from "@/lib/send-welcome-sms.functions";
 import { AnalyticsView } from "@/components/AnalyticsView";
 
 type CrmStatus =
