@@ -913,7 +913,70 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
   const [expanded, setExpanded] = useState(false);
   const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
+  const [convertBusy, setConvertBusy] = useState(false);
+  const [showLostReason, setShowLostReason] = useState(false);
+  const [lostReason, setLostReason] = useState("");
+  const sendWelcome = useServerFn(sendWelcomeSms);
   const priority = computePriority(lead);
+
+  const canConvert =
+    lead.lead_type === "customer_lead" &&
+    lead.crm_status !== "Joined" &&
+    lead.crm_status !== "Lost Lead";
+
+  async function markConverted() {
+    if (convertBusy) return;
+    setConvertBusy(true);
+    const today = new Date().toISOString().slice(0, 10);
+    const now = new Date().toISOString();
+    await updateLead(lead.id, {
+      became_member: true,
+      crm_status: "Joined",
+      membership_start_date: today,
+      converted_at: now,
+      sequence_status: "completed",
+    });
+    if (lead.phone) {
+      try {
+        const res = await sendWelcome({
+          data: { lead_id: lead.id, name: lead.name, phone: lead.phone },
+        });
+        if (res.ok) {
+          toast.success("Marked as converted — welcome text sent!");
+        } else {
+          toast.success("Marked as converted");
+          toast.error(`Welcome text failed: ${res.error}`);
+        }
+      } catch (e) {
+        toast.success("Marked as converted");
+        toast.error("Welcome text failed to send");
+        console.error(e);
+      }
+    } else {
+      toast.success("Marked as converted");
+      toast.message("No phone on file — welcome text skipped");
+    }
+    setConvertBusy(false);
+  }
+
+  async function markNotConverted(reason: string) {
+    if (convertBusy) return;
+    setConvertBusy(true);
+    const stamp = new Date().toISOString();
+    const entry = `[${stamp}] Not converted — reason: ${reason}`;
+    const nextNotes = lead.notes ? `${lead.notes}\n${entry}` : entry;
+    await updateLead(lead.id, {
+      crm_status: "Lost Lead",
+      sequence_status: "completed",
+      notes: nextNotes,
+    });
+    setNotesDraft(nextNotes);
+    setShowLostReason(false);
+    setLostReason("");
+    toast.success("Lead marked as lost");
+    setConvertBusy(false);
+  }
+
 
 
   async function markContactedToday() {
