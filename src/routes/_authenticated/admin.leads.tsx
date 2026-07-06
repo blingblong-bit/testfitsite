@@ -1060,8 +1060,22 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
         <div className="flex-1 min-w-[240px]">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-semibold">{lead.name}</h2>
-            <PriorityBadge p={priority} />
-            <CrmStatusBadge status={(lead.crm_status ?? "New Lead") as CrmStatus} />
+            {lead.crm_status === "Joined" ? (
+              <span className="inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40">
+                Member
+              </span>
+            ) : (
+              <>
+                <PriorityBadge p={priority} />
+                <CrmStatusBadge status={(lead.crm_status ?? "New Lead") as CrmStatus} />
+              </>
+            )}
+            {lead.sequence_status && <SequenceStatusBadge status={lead.sequence_status} />}
+            {lead.sms_opted_out && (
+              <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-destructive/15 text-destructive border-destructive/40">
+                SMS Opted Out
+              </span>
+            )}
             <LastContactBadge iso={lead.last_contacted_at} />
           </div>
           <p className="mt-2 text-sm text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
