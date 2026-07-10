@@ -4,6 +4,7 @@ import bjjAdultAsset from "@/assets/bjj-adult.jpg.asset.json";
 import bjjKidsAsset from "@/assets/bjj-kids.jpg.asset.json";
 import bjjGuardPassAsset from "@/assets/bjj-guard-pass.jpg.asset.json";
 import bjjInstructionAsset from "@/assets/bjj-instruction.jpg.asset.json";
+import bjjRearControlAsset from "@/assets/bjj-rear-control.jpg.asset.json";
 
 export const Route = createFileRoute("/combat-sports/bjj")({
   head: () => ({
