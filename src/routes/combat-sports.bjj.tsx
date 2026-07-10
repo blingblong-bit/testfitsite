@@ -105,12 +105,8 @@ function BjjPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
-              src: bjjAdultAsset.url,
-              alt: "Adult Brazilian Jiu-Jitsu drilling technique at FIT Beyond Plus",
-            },
-            {
-              src: bjjKidsAsset.url,
-              alt: "Kids Brazilian Jiu-Jitsu class at FIT Beyond Plus in Tullahoma",
+              src: bjjRearControlAsset.url,
+              alt: "Adult Brazilian Jiu-Jitsu rear control at FIT Beyond Plus in Tullahoma",
             },
             {
               src: bjjGuardPassAsset.url,
