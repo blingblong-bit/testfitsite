@@ -2,9 +2,12 @@
 // Sends the personalized first SMS immediately for qualifying leads.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
+const TEST_EMAIL = "smstest@fitbeyondplus.com";
+
 type LeadRow = {
   id: string;
   name: string | null;
+  email: string | null;
   phone: string | null;
   interest: string | null;
   source: string | null;
@@ -131,6 +134,35 @@ Deno.serve(async (req) => {
     const to = normalizePhone(lead.phone);
     const body = buildFirstMessage(lead.name, lead.interest, lead.source);
 
+    const isTest = (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL;
+    const nowIso = new Date().toISOString();
+
+    if (isTest) {
+      const testBody = `TEST MODE - SMS not sent | ${body}`;
+      await supabase
+        .from("leads")
+        .update({
+          last_sms_at: nowIso,
+          sequence_status: "active",
+          crm_status: "Contacted",
+        })
+        .eq("id", lead.id);
+      await supabase.from("sms_conversation_log").insert({
+        lead_id: lead.id,
+        phone: to,
+        direction: "outbound",
+        body: testBody,
+        from_ai: false,
+        provider_message_id: null,
+        status: "test_mode",
+        metadata: { kind: "initial", test_mode: true },
+      });
+      return new Response(
+        JSON.stringify({ ok: true, test_mode: true, message: body }),
+        { headers: { "Content-Type": "application/json" } },
+      );
+    }
+
     const send = await sendTwilioSms(to, body);
     if (!send.ok) {
       console.error("[send-initial-lead-sms] twilio error", send.error);
@@ -140,7 +172,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const nowIso = new Date().toISOString();
     await supabase
       .from("leads")
       .update({

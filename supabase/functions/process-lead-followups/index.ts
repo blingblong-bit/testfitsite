@@ -1,6 +1,8 @@
 // Runs every 15 minutes via pg_cron. Sends drip SMS #1/#2/#3 to active leads.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
+const TEST_EMAIL = "smstest@fitbeyondplus.com";
+
 function firstName(name: string | null): string {
   if (!name) return "there";
   return name.trim().split(/\s+/)[0] || "there";
@@ -76,7 +78,7 @@ Deno.serve(async (_req) => {
 
     const { data: leads, error } = await supabase
       .from("leads")
-      .select("id, name, phone, interest, created_at, last_sms_at, last_response_at, sequence_status, crm_status")
+      .select("id, name, email, phone, interest, created_at, last_sms_at, last_response_at, sequence_status, crm_status")
       .eq("lead_type", "customer_lead")
       .eq("should_notify", true)
       .eq("sms_opted_out", false)
@@ -143,6 +145,25 @@ Deno.serve(async (_req) => {
         }
 
         if (!body || !update) continue;
+
+        const isTest = (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL;
+
+        if (isTest) {
+          await supabase.from("leads").update(update).eq("id", lead.id);
+          await supabase.from("sms_conversation_log").insert({
+            lead_id: lead.id,
+            phone: to,
+            direction: "outbound",
+            body: `TEST MODE - SMS not sent | ${body}`,
+            from_ai: false,
+            provider_message_id: null,
+            status: "test_mode",
+            metadata: { kind: "drip", step, test_mode: true },
+          });
+          sent++;
+          results.push({ lead_id: lead.id, step, ok: true, test_mode: true, message: body });
+          continue;
+        }
 
         const send = await sendTwilioSms(to, body);
         if (!send.ok) {
