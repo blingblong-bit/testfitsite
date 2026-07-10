@@ -146,6 +146,25 @@ Deno.serve(async (_req) => {
 
         if (!body || !update) continue;
 
+        const isTest = (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL;
+
+        if (isTest) {
+          await supabase.from("leads").update(update).eq("id", lead.id);
+          await supabase.from("sms_conversation_log").insert({
+            lead_id: lead.id,
+            phone: to,
+            direction: "outbound",
+            body: `TEST MODE - SMS not sent | ${body}`,
+            from_ai: false,
+            provider_message_id: null,
+            status: "test_mode",
+            metadata: { kind: "drip", step, test_mode: true },
+          });
+          sent++;
+          results.push({ lead_id: lead.id, step, ok: true, test_mode: true, message: body });
+          continue;
+        }
+
         const send = await sendTwilioSms(to, body);
         if (!send.ok) {
           console.error(`[process-lead-followups] send failed lead=${lead.id} step=${step}`, send.error);
