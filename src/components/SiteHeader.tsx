@@ -23,7 +23,7 @@ export function SiteHeader() {
           <img src={logo} alt="FIT Beyond Plus" className="h-10 w-auto" />
         </Link>
 
-        <nav className="hidden lg:flex shrink-0 items-center gap-6">
+        <nav className="hidden lg:flex shrink-0 items-center gap-5 xl:gap-6 ml-8 xl:ml-12">
 
           {nav.map((n) => (
             <Link
@@ -38,16 +38,16 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden lg:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-2">
           <Link
             to="/contact"
-            className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-semibold uppercase tracking-wide text-foreground transition-colors hover:bg-secondary"
+            className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs font-semibold uppercase tracking-wide text-foreground transition-colors hover:bg-secondary"
           >
             Book a Tour
           </Link>
           <Link
             to="/memberships"
-            className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-all hover:brightness-110"
+            className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-semibold uppercase tracking-wide text-primary-foreground transition-all hover:brightness-110"
             style={{ boxShadow: "var(--shadow-glow)" }}
           >
             Join the Gym
