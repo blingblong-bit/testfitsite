@@ -4,6 +4,7 @@ import bjjAdultAsset from "@/assets/bjj-adult.jpg.asset.json";
 import bjjKidsAsset from "@/assets/bjj-kids.jpg.asset.json";
 import bjjGuardPassAsset from "@/assets/bjj-guard-pass.jpg.asset.json";
 import bjjInstructionAsset from "@/assets/bjj-instruction.jpg.asset.json";
+import bjjRearControlAsset from "@/assets/bjj-rear-control.jpg.asset.json";
 
 export const Route = createFileRoute("/combat-sports/bjj")({
   head: () => ({
@@ -104,12 +105,8 @@ function BjjPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
-              src: bjjAdultAsset.url,
-              alt: "Adult Brazilian Jiu-Jitsu drilling technique at FIT Beyond Plus",
-            },
-            {
-              src: bjjKidsAsset.url,
-              alt: "Kids Brazilian Jiu-Jitsu class at FIT Beyond Plus in Tullahoma",
+              src: bjjRearControlAsset.url,
+              alt: "Adult Brazilian Jiu-Jitsu rear control at FIT Beyond Plus in Tullahoma",
             },
             {
               src: bjjGuardPassAsset.url,
