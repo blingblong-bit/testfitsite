@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Phone, Mail, ArrowLeft, ArrowRight } from "lucide-react";
 import bjjAdultAsset from "@/assets/bjj-adult.jpg.asset.json";
 import bjjKidsAsset from "@/assets/bjj-kids.jpg.asset.json";
+import bjjGuardPassAsset from "@/assets/bjj-guard-pass.jpg.asset.json";
+import bjjInstructionAsset from "@/assets/bjj-instruction.jpg.asset.json";
 
 export const Route = createFileRoute("/combat-sports/bjj")({
   head: () => ({
@@ -110,8 +112,12 @@ function BjjPage() {
               alt: "Kids Brazilian Jiu-Jitsu class at FIT Beyond Plus in Tullahoma",
             },
             {
-              src: bjjAdultAsset.url,
-              alt: "Adult Brazilian Jiu-Jitsu open mat session at FIT Beyond Plus",
+              src: bjjGuardPassAsset.url,
+              alt: "Adult Brazilian Jiu-Jitsu grappling exchange at FIT Beyond Plus",
+            },
+            {
+              src: bjjInstructionAsset.url,
+              alt: "BJJ coach demonstrating a technique during class at FIT Beyond Plus",
             },
           ].map((img, idx) => (
             <figure
