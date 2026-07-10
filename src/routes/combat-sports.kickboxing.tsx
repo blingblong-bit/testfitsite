@@ -2,8 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Phone, Mail, ArrowLeft, ArrowRight } from "lucide-react";
 import kickboxingAdultAsset from "@/assets/kickboxing-adult.jpg.asset.json";
 import kickboxingKidsAsset from "@/assets/kickboxing-kids.jpg.asset.json";
-import kickboxingAsset from "@/assets/kickboxing.jpg.asset.json";
-import kickboxingLiftAsset from "@/assets/kickboxing-lift.jpg.asset.json";
+import kickboxingPadsTealAsset from "@/assets/kickboxing-pads-teal.jpg.asset.json";
+import kickboxingPadsRedAsset from "@/assets/kickboxing-pads-red.jpg.asset.json";
+import kickboxingStanceDrillAsset from "@/assets/kickboxing-stance-drill.jpg.asset.json";
+import kickboxingKickBagAsset from "@/assets/kickboxing-kick-bag.jpg.asset.json";
 
 export const Route = createFileRoute("/combat-sports/kickboxing")({
   head: () => ({
@@ -98,16 +100,16 @@ function KickboxingPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
-              src: kickboxingAsset.url,
-              alt: "Kickboxing class combinations and drills at FIT Beyond Plus in Tullahoma",
+              src: kickboxingPadsTealAsset.url,
+              alt: "Adult kickboxing partner pad work with teal gloves at FIT Beyond Plus in Tullahoma",
             },
             {
-              src: kickboxingLiftAsset.url,
-              alt: "Kickboxing conditioning and strength work at FIT Beyond Plus",
+              src: kickboxingStanceDrillAsset.url,
+              alt: "Coach leading kickboxing stance and guard drills at FIT Beyond Plus",
             },
             {
-              src: kickboxingAdultAsset.url,
-              alt: "Adult kickboxing pad work at FIT Beyond Plus in Tullahoma",
+              src: kickboxingKickBagAsset.url,
+              alt: "Kickboxing high kick on heavy bag at FIT Beyond Plus in Tullahoma",
             },
           ].map((img) => (
             <figure
