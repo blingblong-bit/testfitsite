@@ -23,7 +23,7 @@ export function SiteHeader() {
           <img src={logo} alt="FIT Beyond Plus" className="h-10 w-auto" />
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-7">
+        <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
           {nav.map((n) => (
             <Link
               key={n.to}
