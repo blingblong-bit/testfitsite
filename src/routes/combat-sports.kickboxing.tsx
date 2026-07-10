@@ -125,8 +125,8 @@ function KickboxingPage() {
       <section className="border-y border-border bg-card">
         <div className="container-page py-16 grid lg:grid-cols-2 gap-10 items-start">
           <img
-            src={kickboxingKidsAsset.url}
-            alt="Kids kickboxing class training at FIT Beyond Plus in Tullahoma"
+            src={kickboxingStanceDrillAsset.url}
+            alt="Coach leading kickboxing stance and guard drills at FIT Beyond Plus"
             className="w-full h-72 md:h-96 object-cover rounded-lg border border-border"
           />
           <div>
