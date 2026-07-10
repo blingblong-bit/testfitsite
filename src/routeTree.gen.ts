@@ -16,13 +16,17 @@ import { Route as MembershipsRouteImport } from './routes/memberships'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as FacilityRouteImport } from './routes/facility'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CombatSportsRouteImport } from './routes/combat-sports'
 import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CombatSportsIndexRouteImport } from './routes/combat-sports.index'
 import { Route as ClassesIndexRouteImport } from './routes/classes.index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as CombatSportsKickboxingRouteImport } from './routes/combat-sports.kickboxing'
+import { Route as CombatSportsBjjRouteImport } from './routes/combat-sports.bjj'
 import { Route as ClassesScheduleRouteImport } from './routes/classes.schedule'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AuthenticatedStaffHomeRouteImport } from './routes/_authenticated/staff-home'
@@ -74,6 +78,11 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CombatSportsRoute = CombatSportsRouteImport.update({
+  id: '/combat-sports',
+  path: '/combat-sports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClassesRoute = ClassesRouteImport.update({
   id: '/classes',
   path: '/classes',
@@ -98,6 +107,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CombatSportsIndexRoute = CombatSportsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CombatSportsRoute,
+} as any)
 const ClassesIndexRoute = ClassesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -107,6 +121,16 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CombatSportsKickboxingRoute = CombatSportsKickboxingRouteImport.update({
+  id: '/kickboxing',
+  path: '/kickboxing',
+  getParentRoute: () => CombatSportsRoute,
+} as any)
+const CombatSportsBjjRoute = CombatSportsBjjRouteImport.update({
+  id: '/bjj',
+  path: '/bjj',
+  getParentRoute: () => CombatSportsRoute,
 } as any)
 const ClassesScheduleRoute = ClassesScheduleRouteImport.update({
   id: '/schedule',
@@ -198,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/classes': typeof ClassesRouteWithChildren
+  '/combat-sports': typeof CombatSportsRouteWithChildren
   '/contact': typeof ContactRoute
   '/facility': typeof FacilityRoute
   '/mcp': typeof McpRoute
@@ -211,8 +236,11 @@ export interface FileRoutesByFullPath {
   '/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
   '/classes/schedule': typeof ClassesScheduleRoute
+  '/combat-sports/bjj': typeof CombatSportsBjjRoute
+  '/combat-sports/kickboxing': typeof CombatSportsKickboxingRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/classes/': typeof ClassesIndexRoute
+  '/combat-sports/': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -240,8 +268,11 @@ export interface FileRoutesByTo {
   '/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
   '/classes/schedule': typeof ClassesScheduleRoute
+  '/combat-sports/bjj': typeof CombatSportsBjjRoute
+  '/combat-sports/kickboxing': typeof CombatSportsKickboxingRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/classes': typeof ClassesIndexRoute
+  '/combat-sports': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -259,6 +290,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/classes': typeof ClassesRouteWithChildren
+  '/combat-sports': typeof CombatSportsRouteWithChildren
   '/contact': typeof ContactRoute
   '/facility': typeof FacilityRoute
   '/mcp': typeof McpRoute
@@ -272,8 +304,11 @@ export interface FileRoutesById {
   '/_authenticated/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
   '/classes/schedule': typeof ClassesScheduleRoute
+  '/combat-sports/bjj': typeof CombatSportsBjjRoute
+  '/combat-sports/kickboxing': typeof CombatSportsKickboxingRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/classes/': typeof ClassesIndexRoute
+  '/combat-sports/': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -291,6 +326,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/classes'
+    | '/combat-sports'
     | '/contact'
     | '/facility'
     | '/mcp'
@@ -304,8 +340,11 @@ export interface FileRouteTypes {
     | '/staff-home'
     | '/admin/login'
     | '/classes/schedule'
+    | '/combat-sports/bjj'
+    | '/combat-sports/kickboxing'
     | '/email/unsubscribe'
     | '/classes/'
+    | '/combat-sports/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/leads'
     | '/lovable/email/suppression'
@@ -333,8 +372,11 @@ export interface FileRouteTypes {
     | '/staff-home'
     | '/admin/login'
     | '/classes/schedule'
+    | '/combat-sports/bjj'
+    | '/combat-sports/kickboxing'
     | '/email/unsubscribe'
     | '/classes'
+    | '/combat-sports'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/leads'
     | '/lovable/email/suppression'
@@ -351,6 +393,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/classes'
+    | '/combat-sports'
     | '/contact'
     | '/facility'
     | '/mcp'
@@ -364,8 +407,11 @@ export interface FileRouteTypes {
     | '/_authenticated/staff-home'
     | '/admin/login'
     | '/classes/schedule'
+    | '/combat-sports/bjj'
+    | '/combat-sports/kickboxing'
     | '/email/unsubscribe'
     | '/classes/'
+    | '/combat-sports/'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/leads'
     | '/lovable/email/suppression'
@@ -383,6 +429,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   ClassesRoute: typeof ClassesRouteWithChildren
+  CombatSportsRoute: typeof CombatSportsRouteWithChildren
   ContactRoute: typeof ContactRoute
   FacilityRoute: typeof FacilityRoute
   McpRoute: typeof McpRoute
@@ -455,6 +502,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/combat-sports': {
+      id: '/combat-sports'
+      path: '/combat-sports'
+      fullPath: '/combat-sports'
+      preLoaderRoute: typeof CombatSportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/classes': {
       id: '/classes'
       path: '/classes'
@@ -490,6 +544,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/combat-sports/': {
+      id: '/combat-sports/'
+      path: '/'
+      fullPath: '/combat-sports/'
+      preLoaderRoute: typeof CombatSportsIndexRouteImport
+      parentRoute: typeof CombatSportsRoute
+    }
     '/classes/': {
       id: '/classes/'
       path: '/'
@@ -503,6 +564,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/email/unsubscribe'
       preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/combat-sports/kickboxing': {
+      id: '/combat-sports/kickboxing'
+      path: '/kickboxing'
+      fullPath: '/combat-sports/kickboxing'
+      preLoaderRoute: typeof CombatSportsKickboxingRouteImport
+      parentRoute: typeof CombatSportsRoute
+    }
+    '/combat-sports/bjj': {
+      id: '/combat-sports/bjj'
+      path: '/bjj'
+      fullPath: '/combat-sports/bjj'
+      preLoaderRoute: typeof CombatSportsBjjRouteImport
+      parentRoute: typeof CombatSportsRoute
     }
     '/classes/schedule': {
       id: '/classes/schedule'
@@ -640,12 +715,29 @@ const ClassesRouteChildren: ClassesRouteChildren = {
 const ClassesRouteWithChildren =
   ClassesRoute._addFileChildren(ClassesRouteChildren)
 
+interface CombatSportsRouteChildren {
+  CombatSportsBjjRoute: typeof CombatSportsBjjRoute
+  CombatSportsKickboxingRoute: typeof CombatSportsKickboxingRoute
+  CombatSportsIndexRoute: typeof CombatSportsIndexRoute
+}
+
+const CombatSportsRouteChildren: CombatSportsRouteChildren = {
+  CombatSportsBjjRoute: CombatSportsBjjRoute,
+  CombatSportsKickboxingRoute: CombatSportsKickboxingRoute,
+  CombatSportsIndexRoute: CombatSportsIndexRoute,
+}
+
+const CombatSportsRouteWithChildren = CombatSportsRoute._addFileChildren(
+  CombatSportsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   ClassesRoute: ClassesRouteWithChildren,
+  CombatSportsRoute: CombatSportsRouteWithChildren,
   ContactRoute: ContactRoute,
   FacilityRoute: FacilityRoute,
   McpRoute: McpRoute,
