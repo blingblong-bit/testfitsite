@@ -104,8 +104,8 @@ function KickboxingPage() {
               alt: "Adult kickboxing partner pad work with teal gloves at FIT Beyond Plus in Tullahoma",
             },
             {
-              src: kickboxingStanceDrillAsset.url,
-              alt: "Coach leading kickboxing stance and guard drills at FIT Beyond Plus",
+              src: kickboxingHighKickPadsAsset.url,
+              alt: "High kick to partner-held pads during adult kickboxing class at FIT Beyond Plus in Tullahoma",
             },
             {
               src: kickboxingKickBagAsset.url,
