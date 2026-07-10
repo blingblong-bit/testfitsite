@@ -18,16 +18,19 @@ import { Route as FacilityRouteImport } from './routes/facility'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CombatSportsRouteImport } from './routes/combat-sports'
 import { Route as ClassesRouteImport } from './routes/classes'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CombatSportsIndexRouteImport } from './routes/combat-sports.index'
 import { Route as ClassesIndexRouteImport } from './routes/classes.index'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as CombatSportsKickboxingRouteImport } from './routes/combat-sports.kickboxing'
 import { Route as CombatSportsBjjRouteImport } from './routes/combat-sports.bjj'
 import { Route as ClassesScheduleRouteImport } from './routes/classes.schedule'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AuthenticatedStaffHomeRouteImport } from './routes/_authenticated/staff-home'
 import { Route as AuthenticatedFrontdeskRouteImport } from './routes/_authenticated/frontdesk'
@@ -35,6 +38,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
+import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -88,6 +92,11 @@ const ClassesRoute = ClassesRouteImport.update({
   path: '/classes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -117,6 +126,11 @@ const ClassesIndexRoute = ClassesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ClassesRoute,
 } as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BlogRoute,
+} as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
@@ -136,6 +150,11 @@ const ClassesScheduleRoute = ClassesScheduleRouteImport.update({
   id: '/schedule',
   path: '/schedule',
   getParentRoute: () => ClassesRoute,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
@@ -172,6 +191,11 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
 const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
   id: '/admin/leads',
   path: '/admin/leads',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminBlogRoute = AuthenticatedAdminBlogRouteImport.update({
+  id: '/admin/blog',
+  path: '/admin/blog',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
@@ -221,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
   '/classes': typeof ClassesRouteWithChildren
   '/combat-sports': typeof CombatSportsRouteWithChildren
   '/contact': typeof ContactRoute
@@ -235,13 +260,16 @@ export interface FileRoutesByFullPath {
   '/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/classes/schedule': typeof ClassesScheduleRoute
   '/combat-sports/bjj': typeof CombatSportsBjjRoute
   '/combat-sports/kickboxing': typeof CombatSportsKickboxingRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/blog/': typeof BlogIndexRoute
   '/classes/': typeof ClassesIndexRoute
   '/combat-sports/': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
@@ -267,13 +295,16 @@ export interface FileRoutesByTo {
   '/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/classes/schedule': typeof ClassesScheduleRoute
   '/combat-sports/bjj': typeof CombatSportsBjjRoute
   '/combat-sports/kickboxing': typeof CombatSportsKickboxingRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/blog': typeof BlogIndexRoute
   '/classes': typeof ClassesIndexRoute
   '/combat-sports': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
@@ -289,6 +320,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
   '/classes': typeof ClassesRouteWithChildren
   '/combat-sports': typeof CombatSportsRouteWithChildren
   '/contact': typeof ContactRoute
@@ -303,13 +335,16 @@ export interface FileRoutesById {
   '/_authenticated/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/_authenticated/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/classes/schedule': typeof ClassesScheduleRoute
   '/combat-sports/bjj': typeof CombatSportsBjjRoute
   '/combat-sports/kickboxing': typeof CombatSportsKickboxingRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/blog/': typeof BlogIndexRoute
   '/classes/': typeof ClassesIndexRoute
   '/combat-sports/': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
@@ -325,6 +360,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/blog'
     | '/classes'
     | '/combat-sports'
     | '/contact'
@@ -339,13 +375,16 @@ export interface FileRouteTypes {
     | '/frontdesk'
     | '/staff-home'
     | '/admin/login'
+    | '/blog/$slug'
     | '/classes/schedule'
     | '/combat-sports/bjj'
     | '/combat-sports/kickboxing'
     | '/email/unsubscribe'
+    | '/blog/'
     | '/classes/'
     | '/combat-sports/'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/blog'
     | '/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/snapshot-month'
@@ -371,13 +410,16 @@ export interface FileRouteTypes {
     | '/frontdesk'
     | '/staff-home'
     | '/admin/login'
+    | '/blog/$slug'
     | '/classes/schedule'
     | '/combat-sports/bjj'
     | '/combat-sports/kickboxing'
     | '/email/unsubscribe'
+    | '/blog'
     | '/classes'
     | '/combat-sports'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/blog'
     | '/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/snapshot-month'
@@ -392,6 +434,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/auth'
+    | '/blog'
     | '/classes'
     | '/combat-sports'
     | '/contact'
@@ -406,13 +449,16 @@ export interface FileRouteTypes {
     | '/_authenticated/frontdesk'
     | '/_authenticated/staff-home'
     | '/admin/login'
+    | '/blog/$slug'
     | '/classes/schedule'
     | '/combat-sports/bjj'
     | '/combat-sports/kickboxing'
     | '/email/unsubscribe'
+    | '/blog/'
     | '/classes/'
     | '/combat-sports/'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/admin/blog'
     | '/_authenticated/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/snapshot-month'
@@ -428,6 +474,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
+  BlogRoute: typeof BlogRouteWithChildren
   ClassesRoute: typeof ClassesRouteWithChildren
   CombatSportsRoute: typeof CombatSportsRouteWithChildren
   ContactRoute: typeof ContactRoute
@@ -516,6 +563,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClassesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -558,6 +612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClassesIndexRouteImport
       parentRoute: typeof ClassesRoute
     }
+    '/blog/': {
+      id: '/blog/'
+      path: '/'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof BlogRoute
+    }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
       path: '/email/unsubscribe'
@@ -585,6 +646,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/classes/schedule'
       preLoaderRoute: typeof ClassesScheduleRouteImport
       parentRoute: typeof ClassesRoute
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/admin/login': {
       id: '/admin/login'
@@ -633,6 +701,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/leads'
       fullPath: '/admin/leads'
       preLoaderRoute: typeof AuthenticatedAdminLeadsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/blog': {
+      id: '/_authenticated/admin/blog'
+      path: '/admin/blog'
+      fullPath: '/admin/blog'
+      preLoaderRoute: typeof AuthenticatedAdminBlogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/.mcp/invoke-tool/$tool': {
@@ -690,17 +765,31 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedFrontdeskRoute: typeof AuthenticatedFrontdeskRoute
   AuthenticatedStaffHomeRoute: typeof AuthenticatedStaffHomeRoute
+  AuthenticatedAdminBlogRoute: typeof AuthenticatedAdminBlogRoute
   AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFrontdeskRoute: AuthenticatedFrontdeskRoute,
   AuthenticatedStaffHomeRoute: AuthenticatedStaffHomeRoute,
+  AuthenticatedAdminBlogRoute: AuthenticatedAdminBlogRoute,
   AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+  BlogIndexRoute: typeof BlogIndexRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+  BlogIndexRoute: BlogIndexRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
 
 interface ClassesRouteChildren {
   ClassesScheduleRoute: typeof ClassesScheduleRoute
@@ -736,6 +825,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
+  BlogRoute: BlogRouteWithChildren,
   ClassesRoute: ClassesRouteWithChildren,
   CombatSportsRoute: CombatSportsRouteWithChildren,
   ContactRoute: ContactRoute,

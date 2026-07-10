@@ -35,6 +35,45 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts: {
+        Row: {
+          content: string
+          created_at: string
+          featured_image_url: string | null
+          id: string
+          meta_description: string
+          published: boolean
+          published_at: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          featured_image_url?: string | null
+          id?: string
+          meta_description?: string
+          published?: boolean
+          published_at?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          featured_image_url?: string | null
+          id?: string
+          meta_description?: string
+          published?: boolean
+          published_at?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
