@@ -2,9 +2,12 @@
 // Sends the personalized first SMS immediately for qualifying leads.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
+const TEST_EMAIL = "smstest@fitbeyondplus.com";
+
 type LeadRow = {
   id: string;
   name: string | null;
+  email: string | null;
   phone: string | null;
   interest: string | null;
   source: string | null;
