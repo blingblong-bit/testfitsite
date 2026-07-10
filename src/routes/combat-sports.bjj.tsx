@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Phone, Mail, ArrowLeft, ArrowRight } from "lucide-react";
 import bjjAdultAsset from "@/assets/bjj-adult.jpg.asset.json";
 import bjjKidsAsset from "@/assets/bjj-kids.jpg.asset.json";
+import bjjGuardPassAsset from "@/assets/bjj-guard-pass.jpg.asset.json";
+import bjjInstructionAsset from "@/assets/bjj-instruction.jpg.asset.json";
 
 export const Route = createFileRoute("/combat-sports/bjj")({
   head: () => ({
