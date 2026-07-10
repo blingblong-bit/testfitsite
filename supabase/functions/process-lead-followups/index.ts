@@ -1,6 +1,8 @@
 // Runs every 15 minutes via pg_cron. Sends drip SMS #1/#2/#3 to active leads.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
+const TEST_EMAIL = "smstest@fitbeyondplus.com";
+
 function firstName(name: string | null): string {
   if (!name) return "there";
   return name.trim().split(/\s+/)[0] || "there";
