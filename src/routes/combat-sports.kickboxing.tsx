@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Phone, Mail, ArrowLeft, ArrowRight } from "lucide-react";
 import kickboxingAdultAsset from "@/assets/kickboxing-adult.jpg.asset.json";
-import kickboxingKidsAsset from "@/assets/kickboxing-kids.jpg.asset.json";
 import kickboxingPadsTealAsset from "@/assets/kickboxing-pads-teal.jpg.asset.json";
 import kickboxingPadsRedAsset from "@/assets/kickboxing-pads-red.jpg.asset.json";
 import kickboxingStanceDrillAsset from "@/assets/kickboxing-stance-drill.jpg.asset.json";
 import kickboxingKickBagAsset from "@/assets/kickboxing-kick-bag.jpg.asset.json";
+import kickboxingHighKickPadsAsset from "@/assets/kickboxing-high-kick-pads.jpg.asset.json";
 
 export const Route = createFileRoute("/combat-sports/kickboxing")({
   head: () => ({
@@ -104,8 +104,8 @@ function KickboxingPage() {
               alt: "Adult kickboxing partner pad work with teal gloves at FIT Beyond Plus in Tullahoma",
             },
             {
-              src: kickboxingStanceDrillAsset.url,
-              alt: "Coach leading kickboxing stance and guard drills at FIT Beyond Plus",
+              src: kickboxingHighKickPadsAsset.url,
+              alt: "High kick to partner-held pads during adult kickboxing class at FIT Beyond Plus in Tullahoma",
             },
             {
               src: kickboxingKickBagAsset.url,
@@ -125,8 +125,8 @@ function KickboxingPage() {
       <section className="border-y border-border bg-card">
         <div className="container-page py-16 grid lg:grid-cols-2 gap-10 items-start">
           <img
-            src={kickboxingKidsAsset.url}
-            alt="Kids kickboxing class training at FIT Beyond Plus in Tullahoma"
+            src={kickboxingStanceDrillAsset.url}
+            alt="Coach leading kickboxing stance and guard drills at FIT Beyond Plus"
             className="w-full h-72 md:h-96 object-cover rounded-lg border border-border"
           />
           <div>
