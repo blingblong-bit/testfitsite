@@ -112,8 +112,12 @@ function BjjPage() {
               alt: "Kids Brazilian Jiu-Jitsu class at FIT Beyond Plus in Tullahoma",
             },
             {
-              src: bjjAdultAsset.url,
-              alt: "Adult Brazilian Jiu-Jitsu open mat session at FIT Beyond Plus",
+              src: bjjGuardPassAsset.url,
+              alt: "Adult Brazilian Jiu-Jitsu grappling exchange at FIT Beyond Plus",
+            },
+            {
+              src: bjjInstructionAsset.url,
+              alt: "BJJ coach demonstrating a technique during class at FIT Beyond Plus",
             },
           ].map((img, idx) => (
             <figure
