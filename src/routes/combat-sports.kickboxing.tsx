@@ -100,16 +100,16 @@ function KickboxingPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
-              src: kickboxingAsset.url,
-              alt: "Kickboxing class combinations and drills at FIT Beyond Plus in Tullahoma",
+              src: kickboxingPadsTealAsset.url,
+              alt: "Adult kickboxing partner pad work with teal gloves at FIT Beyond Plus in Tullahoma",
             },
             {
-              src: kickboxingLiftAsset.url,
-              alt: "Kickboxing conditioning and strength work at FIT Beyond Plus",
+              src: kickboxingStanceDrillAsset.url,
+              alt: "Coach leading kickboxing stance and guard drills at FIT Beyond Plus",
             },
             {
-              src: kickboxingAdultAsset.url,
-              alt: "Adult kickboxing pad work at FIT Beyond Plus in Tullahoma",
+              src: kickboxingKickBagAsset.url,
+              alt: "Kickboxing high kick on heavy bag at FIT Beyond Plus in Tullahoma",
             },
           ].map((img) => (
             <figure
