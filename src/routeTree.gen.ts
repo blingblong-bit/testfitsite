@@ -30,6 +30,7 @@ import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe
 import { Route as CombatSportsKickboxingRouteImport } from './routes/combat-sports.kickboxing'
 import { Route as CombatSportsBjjRouteImport } from './routes/combat-sports.bjj'
 import { Route as ClassesScheduleRouteImport } from './routes/classes.schedule'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AuthenticatedStaffHomeRouteImport } from './routes/_authenticated/staff-home'
 import { Route as AuthenticatedFrontdeskRouteImport } from './routes/_authenticated/frontdesk'
@@ -149,6 +150,11 @@ const ClassesScheduleRoute = ClassesScheduleRouteImport.update({
   path: '/schedule',
   getParentRoute: () => ClassesRoute,
 } as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
+} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
@@ -248,6 +254,7 @@ export interface FileRoutesByFullPath {
   '/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/classes/schedule': typeof ClassesScheduleRoute
   '/combat-sports/bjj': typeof CombatSportsBjjRoute
   '/combat-sports/kickboxing': typeof CombatSportsKickboxingRoute
@@ -281,6 +288,7 @@ export interface FileRoutesByTo {
   '/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/classes/schedule': typeof ClassesScheduleRoute
   '/combat-sports/bjj': typeof CombatSportsBjjRoute
   '/combat-sports/kickboxing': typeof CombatSportsKickboxingRoute
@@ -319,6 +327,7 @@ export interface FileRoutesById {
   '/_authenticated/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/_authenticated/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/classes/schedule': typeof ClassesScheduleRoute
   '/combat-sports/bjj': typeof CombatSportsBjjRoute
   '/combat-sports/kickboxing': typeof CombatSportsKickboxingRoute
@@ -357,6 +366,7 @@ export interface FileRouteTypes {
     | '/frontdesk'
     | '/staff-home'
     | '/admin/login'
+    | '/blog/$slug'
     | '/classes/schedule'
     | '/combat-sports/bjj'
     | '/combat-sports/kickboxing'
@@ -390,6 +400,7 @@ export interface FileRouteTypes {
     | '/frontdesk'
     | '/staff-home'
     | '/admin/login'
+    | '/blog/$slug'
     | '/classes/schedule'
     | '/combat-sports/bjj'
     | '/combat-sports/kickboxing'
@@ -427,6 +438,7 @@ export interface FileRouteTypes {
     | '/_authenticated/frontdesk'
     | '/_authenticated/staff-home'
     | '/admin/login'
+    | '/blog/$slug'
     | '/classes/schedule'
     | '/combat-sports/bjj'
     | '/combat-sports/kickboxing'
@@ -623,6 +635,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClassesScheduleRouteImport
       parentRoute: typeof ClassesRoute
     }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
     '/admin/login': {
       id: '/admin/login'
       path: '/admin/login'
@@ -740,10 +759,12 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
   BlogIndexRoute: typeof BlogIndexRoute
 }
 
 const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
   BlogIndexRoute: BlogIndexRoute,
 }
 
