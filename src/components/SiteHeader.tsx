@@ -12,6 +12,7 @@ const nav = [
   { to: "/combat-sports", label: "Combat Sports" },
   { to: "/facility", label: "Facility" },
   { to: "/contact", label: "Contact" },
+  { to: "/blog", label: "Blog" },
 ] as const;
 
 export function SiteHeader() {
