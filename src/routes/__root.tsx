@@ -17,6 +17,9 @@ import appleTouchIcon from "../assets/apple-touch-icon.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
+import socialImage from "../assets/facility-full-floor.jpg.asset.json";
+
+const SITE_URL = "https://fitbeyondplus.com";
 
 function NotFoundComponent() {
   return (
@@ -84,16 +87,40 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN" },
-      { name: "description", content: "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today." },
+      {
+        name: "description",
+        content:
+          "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today.",
+      },
       { name: "author", content: "FIT Beyond Plus" },
-      { property: "og:title", content: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN" },
-      { property: "og:description", content: "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today." },
+      {
+        property: "og:title",
+        content: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN",
+      },
+      {
+        property: "og:description",
+        content:
+          "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today.",
+      },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "FIT Beyond Plus" },
+      { property: "og:locale", content: "en_US" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN" },
-      { name: "twitter:description", content: "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/jqENWZ4ZZDRMrCPTaFQeFYFDY1p1/social-images/social-1783057769508-ChatGPT_Image_Jul_3,_2026,_12_27_42_AM.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/jqENWZ4ZZDRMrCPTaFQeFYFDY1p1/social-images/social-1783057769508-ChatGPT_Image_Jul_3,_2026,_12_27_42_AM.webp" },
+      {
+        name: "twitter:title",
+        content: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today.",
+      },
+      { property: "og:image", content: `${SITE_URL}${socialImage.url}` },
+      {
+        property: "og:image:alt",
+        content: "The training floor at FIT Beyond Plus in Tullahoma, TN",
+      },
+      { name: "twitter:image", content: `${SITE_URL}${socialImage.url}` },
       { name: "google-site-verification", content: "LkNAj6QnBq0j7hICS65jW6dsrBr9_VQmafJKu6Vl2RU" },
     ],
     links: [
@@ -104,7 +131,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap",
+      },
     ],
     scripts: [
       {
@@ -116,6 +146,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           name: "FIT Beyond Plus",
           url: "https://fitbeyondplus.com",
           logo: "https://storage.googleapis.com/gpt-engineer-file-uploads/jqENWZ4ZZDRMrCPTaFQeFYFDY1p1/social-images/social-1781665667447-logo.webp",
+          telephone: "+1-931-222-4449",
+          email: "Info@fitbeyondplus.com",
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "449 W Lincoln St",
+            addressLocality: "Tullahoma",
+            addressRegion: "TN",
+            postalCode: "37388",
+            addressCountry: "US",
+          },
+          sameAs: [
+            "https://www.instagram.com/f.i.tbeyondplus/",
+            "https://www.facebook.com/fitbeyondplus/",
+          ],
         }),
       },
     ],

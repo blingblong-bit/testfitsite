@@ -10,12 +10,30 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN" },
-      { name: "description", content: "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today." },
-      { property: "og:title", content: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN" },
-      { property: "og:description", content: "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today." },
+      {
+        name: "description",
+        content:
+          "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today.",
+      },
+      {
+        property: "og:title",
+        content: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN",
+      },
+      {
+        property: "og:description",
+        content:
+          "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today.",
+      },
       { property: "og:url", content: "https://fitbeyondplus.com/" },
-      { name: "twitter:title", content: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN" },
-      { name: "twitter:description", content: "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today." },
+      {
+        name: "twitter:title",
+        content: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today.",
+      },
     ],
     links: [
       { rel: "preload", as: "image", href: heroImg, fetchpriority: "high" },
@@ -26,12 +44,20 @@ export const Route = createFileRoute("/")({
         type: "application/ld+json",
         children: JSON.stringify({
           "@context": "https://schema.org",
-          "@type": "LocalBusiness",
+          "@type": "HealthClub",
           "@id": "https://fitbeyondplus.com/#business",
           name: "FIT Beyond Plus",
           description: "A serious gym and training facility in Tullahoma, Tennessee.",
           url: "https://fitbeyondplus.com",
           telephone: "+1-931-222-4449",
+          email: "Info@fitbeyondplus.com",
+          priceRange: "$",
+          image:
+            "https://fitbeyondplus.com/__l5e/assets-v1/82def577-7f52-446d-9988-aaf1352cad66/facility-full-floor.jpg",
+          sameAs: [
+            "https://www.instagram.com/f.i.tbeyondplus/",
+            "https://www.facebook.com/fitbeyondplus/",
+          ],
           address: {
             "@type": "PostalAddress",
             streetAddress: "449 W Lincoln St",
@@ -41,9 +67,24 @@ export const Route = createFileRoute("/")({
             addressCountry: "US",
           },
           openingHoursSpecification: [
-            { "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], opens: "09:00", closes: "20:00" },
-            { "@type": "OpeningHoursSpecification", dayOfWeek: "Saturday", opens: "09:00", closes: "18:00" },
-            { "@type": "OpeningHoursSpecification", dayOfWeek: "Sunday", opens: "10:00", closes: "17:00" },
+            {
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              opens: "09:00",
+              closes: "20:00",
+            },
+            {
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: "Saturday",
+              opens: "09:00",
+              closes: "18:00",
+            },
+            {
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: "Sunday",
+              opens: "10:00",
+              closes: "17:00",
+            },
           ],
         }),
       },
@@ -68,12 +109,27 @@ function Home() {
           fetchpriority="high"
         />
         {/* Subtle base darkening so the whole image stays visible */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, oklch(0.15 0.04 250 / 0.35) 0%, oklch(0.12 0.03 250 / 0.45) 100%)" }} />
-        {/* Strong left-side gradient behind the text */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, oklch(0.10 0.04 250 / 0.92) 0%, oklch(0.12 0.04 250 / 0.78) 28%, oklch(0.15 0.04 250 / 0.35) 55%, transparent 80%)" }} />
         <div
           className="absolute inset-0"
-          style={{ background: "radial-gradient(700px circle at 75% 25%, oklch(0.70 0.18 235 / 0.15), transparent 60%)" }}
+          style={{
+            background:
+              "linear-gradient(180deg, oklch(0.15 0.04 250 / 0.35) 0%, oklch(0.12 0.03 250 / 0.45) 100%)",
+          }}
+        />
+        {/* Strong left-side gradient behind the text */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(90deg, oklch(0.10 0.04 250 / 0.92) 0%, oklch(0.12 0.04 250 / 0.78) 28%, oklch(0.15 0.04 250 / 0.35) 55%, transparent 80%)",
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(700px circle at 75% 25%, oklch(0.70 0.18 235 / 0.15), transparent 60%)",
+          }}
         />
         <div className="container-page relative py-28 md:py-40">
           <p className="text-xs tracking-[0.35em] text-primary">TULLAHOMA · TENNESSEE</p>
@@ -81,7 +137,9 @@ function Home() {
             More than <span className="text-gradient-blue">a gym.</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg text-foreground/85">
-            FIT Beyond Plus is a clean, well-equipped training facility in Tullahoma, Tennessee built for beginners, athletes, serious lifters, and everyday people who want to get stronger, move better, and train with purpose.
+            FIT Beyond Plus is a clean, well-equipped training facility in Tullahoma, Tennessee
+            built for beginners, athletes, serious lifters, and everyday people who want to get
+            stronger, move better, and train with purpose.
           </p>
           <p className="mt-4 max-w-xl text-base text-foreground/75">
             You do not have to be in shape before joining. That is what the gym is for.
@@ -116,7 +174,9 @@ function Home() {
             ].map((s) => (
               <div key={s.v} className="border-l-2 border-primary pl-4">
                 <div className="text-3xl font-display font-bold">{s.k}</div>
-                <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">{s.v}</div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">
+                  {s.v}
+                </div>
               </div>
             ))}
           </div>
@@ -128,15 +188,22 @@ function Home() {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <p className="text-xs tracking-[0.3em] text-primary">WHO WE ARE</p>
-            <h2 className="mt-3 text-4xl md:text-5xl">Built for people who actually want to train.</h2>
+            <h2 className="mt-3 text-4xl md:text-5xl">
+              Built for people who actually want to train.
+            </h2>
             <p className="mt-5 text-muted-foreground leading-relaxed">
-              At FIT Beyond Plus, you do not have to be advanced to belong here. You just have to be willing to start.
+              At FIT Beyond Plus, you do not have to be advanced to belong here. You just have to be
+              willing to start.
             </p>
             <p className="mt-4 text-muted-foreground leading-relaxed">
-              We serve first-time gym-goers, weekend warriors, athletes, parents, busy adults, and experienced lifters. Some members are learning the basics. Some are chasing performance. Some are rebuilding confidence. All of them deserve a gym that respects the work.
+              We serve first-time gym-goers, weekend warriors, athletes, parents, busy adults, and
+              experienced lifters. Some members are learning the basics. Some are chasing
+              performance. Some are rebuilding confidence. All of them deserve a gym that respects
+              the work.
             </p>
             <p className="mt-4 text-muted-foreground leading-relaxed">
-              Our facility is designed to give you a serious training environment without the ego, attitude, or intimidation that keeps too many people from getting started.
+              Our facility is designed to give you a serious training environment without the ego,
+              attitude, or intimidation that keeps too many people from getting started.
             </p>
             <Link
               to="/about"
@@ -146,8 +213,18 @@ function Home() {
             </Link>
           </div>
           <div className="relative">
-            <img src={weightsImg} alt="Dumbbell rack" loading="lazy" width={1280} height={896} className="rounded-lg border border-border" />
-            <div className="absolute -bottom-6 -left-6 hidden md:block bg-card border border-border rounded-lg p-5 max-w-xs" style={{ boxShadow: "var(--shadow-glow)" }}>
+            <img
+              src={weightsImg}
+              alt="Dumbbell rack"
+              loading="lazy"
+              width={1280}
+              height={896}
+              className="rounded-lg border border-border"
+            />
+            <div
+              className="absolute -bottom-6 -left-6 hidden md:block bg-card border border-border rounded-lg p-5 max-w-xs"
+              style={{ boxShadow: "var(--shadow-glow)" }}
+            >
               <p className="text-xs uppercase tracking-widest text-primary">Our promise</p>
               <p className="mt-2 text-sm">Clean equipment, real coaching, zero attitude.</p>
             </div>
@@ -164,12 +241,36 @@ function Home() {
           </div>
           <div className="mt-14 grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
             {[
-              { icon: Dumbbell, t: "Premium Equipment", d: "Train with quality strength equipment, free weights, machines, racks, platforms, and dumbbells built for real progress." },
-              { icon: Clock, t: "24/7 Access", d: "Members can train on their schedule with secure access, day or night." },
-              { icon: Users, t: "1-on-1 Coaching", d: "For those who want more guidance, our trainers provide real coaching, structure, accountability, and support." },
-              { icon: Trophy, t: "Athlete-Ready", d: "For athletes and serious lifters, we have the tools and training environment to build strength, power, and performance." },
-              { icon: Heart, t: "Beginner Friendly", d: "New to the gym? You are welcome here. We help you get started without judgment or pressure." },
-              { icon: Shield, t: "Clean & Maintained", d: "We care about the details: clean floors, working equipment, organized spaces, and a gym you actually want to come back to." },
+              {
+                icon: Dumbbell,
+                t: "Premium Equipment",
+                d: "Train with quality strength equipment, free weights, machines, racks, platforms, and dumbbells built for real progress.",
+              },
+              {
+                icon: Clock,
+                t: "24/7 Access",
+                d: "Members can train on their schedule with secure access, day or night.",
+              },
+              {
+                icon: Users,
+                t: "1-on-1 Coaching",
+                d: "For those who want more guidance, our trainers provide real coaching, structure, accountability, and support.",
+              },
+              {
+                icon: Trophy,
+                t: "Athlete-Ready",
+                d: "For athletes and serious lifters, we have the tools and training environment to build strength, power, and performance.",
+              },
+              {
+                icon: Heart,
+                t: "Beginner Friendly",
+                d: "New to the gym? You are welcome here. We help you get started without judgment or pressure.",
+              },
+              {
+                icon: Shield,
+                t: "Clean & Maintained",
+                d: "We care about the details: clean floors, working equipment, organized spaces, and a gym you actually want to come back to.",
+              },
             ].map(({ icon: Icon, t, d }) => (
               <div key={t} className="bg-background p-8 hover:bg-card transition-colors group">
                 <Icon className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />

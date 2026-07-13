@@ -7,10 +7,19 @@ export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "About — FIT Beyond Plus | Tullahoma, TN" },
-      { name: "description", content: "FIT Beyond Plus is more than a gym. Learn about our mission, our team, and how we built Tullahoma's serious training facility." },
+      {
+        name: "description",
+        content:
+          "FIT Beyond Plus is more than a gym. Learn about our mission, our team, and how we built Tullahoma's serious training facility.",
+      },
       { property: "og:title", content: "About FIT Beyond Plus" },
-      { property: "og:description", content: "Tullahoma's serious training facility. Built for every fitness level." },
+      {
+        property: "og:description",
+        content: "Tullahoma's serious training facility. Built for every fitness level.",
+      },
+      { property: "og:url", content: "https://fitbeyondplus.com/about" },
     ],
+    links: [{ rel: "canonical", href: "https://fitbeyondplus.com/about" }],
   }),
   component: About,
 });
@@ -25,26 +34,44 @@ function About() {
       />
 
       <section className="container-page py-20 grid md:grid-cols-2 gap-12 items-start">
-        <img src={weightsImg.url} alt="FIT Beyond Plus owner" loading="lazy" width={1280} height={1536} className="rounded-lg border border-border" />
+        <img
+          src={weightsImg.url}
+          alt="FIT Beyond Plus owner"
+          loading="lazy"
+          width={1280}
+          height={1536}
+          className="rounded-lg border border-border"
+        />
         <div>
           <p className="text-xs tracking-[0.3em] text-primary">OUR STORY</p>
           <h2 className="mt-3 text-3xl md:text-4xl">More than a gym.</h2>
           <p className="mt-5 text-muted-foreground leading-relaxed">
-            FIT Beyond Plus was built around a simple idea: fitness should not stop when physical therapy ends, and performance should not come at the expense of long-term health.
+            FIT Beyond Plus was built around a simple idea: fitness should not stop when physical
+            therapy ends, and performance should not come at the expense of long-term health.
           </p>
           <p className="mt-4 text-muted-foreground leading-relaxed">
-            Our name comes from the principles that guide everything we do: Functional Training, Injury Prevention, and Technique. Through our connection with FIT Beyond Therapy, we have created an environment where rehabilitation, fitness, and performance work together—not as separate services, but as part of the same journey.
+            Our name comes from the principles that guide everything we do: Functional Training,
+            Injury Prevention, and Technique. Through our connection with FIT Beyond Therapy, we
+            have created an environment where rehabilitation, fitness, and performance work
+            together—not as separate services, but as part of the same journey.
           </p>
           <p className="mt-4 text-muted-foreground leading-relaxed">
-            Whether you're recovering from an injury, beginning your fitness journey, training for a sport, or simply looking to improve your quality of life, our goal is to provide the equipment, coaching, and support needed to help you succeed.
+            Whether you're recovering from an injury, beginning your fitness journey, training for a
+            sport, or simply looking to improve your quality of life, our goal is to provide the
+            equipment, coaching, and support needed to help you succeed.
           </p>
           <p className="mt-4 text-muted-foreground leading-relaxed">
-            We believe fitness should be accessible to everyone without sacrificing quality. That's why FIT Beyond Plus combines a welcoming atmosphere with serious training opportunities, including strength and cardio equipment, personal training, group fitness classes, kickboxing, Brazilian Jiu-Jitsu, athlete performance training, and recovery-focused services.
+            We believe fitness should be accessible to everyone without sacrificing quality. That's
+            why FIT Beyond Plus combines a welcoming atmosphere with serious training opportunities,
+            including strength and cardio equipment, personal training, group fitness classes,
+            kickboxing, Brazilian Jiu-Jitsu, athlete performance training, and recovery-focused
+            services.
           </p>
           <p className="mt-4 text-muted-foreground leading-relaxed">
-            At FIT Beyond Plus, we are more than a gym. We are a place where people come to move better, get stronger, prevent injuries, and achieve goals they once thought were out of reach.
+            At FIT Beyond Plus, we are more than a gym. We are a place where people come to move
+            better, get stronger, prevent injuries, and achieve goals they once thought were out of
+            reach.
           </p>
-
         </div>
       </section>
 
@@ -61,7 +88,10 @@ function About() {
               "You are a busy adult who wants to take care of your health and feel better day to day.",
               "You are someone who wants to train around people who respect effort.",
             ].map((line) => (
-              <div key={line} className="flex gap-4 border border-border bg-background p-5 rounded-lg">
+              <div
+                key={line}
+                className="flex gap-4 border border-border bg-background p-5 rounded-lg"
+              >
                 <span className="text-primary font-display">/</span>
                 <p className="text-sm text-muted-foreground">{line}</p>
               </div>
@@ -77,10 +107,26 @@ function About() {
         <h2 className="text-3xl md:text-4xl text-center">What we stand for</h2>
         <div className="mt-14 grid md:grid-cols-2 gap-8">
           {[
-            { n: "01", t: "Effort Over Ego", d: "We respect the work, not the image. You do not have to lift the most weight, look a certain way, or already know everything. If you are showing up and trying to improve, you belong here." },
-            { n: "02", t: "Coaching That Matters", d: "Good coaching is more than counting reps. It means listening, teaching, correcting, encouraging, and helping people train with purpose." },
-            { n: "03", t: "A Space That Delivers", d: "A gym should be clean, organized, well-equipped, and maintained. We want members to feel proud of where they train." },
-            { n: "04", t: "Serious But Welcoming", d: "We believe training should be taken seriously, but that does not mean the gym should feel intimidating. Beginners and advanced lifters can share the same space when the culture is built on respect." },
+            {
+              n: "01",
+              t: "Effort Over Ego",
+              d: "We respect the work, not the image. You do not have to lift the most weight, look a certain way, or already know everything. If you are showing up and trying to improve, you belong here.",
+            },
+            {
+              n: "02",
+              t: "Coaching That Matters",
+              d: "Good coaching is more than counting reps. It means listening, teaching, correcting, encouraging, and helping people train with purpose.",
+            },
+            {
+              n: "03",
+              t: "A Space That Delivers",
+              d: "A gym should be clean, organized, well-equipped, and maintained. We want members to feel proud of where they train.",
+            },
+            {
+              n: "04",
+              t: "Serious But Welcoming",
+              d: "We believe training should be taken seriously, but that does not mean the gym should feel intimidating. Beginners and advanced lifters can share the same space when the culture is built on respect.",
+            },
           ].map((v) => (
             <div key={v.t} className="border border-border bg-card p-8 rounded-lg">
               <div className="text-5xl text-primary font-display">{v.n}</div>
@@ -96,27 +142,35 @@ function About() {
           <p className="text-xs tracking-[0.3em] text-primary">MEET THE TEAM</p>
           <h2 className="mt-3 text-3xl md:text-4xl">The people behind FIT Beyond Plus</h2>
           <p className="mt-5 text-muted-foreground leading-relaxed">
-            FIT Beyond Plus is built and operated by people who care about training, health, performance, and the local community.
+            FIT Beyond Plus is built and operated by people who care about training, health,
+            performance, and the local community.
           </p>
           <p className="mt-4 text-muted-foreground leading-relaxed">
-            Our team is here to help members feel comfortable, answer questions, provide guidance, and keep the gym moving in the right direction.
+            Our team is here to help members feel comfortable, answer questions, provide guidance,
+            and keep the gym moving in the right direction.
           </p>
           <p className="mt-4 text-muted-foreground leading-relaxed">
-            Whether you need coaching, accountability, or just a place to train consistently, we are here to help you take the next step.
+            Whether you need coaching, accountability, or just a place to train consistently, we are
+            here to help you take the next step.
           </p>
         </div>
       </section>
 
       <section className="container-page py-20 text-center">
         <h2 className="text-3xl md:text-4xl">Come see what we're building.</h2>
-        <p className="mt-4 max-w-xl mx-auto text-muted-foreground">Book a tour, meet the team, and see if FIT Beyond Plus is the right fit for you.</p>
+        <p className="mt-4 max-w-xl mx-auto text-muted-foreground">
+          Book a tour, meet the team, and see if FIT Beyond Plus is the right fit for you.
+        </p>
         <div className="mt-8">
-          <Link to="/contact" className="inline-flex h-12 items-center rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground" style={{ boxShadow: "var(--shadow-glow)" }}>
+          <Link
+            to="/contact"
+            className="inline-flex h-12 items-center rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground"
+            style={{ boxShadow: "var(--shadow-glow)" }}
+          >
             Book a Tour
           </Link>
         </div>
       </section>
-
     </>
   );
 }

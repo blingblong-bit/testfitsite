@@ -8,9 +8,17 @@ export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
       { title: "Contact & Book a Tour — FIT Beyond Plus" },
-      { name: "description", content: "Visit FIT Beyond Plus in Tullahoma, TN. Book a free tour, ask a question, or sign up for a membership." },
+      {
+        name: "description",
+        content:
+          "Visit FIT Beyond Plus in Tullahoma, TN. Book a free tour, ask a question, or sign up for a membership.",
+      },
       { property: "og:title", content: "Contact & Book a Tour — FIT Beyond Plus" },
-      { property: "og:description", content: "Visit FIT Beyond Plus at 449 W Lincoln St, Tullahoma, TN. Book a free tour, ask a question, or start your membership today." },
+      {
+        property: "og:description",
+        content:
+          "Visit FIT Beyond Plus at 449 W Lincoln St, Tullahoma, TN. Book a free tour, ask a question, or start your membership today.",
+      },
       { property: "og:url", content: "https://fitbeyondplus.com/contact" },
     ],
     links: [{ rel: "canonical", href: "https://fitbeyondplus.com/contact" }],
@@ -25,6 +33,14 @@ export const Route = createFileRoute("/contact")({
           description: "A serious gym and training facility in Tullahoma, Tennessee.",
           url: "https://fitbeyondplus.com",
           telephone: "+1-931-222-4449",
+          email: "Info@fitbeyondplus.com",
+          priceRange: "$",
+          image:
+            "https://fitbeyondplus.com/__l5e/assets-v1/82def577-7f52-446d-9988-aaf1352cad66/facility-full-floor.jpg",
+          sameAs: [
+            "https://www.instagram.com/f.i.tbeyondplus/",
+            "https://www.facebook.com/fitbeyondplus/",
+          ],
           address: {
             "@type": "PostalAddress",
             streetAddress: "449 W Lincoln St",
@@ -34,9 +50,24 @@ export const Route = createFileRoute("/contact")({
             addressCountry: "US",
           },
           openingHoursSpecification: [
-            { "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], opens: "09:00", closes: "20:00" },
-            { "@type": "OpeningHoursSpecification", dayOfWeek: "Saturday", opens: "09:00", closes: "18:00" },
-            { "@type": "OpeningHoursSpecification", dayOfWeek: "Sunday", opens: "10:00", closes: "17:00" },
+            {
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              opens: "09:00",
+              closes: "20:00",
+            },
+            {
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: "Saturday",
+              opens: "09:00",
+              closes: "18:00",
+            },
+            {
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: "Sunday",
+              opens: "10:00",
+              closes: "17:00",
+            },
           ],
         }),
       },
@@ -86,7 +117,9 @@ function Contact() {
           <h2 className="text-2xl md:text-3xl">Send us a message</h2>
           {sent ? (
             <div className="mt-8 rounded-lg border border-primary bg-primary/10 p-8 text-center">
-              <p className="text-lg">Thanks — your message was received. We'll be in touch shortly.</p>
+              <p className="text-lg">
+                Thanks — your message was received. We'll be in touch shortly.
+              </p>
             </div>
           ) : (
             <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
@@ -97,7 +130,12 @@ function Contact() {
               <div className="grid sm:grid-cols-2 gap-5">
                 <Field label="Phone" name="phone" type="tel" />
                 <div>
-                  <label htmlFor="interest" className="block text-xs uppercase tracking-widest mb-2">Interested in</label>
+                  <label
+                    htmlFor="interest"
+                    className="block text-xs uppercase tracking-widest mb-2"
+                  >
+                    Interested in
+                  </label>
                   <select
                     id="interest"
                     name="interest"
@@ -113,7 +151,9 @@ function Contact() {
                 </div>
               </div>
               <div>
-                <label htmlFor="message" className="block text-xs uppercase tracking-widest mb-2">Message</label>
+                <label htmlFor="message" className="block text-xs uppercase tracking-widest mb-2">
+                  Message
+                </label>
                 <textarea
                   id="message"
                   name="message"
@@ -137,28 +177,62 @@ function Contact() {
 
         <aside className="lg:col-span-2 space-y-6">
           <InfoCard icon={MapPin} title="Visit">
-            449 W Lincoln St<br />Tullahoma, TN, United States, Tennessee
+            449 W Lincoln St
+            <br />
+            Tullahoma, TN 37388
           </InfoCard>
           <InfoCard icon={Phone} title="Call">
-            <a href="tel:9312224449" className="hover:text-primary">(931) 222-4449</a>
+            <a href="tel:9312224449" className="hover:text-primary">
+              (931) 222-4449
+            </a>
           </InfoCard>
           <InfoCard icon={Mail} title="Email">
-            <a href="mailto:Info@fitbeyondplus.com" className="hover:text-primary">Info@fitbeyondplus.com</a>
+            <a href="mailto:Info@fitbeyondplus.com" className="hover:text-primary">
+              Info@fitbeyondplus.com
+            </a>
           </InfoCard>
           <InfoCard icon={Clock} title="Hours">
-            Staffed: Mon–Fri 9a–8p · Sat 9a–6p · Sun 10a–5p<br />
+            Staffed: Mon–Fri 9a–8p · Sat 9a–6p · Sun 10a–5p
+            <br />
             Member access: 24/7
           </InfoCard>
         </aside>
+      </section>
+
+      <section className="container-page pb-20">
+        <div className="overflow-hidden rounded-lg border border-border">
+          <iframe
+            title="Map to FIT Beyond Plus — 449 W Lincoln St, Tullahoma, TN 37388"
+            src="https://www.google.com/maps?q=449+W+Lincoln+St,+Tullahoma,+TN+37388&output=embed"
+            width="100%"
+            height="400"
+            style={{ border: 0 }}
+            loading="lazy"
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
       </section>
     </>
   );
 }
 
-function Field({ label, name, type = "text", required }: { label: string; name: string; type?: string; required?: boolean }) {
+function Field({
+  label,
+  name,
+  type = "text",
+  required,
+}: {
+  label: string;
+  name: string;
+  type?: string;
+  required?: boolean;
+}) {
   return (
     <div>
-      <label htmlFor={name} className="block text-xs uppercase tracking-widest mb-2">{label}</label>
+      <label htmlFor={name} className="block text-xs uppercase tracking-widest mb-2">
+        {label}
+      </label>
       <input
         id={name}
         name={name}
@@ -170,7 +244,15 @@ function Field({ label, name, type = "text", required }: { label: string; name: 
   );
 }
 
-function InfoCard({ icon: Icon, title, children }: { icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode }) {
+function InfoCard({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-lg border border-border bg-card p-6">
       <div className="flex items-center gap-3">

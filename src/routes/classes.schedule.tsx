@@ -46,9 +46,7 @@ const schedule: { day: string; classes: ClassItem[] }[] = [
   },
   {
     day: "Saturday",
-    classes: [
-      { name: "Pilates Stretch", time: "8:00 AM", instructor: "Carla" },
-    ],
+    classes: [{ name: "Pilates Stretch", time: "8:00 AM", instructor: "Carla" }],
   },
 ];
 
@@ -56,10 +54,16 @@ export const Route = createFileRoute("/classes/schedule")({
   head: () => ({
     meta: [
       { title: "Class Schedule — FIT Beyond Plus" },
-      { name: "description", content: "Weekly fitness class schedule at FIT Beyond Plus in Tullahoma, TN. HIIT, TRX, Barre, Yoga, Cardio, Kickboxing, and Pilates." },
+      {
+        name: "description",
+        content:
+          "Weekly fitness class schedule at FIT Beyond Plus in Tullahoma, TN. HIIT, TRX, Barre, Yoga, Cardio, Kickboxing, and Pilates.",
+      },
       { property: "og:title", content: "Class Schedule — FIT Beyond Plus" },
       { property: "og:description", content: "Weekly fitness class schedule." },
+      { property: "og:url", content: "https://fitbeyondplus.com/classes/schedule" },
     ],
+    links: [{ rel: "canonical", href: "https://fitbeyondplus.com/classes/schedule" }],
   }),
   component: ClassSchedule,
 });
@@ -91,7 +95,9 @@ function ClassSchedule() {
             <div key={d.day} className="rounded-lg border border-border bg-card p-6 flex flex-col">
               <div className="flex items-baseline justify-between border-b border-border pb-3">
                 <h3 className="text-2xl text-primary">{d.day}</h3>
-                <span className="text-xs text-muted-foreground">{d.classes.length} {d.classes.length === 1 ? "class" : "classes"}</span>
+                <span className="text-xs text-muted-foreground">
+                  {d.classes.length} {d.classes.length === 1 ? "class" : "classes"}
+                </span>
               </div>
               <ul className="mt-4 space-y-4">
                 {d.classes.map((c, i) => (
@@ -102,7 +108,9 @@ function ClassSchedule() {
                         <p className="text-xs text-muted-foreground mt-0.5">with {c.instructor}</p>
                       )}
                     </div>
-                    <span className="shrink-0 text-sm font-display tracking-wide text-foreground">{c.time}</span>
+                    <span className="shrink-0 text-sm font-display tracking-wide text-foreground">
+                      {c.time}
+                    </span>
                   </li>
                 ))}
               </ul>

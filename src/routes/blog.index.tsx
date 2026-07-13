@@ -17,8 +17,7 @@ export const Route = createFileRoute("/blog/")({
       { title: "Blog — FIT Beyond Plus | Tullahoma, TN" },
       {
         name: "description",
-        content:
-          "News, training tips, and updates from FIT Beyond Plus in Tullahoma, TN.",
+        content: "News, training tips, and updates from FIT Beyond Plus in Tullahoma, TN.",
       },
       { property: "og:title", content: "FIT Beyond Plus Blog" },
       {
@@ -26,8 +25,8 @@ export const Route = createFileRoute("/blog/")({
         content: "Training tips, gym news, and updates from FIT Beyond Plus.",
       },
       { property: "og:url", content: "https://fitbeyondplus.com/blog" },
-      { rel: "canonical", href: "https://fitbeyondplus.com/blog" },
     ],
+    links: [{ rel: "canonical", href: "https://fitbeyondplus.com/blog" }],
   }),
   component: BlogIndex,
 });
@@ -56,9 +55,7 @@ function BlogIndex() {
         Training tips, gym news, and updates from our team in Tullahoma.
       </p>
 
-      {error && (
-        <p className="mt-10 text-sm text-destructive">Unable to load posts: {error}</p>
-      )}
+      {error && <p className="mt-10 text-sm text-destructive">Unable to load posts: {error}</p>}
 
       {posts && posts.length === 0 && (
         <p className="mt-10 text-muted-foreground">No posts yet. Check back soon.</p>
@@ -90,9 +87,7 @@ function BlogIndex() {
                   })}
                 </p>
               )}
-              <h2 className="mt-2 text-xl group-hover:text-primary transition-colors">
-                {p.title}
-              </h2>
+              <h2 className="mt-2 text-xl group-hover:text-primary transition-colors">{p.title}</h2>
               {p.meta_description && (
                 <p className="mt-3 text-sm text-muted-foreground line-clamp-3">
                   {p.meta_description}

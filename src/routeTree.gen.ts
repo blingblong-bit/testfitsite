@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PersonalTrainingRouteImport } from './routes/personal-training'
 import { Route as MembershipsRouteImport } from './routes/memberships'
 import { Route as McpRouteImport } from './routes/mcp'
@@ -55,6 +56,11 @@ const UnsubscribeRoute = UnsubscribeRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PersonalTrainingRoute = PersonalTrainingRouteImport.update({
@@ -253,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -288,6 +295,7 @@ export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/memberships': typeof MembershipsRoute
   '/personal-training': typeof PersonalTrainingRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -368,6 +377,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/memberships'
     | '/personal-training'
+    | '/privacy'
     | '/sitemap.xml'
     | '/unsubscribe'
     | '/.mcp/list-tools'
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/memberships'
     | '/personal-training'
+    | '/privacy'
     | '/sitemap.xml'
     | '/unsubscribe'
     | '/.mcp/list-tools'
@@ -442,6 +453,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/memberships'
     | '/personal-training'
+    | '/privacy'
     | '/sitemap.xml'
     | '/unsubscribe'
     | '/.mcp/list-tools'
@@ -482,6 +494,7 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   MembershipsRoute: typeof MembershipsRoute
   PersonalTrainingRoute: typeof PersonalTrainingRoute
+  PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
@@ -512,6 +525,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/personal-training': {
@@ -833,6 +853,7 @@ const rootRouteChildren: RootRouteChildren = {
   McpRoute: McpRoute,
   MembershipsRoute: MembershipsRoute,
   PersonalTrainingRoute: PersonalTrainingRoute,
+  PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,

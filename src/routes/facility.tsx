@@ -19,8 +19,11 @@ export const Route = createFileRoute("/facility")({
       },
       { property: "og:title", content: "FIT Beyond Plus Facility" },
       { property: "og:description", content: "Room to train. Tools to progress." },
-      { property: "og:image", content: fullFloorAsset.url },
+      { property: "og:url", content: "https://fitbeyondplus.com/facility" },
+      { property: "og:image", content: `https://fitbeyondplus.com${fullFloorAsset.url}` },
+      { name: "twitter:image", content: `https://fitbeyondplus.com${fullFloorAsset.url}` },
     ],
+    links: [{ rel: "canonical", href: "https://fitbeyondplus.com/facility" }],
   }),
   component: Facility,
 });
@@ -183,7 +186,6 @@ function Facility() {
           </Link>
         </div>
       </section>
-
     </>
   );
 }

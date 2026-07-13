@@ -12,5 +12,9 @@ FIT Beyond Plus is a 13,500 sq ft training facility at 449 W Lincoln St, Tullaho
 - [Personal Training](/personal-training): 1:1 coaching options and trainers.
 - [Classes](/classes): Group fitness class lineup — HIIT, TRX, Barre, Yoga, Cardio, Kickboxing, Pilates.
 - [Class Schedule](/classes/schedule): Weekly class times.
+- [Combat Sports](/combat-sports): Kickboxing and Brazilian Jiu-Jitsu programs for kids and adults.
+- [Kickboxing](/combat-sports/kickboxing): Kickboxing classes in Tullahoma, TN.
+- [Brazilian Jiu-Jitsu](/combat-sports/bjj): BJJ classes in Tullahoma, TN.
 - [Facility](/facility): Equipment, layout, and amenities.
+- [Blog](/blog): Training tips, gym news, and updates.
 - [Contact](/contact): Address, phone, hours, and tour booking.
