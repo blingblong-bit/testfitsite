@@ -5,6 +5,7 @@ import { Bell, BellOff, Home, ChevronDown, ChevronUp, Phone, Mail, Calendar, Sea
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { sendWelcomeSms } from "@/lib/send-welcome-sms.functions";
+import { sendManualSms } from "@/lib/send-manual-sms.functions";
 import { AnalyticsView } from "@/components/AnalyticsView";
 
 type CrmStatus =
