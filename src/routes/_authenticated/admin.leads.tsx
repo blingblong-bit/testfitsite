@@ -1344,6 +1344,75 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
             </div>
           )}
 
+          {/* SMS Conversation */}
+          <div className="rounded-md border border-border p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">SMS Conversation</p>
+              {lead.sequence_status && (
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Sequence: <span className="text-foreground">{lead.sequence_status}</span>
+                </span>
+              )}
+            </div>
+            <div className="max-h-80 overflow-y-auto rounded-md bg-background/60 p-3 space-y-2">
+              {threadLoading && <p className="text-xs text-muted-foreground">Loading…</p>}
+              {!threadLoading && thread && thread.length === 0 && (
+                <p className="text-xs text-muted-foreground">No messages yet.</p>
+              )}
+              {thread?.map((m) => {
+                const outbound = m.direction === "outbound";
+                return (
+                  <div key={m.id} className={"flex " + (outbound ? "justify-end" : "justify-start")}>
+                    <div
+                      className={
+                        "max-w-[75%] rounded-2xl px-3 py-2 text-sm " +
+                        (outbound
+                          ? "bg-primary text-primary-foreground rounded-br-sm"
+                          : "bg-secondary text-foreground rounded-bl-sm")
+                      }
+                    >
+                      <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                      <p className={"mt-1 text-[10px] " + (outbound ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                        {new Date(m.created_at).toLocaleString("en-US", {
+                          month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true,
+                        })}
+                        {m.from_ai && " · AI"}
+                        {m.metadata?.sent_by === "staff" && " · Staff"}
+                        {m.status === "test_mode" && " · TEST"}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {!lead.phone ? (
+              <p className="text-xs text-muted-foreground">Add a phone number to send SMS.</p>
+            ) : lead.sms_opted_out ? (
+              <p className="text-xs text-destructive">This lead has opted out of SMS.</p>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  value={smsDraft}
+                  onChange={(e) => setSmsDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendSms(); } }}
+                  placeholder="Type a reply…"
+                  maxLength={1600}
+                  className="h-10 flex-1 rounded-md border border-border bg-background px-3 text-sm"
+                />
+                <button
+                  onClick={sendSms}
+                  disabled={sendingSms || !smsDraft.trim()}
+                  className="h-10 rounded-md bg-primary px-4 text-xs font-semibold uppercase tracking-widest text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                >
+                  {sendingSms ? "Sending…" : "Send"}
+                </button>
+              </div>
+            )}
+            <p className="text-[10px] text-muted-foreground">Sending a manual reply pauses the automated sequence.</p>
+          </div>
+
+
+
           {/* Notes */}
           <div>
             <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Staff Notes</p>
