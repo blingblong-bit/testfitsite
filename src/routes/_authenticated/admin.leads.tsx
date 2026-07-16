@@ -936,6 +936,16 @@ function formatLastSmsAt(iso: string): string {
   return str.replace(", ", " at ");
 }
 
+type SmsMessage = {
+  id: string;
+  direction: "inbound" | "outbound";
+  body: string;
+  status: string | null;
+  from_ai: boolean;
+  created_at: string;
+  metadata: { sent_by?: string; kind?: string; test_mode?: boolean } | null;
+};
+
 function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void> }) {
   const [expanded, setExpanded] = useState(false);
   const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
@@ -943,8 +953,73 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
   const [convertBusy, setConvertBusy] = useState(false);
   const [showLostReason, setShowLostReason] = useState(false);
   const [lostReason, setLostReason] = useState("");
+  const [thread, setThread] = useState<SmsMessage[] | null>(null);
+  const [threadLoading, setThreadLoading] = useState(false);
+  const [smsDraft, setSmsDraft] = useState("");
+  const [sendingSms, setSendingSms] = useState(false);
   const sendWelcome = useServerFn(sendWelcomeSms);
+  const sendManual = useServerFn(sendManualSms);
   const priority = computePriority(lead);
+
+  useEffect(() => {
+    if (!expanded) return;
+    let cancelled = false;
+    setThreadLoading(true);
+    supabase
+      .from("sms_conversation_log")
+      .select("id, direction, body, status, from_ai, created_at, metadata")
+      .eq("lead_id", lead.id)
+      .order("created_at", { ascending: true })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.error("[thread] load failed", error.message);
+          setThread([]);
+        } else {
+          setThread((data ?? []) as SmsMessage[]);
+        }
+        setThreadLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [expanded, lead.id]);
+
+  async function sendSms() {
+    const text = smsDraft.trim();
+    if (!text || sendingSms) return;
+    if (!lead.phone) {
+      toast.error("No phone number on this lead.");
+      return;
+    }
+    setSendingSms(true);
+    try {
+      const res = await sendManual({
+        data: { lead_id: lead.id, phone: lead.phone, message: text },
+      });
+      if (res.ok) {
+        setSmsDraft("");
+        toast.success(res.test_mode ? "Logged (test mode)" : "Message sent");
+        // Optimistically append; realistic timestamp from server via reload
+        const { data } = await supabase
+          .from("sms_conversation_log")
+          .select("id, direction, body, status, from_ai, created_at, metadata")
+          .eq("lead_id", lead.id)
+          .order("created_at", { ascending: true });
+        setThread((data ?? []) as SmsMessage[]);
+        await updateLead(lead.id, {
+          last_sms_at: new Date().toISOString(),
+          sequence_status: "paused",
+        });
+      } else {
+        toast.error(`Failed to send: ${res.error}`);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "send_exception";
+      toast.error(msg);
+    } finally {
+      setSendingSms(false);
+    }
+  }
+
 
   const canConvert =
     lead.lead_type === "customer_lead" &&
