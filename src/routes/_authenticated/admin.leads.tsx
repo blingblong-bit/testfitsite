@@ -5,6 +5,7 @@ import { Bell, BellOff, Home, ChevronDown, ChevronUp, Phone, Mail, Calendar, Sea
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { sendWelcomeSms } from "@/lib/send-welcome-sms.functions";
+import { sendManualSms } from "@/lib/send-manual-sms.functions";
 import { AnalyticsView } from "@/components/AnalyticsView";
 
 type CrmStatus =
@@ -935,6 +936,16 @@ function formatLastSmsAt(iso: string): string {
   return str.replace(", ", " at ");
 }
 
+type SmsMessage = {
+  id: string;
+  direction: "inbound" | "outbound";
+  body: string;
+  status: string | null;
+  from_ai: boolean;
+  created_at: string;
+  metadata: { sent_by?: string; kind?: string; test_mode?: boolean } | null;
+};
+
 function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void> }) {
   const [expanded, setExpanded] = useState(false);
   const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
@@ -942,8 +953,73 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
   const [convertBusy, setConvertBusy] = useState(false);
   const [showLostReason, setShowLostReason] = useState(false);
   const [lostReason, setLostReason] = useState("");
+  const [thread, setThread] = useState<SmsMessage[] | null>(null);
+  const [threadLoading, setThreadLoading] = useState(false);
+  const [smsDraft, setSmsDraft] = useState("");
+  const [sendingSms, setSendingSms] = useState(false);
   const sendWelcome = useServerFn(sendWelcomeSms);
+  const sendManual = useServerFn(sendManualSms);
   const priority = computePriority(lead);
+
+  useEffect(() => {
+    if (!expanded) return;
+    let cancelled = false;
+    setThreadLoading(true);
+    supabase
+      .from("sms_conversation_log")
+      .select("id, direction, body, status, from_ai, created_at, metadata")
+      .eq("lead_id", lead.id)
+      .order("created_at", { ascending: true })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.error("[thread] load failed", error.message);
+          setThread([]);
+        } else {
+          setThread((data ?? []) as SmsMessage[]);
+        }
+        setThreadLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [expanded, lead.id]);
+
+  async function sendSms() {
+    const text = smsDraft.trim();
+    if (!text || sendingSms) return;
+    if (!lead.phone) {
+      toast.error("No phone number on this lead.");
+      return;
+    }
+    setSendingSms(true);
+    try {
+      const res = await sendManual({
+        data: { lead_id: lead.id, phone: lead.phone, message: text },
+      });
+      if (res.ok) {
+        setSmsDraft("");
+        toast.success(res.test_mode ? "Logged (test mode)" : "Message sent");
+        // Optimistically append; realistic timestamp from server via reload
+        const { data } = await supabase
+          .from("sms_conversation_log")
+          .select("id, direction, body, status, from_ai, created_at, metadata")
+          .eq("lead_id", lead.id)
+          .order("created_at", { ascending: true });
+        setThread((data ?? []) as SmsMessage[]);
+        await updateLead(lead.id, {
+          last_sms_at: new Date().toISOString(),
+          sequence_status: "paused",
+        });
+      } else {
+        toast.error(`Failed to send: ${res.error}`);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "send_exception";
+      toast.error(msg);
+    } finally {
+      setSendingSms(false);
+    }
+  }
+
 
   const canConvert =
     lead.lead_type === "customer_lead" &&
@@ -1267,6 +1343,75 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
               {lead.message && <p className="text-sm whitespace-pre-wrap text-muted-foreground">{lead.message}</p>}
             </div>
           )}
+
+          {/* SMS Conversation */}
+          <div className="rounded-md border border-border p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">SMS Conversation</p>
+              {lead.sequence_status && (
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Sequence: <span className="text-foreground">{lead.sequence_status}</span>
+                </span>
+              )}
+            </div>
+            <div className="max-h-80 overflow-y-auto rounded-md bg-background/60 p-3 space-y-2">
+              {threadLoading && <p className="text-xs text-muted-foreground">Loading…</p>}
+              {!threadLoading && thread && thread.length === 0 && (
+                <p className="text-xs text-muted-foreground">No messages yet.</p>
+              )}
+              {thread?.map((m) => {
+                const outbound = m.direction === "outbound";
+                return (
+                  <div key={m.id} className={"flex " + (outbound ? "justify-end" : "justify-start")}>
+                    <div
+                      className={
+                        "max-w-[75%] rounded-2xl px-3 py-2 text-sm " +
+                        (outbound
+                          ? "bg-primary text-primary-foreground rounded-br-sm"
+                          : "bg-secondary text-foreground rounded-bl-sm")
+                      }
+                    >
+                      <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                      <p className={"mt-1 text-[10px] " + (outbound ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                        {new Date(m.created_at).toLocaleString("en-US", {
+                          month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true,
+                        })}
+                        {m.from_ai && " · AI"}
+                        {m.metadata?.sent_by === "staff" && " · Staff"}
+                        {m.status === "test_mode" && " · TEST"}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {!lead.phone ? (
+              <p className="text-xs text-muted-foreground">Add a phone number to send SMS.</p>
+            ) : lead.sms_opted_out ? (
+              <p className="text-xs text-destructive">This lead has opted out of SMS.</p>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  value={smsDraft}
+                  onChange={(e) => setSmsDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendSms(); } }}
+                  placeholder="Type a reply…"
+                  maxLength={1600}
+                  className="h-10 flex-1 rounded-md border border-border bg-background px-3 text-sm"
+                />
+                <button
+                  onClick={sendSms}
+                  disabled={sendingSms || !smsDraft.trim()}
+                  className="h-10 rounded-md bg-primary px-4 text-xs font-semibold uppercase tracking-widest text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                >
+                  {sendingSms ? "Sending…" : "Send"}
+                </button>
+              </div>
+            )}
+            <p className="text-[10px] text-muted-foreground">Sending a manual reply pauses the automated sequence.</p>
+          </div>
+
+
 
           {/* Notes */}
           <div>
