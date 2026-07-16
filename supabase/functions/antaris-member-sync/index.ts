@@ -1,7 +1,7 @@
 // Antaris member sync — polls recent leads and marks conversions when a
 // matching Active member is found in Antaris. READ-ONLY toward Antaris.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { checkMemberMatch } from "../../../src/lib/antaris/client.ts";
+import { checkMemberMatch } from "./antaris-client.ts";
 
 const TEST_EMAIL = "smstest@fitbeyondplus.com";
 
