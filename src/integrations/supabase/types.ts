@@ -169,6 +169,7 @@ export type Database = {
           crm_status: string | null
           day_pass_price: number | null
           email: string
+          followup_count: number
           id: string
           interest: string | null
           last_contact_method: string | null
@@ -206,6 +207,7 @@ export type Database = {
           crm_status?: string | null
           day_pass_price?: number | null
           email: string
+          followup_count?: number
           id?: string
           interest?: string | null
           last_contact_method?: string | null
@@ -243,6 +245,7 @@ export type Database = {
           crm_status?: string | null
           day_pass_price?: number | null
           email?: string
+          followup_count?: number
           id?: string
           interest?: string | null
           last_contact_method?: string | null
