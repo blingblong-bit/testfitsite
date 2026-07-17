@@ -143,6 +143,8 @@ Deno.serve(async (_req) => {
           crm_status: "Joined",
           sequence_status: "completed",
           converted_at: ts,
+          lead_type: "existing_member",
+          should_notify: false,
           notes: nextNotes,
         })
         .eq("id", lead.id);
