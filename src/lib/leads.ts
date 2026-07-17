@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { notifyNewLead } from "./notify-lead.functions";
 import { confirmLeadToCustomer } from "./confirm-lead.functions";
 import { classifyLead } from "./lead-classifier";
+import { checkExistingMemberSubmission } from "./check-existing-member.functions";
 
 export type LeadInput = {
   source: string;
