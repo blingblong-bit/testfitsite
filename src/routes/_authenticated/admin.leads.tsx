@@ -124,7 +124,7 @@ type Referral = {
   created_at: string;
 };
 
-type TypeFilter = "customer_lead" | "vendor_solicitation" | "spam" | "all";
+type TypeFilter = "customer_lead" | "existing_member" | "vendor_solicitation" | "spam" | "all";
 type Tab = "leads" | "referrals" | "analytics" | "settings";
 type SortKey = "priority" | "newest" | "oldest" | "tour_date" | "last_contact" | "source";
 type QuickFilter = "none" | "new" | "high_priority" | "due_today" | "tours_scheduled" | "tours_completed" | "joined_this_month";
