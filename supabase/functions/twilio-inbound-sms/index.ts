@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     // Find lead by phone (try normalized and raw)
     const { data: leadRows } = await supabase
       .from("leads")
-      .select("id, name, phone, interest, goal, sms_opted_out, notes")
+      .select("id, name, phone, interest, goal, sms_opted_out, notes, lead_type")
       .or(`phone.eq.${from},phone.eq.${fromRaw}`)
       .limit(1);
     const lead = leadRows?.[0];
