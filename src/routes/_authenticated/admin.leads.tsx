@@ -725,19 +725,27 @@ function LeadsView({
     return arr;
   }, [filtered, sortBy]);
 
-  // Dashboard stats (over byType — customer leads view)
+  // Dashboard stats — always computed over customer_lead pool, excluding existing_member
+  const customerLeads = useMemo(
+    () => leads?.filter((l) => (l.lead_type ?? "customer_lead") === "customer_lead") ?? [],
+    [leads],
+  );
+  const existingMembersCount = useMemo(
+    () => leads?.filter((l) => l.lead_type === "existing_member").length ?? 0,
+    [leads],
+  );
   const stats = useMemo(() => {
-    const newLeads = byType.filter((l) => (l.crm_status ?? "New Lead") === "New Lead").length;
-    const highPriority = byType.filter((l) => computePriority(l) === "high" && l.crm_status !== "Joined" && l.crm_status !== "Lost Lead").length;
-    const followUpsDueToday = byType.filter((l) => isFollowUpDueToday(l)).length;
-    const toursScheduled = byType.filter((l) => l.tour_scheduled && !l.tour_completed).length;
-    const toursCompleted = byType.filter((l) => l.tour_completed).length;
-    const joinedThisMonth = byType.filter((l) => l.became_member && l.membership_start_date && new Date(l.membership_start_date) >= monthStart).length;
-    const totalForConversion = byType.length;
-    const totalJoined = byType.filter((l) => l.became_member).length;
+    const newLeads = customerLeads.filter((l) => (l.crm_status ?? "New Lead") === "New Lead").length;
+    const highPriority = customerLeads.filter((l) => computePriority(l) === "high" && l.crm_status !== "Joined" && l.crm_status !== "Lost Lead").length;
+    const followUpsDueToday = customerLeads.filter((l) => isFollowUpDueToday(l)).length;
+    const toursScheduled = customerLeads.filter((l) => l.tour_scheduled && !l.tour_completed).length;
+    const toursCompleted = customerLeads.filter((l) => l.tour_completed).length;
+    const joinedThisMonth = customerLeads.filter((l) => l.became_member && l.membership_start_date && new Date(l.membership_start_date) >= monthStart).length;
+    const totalForConversion = customerLeads.length;
+    const totalJoined = customerLeads.filter((l) => l.became_member).length;
     const conversionRate = totalForConversion === 0 ? 0 : Math.round((totalJoined / totalForConversion) * 100);
     return { newLeads, highPriority, followUpsDueToday, toursScheduled, toursCompleted, joinedThisMonth, conversionRate };
-  }, [byType, monthStart]);
+  }, [customerLeads, monthStart]);
 
   function toggleQuick(q: QuickFilter) {
     setQuickFilter((prev) => (prev === q ? "none" : q));
@@ -749,7 +757,7 @@ function LeadsView({
   return (
     <>
       {/* Dashboard stats — click to filter */}
-      <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
+      <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-3">
         <Stat label="New Leads" value={stats.newLeads} active={quickFilter === "new"} onClick={() => toggleQuick("new")} />
         <Stat label="Follow-Ups Due Today" value={stats.followUpsDueToday} accent={stats.followUpsDueToday > 0 ? "destructive" : undefined} active={quickFilter === "due_today"} onClick={() => toggleQuick("due_today")} />
         <Stat label="High Priority" value={stats.highPriority} accent="destructive" active={quickFilter === "high_priority"} onClick={() => toggleQuick("high_priority")} />
@@ -757,6 +765,7 @@ function LeadsView({
         <Stat label="Tours Completed" value={stats.toursCompleted} active={quickFilter === "tours_completed"} onClick={() => toggleQuick("tours_completed")} />
         <Stat label="Joined This Month" value={stats.joinedThisMonth} accent="primary" active={quickFilter === "joined_this_month"} onClick={() => toggleQuick("joined_this_month")} />
         <Stat label="Conversion Rate" value={`${stats.conversionRate}%`} accent="primary" />
+        <Stat label="Existing Members Detected" value={existingMembersCount} onClick={() => setTypeFilter("existing_member")} active={typeFilter === "existing_member"} />
       </div>
       {quickFilter !== "none" && (
         <div className="mt-3">
@@ -772,6 +781,7 @@ function LeadsView({
       {/* Type filter */}
       <div className="mt-6 flex flex-wrap gap-2">
         <FilterChip active={typeFilter === "customer_lead"} onClick={() => setTypeFilter("customer_lead")}>Customer Leads ({count("customer_lead")})</FilterChip>
+        <FilterChip active={typeFilter === "existing_member"} onClick={() => setTypeFilter("existing_member")}>Existing Members ({count("existing_member")})</FilterChip>
         <FilterChip active={typeFilter === "vendor_solicitation"} onClick={() => setTypeFilter("vendor_solicitation")}>Vendor Solicitations ({count("vendor_solicitation")})</FilterChip>
         <FilterChip active={typeFilter === "spam"} onClick={() => setTypeFilter("spam")}>Spam ({count("spam")})</FilterChip>
         <FilterChip active={typeFilter === "all"} onClick={() => setTypeFilter("all")}>All ({count("all")})</FilterChip>
