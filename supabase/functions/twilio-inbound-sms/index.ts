@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     // Find lead by phone (try normalized and raw)
     const { data: leadRows } = await supabase
       .from("leads")
-      .select("id, name, phone, interest, goal, sms_opted_out, notes")
+      .select("id, name, phone, interest, goal, sms_opted_out, notes, lead_type")
       .or(`phone.eq.${from},phone.eq.${fromRaw}`)
       .limit(1);
     const lead = leadRows?.[0];
@@ -136,7 +136,9 @@ Deno.serve(async (req) => {
     }
     messages.push({ role: "user", content: body });
 
-    const systemPrompt = `You are the friendly front desk assistant for FIT Beyond Plus, a full-service gym in Tullahoma, Tennessee. You are texting with a potential member named ${lead.name ?? "there"} who is interested in ${lead.interest ?? lead.goal ?? "getting started"}.
+    const isExistingMember = lead.lead_type === "existing_member";
+
+    const prospectPrompt = `You are the friendly front desk assistant for FIT Beyond Plus, a full-service gym in Tullahoma, Tennessee. You are texting with a potential member named ${lead.name ?? "there"} who is interested in ${lead.interest ?? lead.goal ?? "getting started"}.
 
 About FIT Beyond Plus:
 - Address: 449 W Lincoln St, Tullahoma, TN 37388
@@ -164,6 +166,21 @@ Always respond in this exact JSON format:
 { "reply": "your text reply here", "needs_human": false }
 or
 { "reply": null, "needs_human": true, "reason": "brief reason" }`;
+
+    const memberPrompt = `You are the friendly support assistant for FIT Beyond Plus. You are texting with an EXISTING MEMBER named ${lead.name ?? "there"}. Do not try to sell them on joining — they are already a member. Help them with questions about class schedules, hours, freezing or pausing membership, billing questions, guest passes, or general gym info. For anything involving actual account changes, billing disputes, or cancellations, set needs_human to true — staff needs to handle those personally. Keep the same warm, short, conversational tone as the prospect-facing assistant.
+
+About FIT Beyond Plus:
+- Address: 449 W Lincoln St, Tullahoma, TN 37388
+- Phone: (931) 222-4449
+- Email: info@fitbeyondplus.com
+- Offerings: Strength training, cardio, group fitness, kickboxing, Brazilian Jiu-Jitsu (adult and kids), athlete performance training, sauna, connected physical therapy
+
+Always respond in this exact JSON format:
+{ "reply": "your text reply here", "needs_human": false }
+or
+{ "reply": null, "needs_human": true, "reason": "brief reason" }`;
+
+    const systemPrompt = isExistingMember ? memberPrompt : prospectPrompt;
 
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
     if (!anthropicKey) {
@@ -247,7 +264,8 @@ or
 
       const staffPhone = Deno.env.get("STAFF_ALERT_PHONE");
       if (staffPhone) {
-        const alert = `⚡ ${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${reason || "n/a"}. Check the lead tracker.`;
+        const prefix = isExistingMember ? "⚡ [EXISTING MEMBER] " : "⚡ ";
+        const alert = `${prefix}${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${reason || "n/a"}. Check the lead tracker.`;
         await sendTwilioSms(normalizePhone(staffPhone), alert);
       }
       return twiml();
