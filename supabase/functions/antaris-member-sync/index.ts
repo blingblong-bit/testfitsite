@@ -104,7 +104,7 @@ Deno.serve(async (_req) => {
     .select("id, name, email, phone, notes, last_sms_at")
     .eq("became_member", false)
     .eq("lead_type", "customer_lead")
-    .not("crm_status", "in", "(Joined,Lost Lead)")
+    .or("crm_status.is.null,and(crm_status.neq.Joined,crm_status.neq.Lost Lead)")
     .gte("created_at", since);
 
   if (error) {
