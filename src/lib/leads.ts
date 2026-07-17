@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { notifyNewLead } from "./notify-lead.functions";
 import { confirmLeadToCustomer } from "./confirm-lead.functions";
 import { classifyLead } from "./lead-classifier";
+import { checkExistingMemberSubmission } from "./check-existing-member.functions";
 
 export type LeadInput = {
   source: string;
@@ -31,6 +32,24 @@ export async function submitLead(input: LeadInput) {
 
   if (!payload.name || !payload.email) {
     throw new Error("Name and email are required.");
+  }
+
+  // Check Antaris first — if this submitter is already an active member,
+  // handle it server-side (insert + welcome SMS) and skip the normal flow.
+  try {
+    const result = await checkExistingMemberSubmission({
+      data: {
+        source: payload.source,
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        interest: payload.interest,
+        message: payload.message,
+      },
+    });
+    if (result?.handled) return;
+  } catch (e) {
+    console.error("Existing member check failed:", e);
   }
 
   const classification = classifyLead(payload);
