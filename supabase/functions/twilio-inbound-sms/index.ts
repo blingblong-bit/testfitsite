@@ -264,7 +264,8 @@ or
 
       const staffPhone = Deno.env.get("STAFF_ALERT_PHONE");
       if (staffPhone) {
-        const alert = `⚡ ${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${reason || "n/a"}. Check the lead tracker.`;
+        const prefix = isExistingMember ? "⚡ [EXISTING MEMBER] " : "⚡ ";
+        const alert = `${prefix}${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${reason || "n/a"}. Check the lead tracker.`;
         await sendTwilioSms(normalizePhone(staffPhone), alert);
       }
       return twiml();
