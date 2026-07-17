@@ -144,6 +144,12 @@ export type MemberMatch = {
   status: string | null;
 };
 
+function hasPhoneMatch(c: AntarisClient, phone: string): boolean {
+  const target = last10(phone);
+  if (target.length !== 10) return false;
+  return last10(c.cell_phone) === target || last10(c.home_phone) === target;
+}
+
 export async function checkMemberMatch(
   name: string,
   email: string,
@@ -159,22 +165,48 @@ export async function checkMemberMatch(
     const token = await login();
     if (!token) return fallback;
 
+    // Antaris q= is single-term. Try email, then last name, then first name.
+    // Many real members have placeholder emails (noemail####@antaris.ca), so
+    // email search alone frequently returns zero — cascade to name terms.
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    const first = words[0] ?? "";
+    const last = words.slice(1).join(" ").trim();
+
+    const queries: string[] = [];
+    if (email) queries.push(email);
+    if (last) queries.push(last);
+    if (first) queries.push(first);
+
     let results: AntarisClient[] = [];
-    if (email) results = await searchClients(token, email);
-    if (results.length === 0 && name)
-      results = await searchClients(token, name);
+    for (const q of queries) {
+      results = await searchClients(token, q);
+      if (results.length > 0) break;
+    }
     if (results.length === 0) return fallback;
 
-    const top = results[0];
-    const clientId = String(top.id ?? top.client_id ?? "");
+    // Score every candidate and take the best. On ties, prefer phone match.
+    let best: { c: AntarisClient; score: number; phone: boolean } | null = null;
+    for (const c of results) {
+      const score = scoreClient(c, name, email, phone);
+      const phoneOk = hasPhoneMatch(c, phone);
+      if (
+        !best ||
+        score > best.score ||
+        (score === best.score && phoneOk && !best.phone)
+      ) {
+        best = { c, score, phone: phoneOk };
+      }
+    }
+    if (!best) return fallback;
+
+    const clientId = String(best.c.id ?? best.c.client_id ?? "");
     if (!clientId) return fallback;
 
-    const score = scoreClient(top, name, email, phone);
     const { status } = await getMembershipStatus(token, clientId);
 
     return {
-      isMember: status === "Active" && score >= 80,
-      confidence: score,
+      isMember: status === "Active" && best.score >= 80,
+      confidence: best.score,
       clientId,
       status,
     };
