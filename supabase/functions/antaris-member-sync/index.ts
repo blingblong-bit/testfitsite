@@ -12,6 +12,7 @@ type LeadRow = {
   phone: string | null;
   notes: string | null;
   last_sms_at: string | null;
+  created_at: string | null;
 };
 
 function firstName(name: string | null): string {
