@@ -12,6 +12,7 @@ type LeadRow = {
   phone: string | null;
   notes: string | null;
   last_sms_at: string | null;
+  created_at: string | null;
 };
 
 function firstName(name: string | null): string {
@@ -101,7 +102,7 @@ Deno.serve(async (_req) => {
   const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
   const { data: leads, error } = await supabase
     .from("leads")
-    .select("id, name, email, phone, notes, last_sms_at")
+    .select("id, name, email, phone, notes, last_sms_at, created_at")
     .eq("became_member", false)
     .eq("lead_type", "customer_lead")
     .or("crm_status.is.null,and(crm_status.neq.Joined,crm_status.neq.Lost Lead)")
@@ -130,23 +131,31 @@ Deno.serve(async (_req) => {
       if (!match.isMember) continue;
 
       const ts = new Date().toISOString();
-      const noteLine =
-        match.confidence >= 100
-          ? `[${ts}] Verified Antaris match (name+phone+email)`
-          : `[${ts}] High confidence Antaris match (name+phone)`;
+      const leadCreated = lead.created_at ? new Date(lead.created_at).getTime() : 0;
+      const antarisDate = match.joinDate ? new Date(match.joinDate).getTime() : NaN;
+      const isGenuineConversion =
+        !Number.isNaN(antarisDate) && antarisDate > leadCreated;
+
+      const noteLine = isGenuineConversion
+        ? `[${ts}] Converted — Antaris join date (${match.joinDate}) confirms signup after lead creation`
+        : `[${ts}] Existing member match — Antaris join date predates or is unavailable relative to lead creation`;
       const nextNotes = lead.notes ? `${lead.notes}\n${noteLine}` : noteLine;
+
+      const updatePayload: Record<string, unknown> = {
+        became_member: true,
+        crm_status: "Joined",
+        sequence_status: "completed",
+        converted_at: ts,
+        should_notify: false,
+        notes: nextNotes,
+      };
+      if (!isGenuineConversion) {
+        updatePayload.lead_type = "existing_member";
+      }
 
       const { error: updErr } = await supabase
         .from("leads")
-        .update({
-          became_member: true,
-          crm_status: "Joined",
-          sequence_status: "completed",
-          converted_at: ts,
-          lead_type: "existing_member",
-          should_notify: false,
-          notes: nextNotes,
-        })
+        .update(updatePayload)
         .eq("id", lead.id);
       if (updErr) throw updErr;
 

@@ -118,22 +118,24 @@ function scoreClient(
 async function getMembershipStatus(
   token: string,
   clientId: string | number,
-): Promise<{ status: string | null }> {
+): Promise<{ status: string | null; joinDate: string | null }> {
   try {
     const res = await fetch(
       `${BASE_URL}/v1/clients/${encodeURIComponent(String(clientId))}/membershipStatus`,
       { headers: { Authorization: `Bearer ${token}` } },
     );
-    if (!res.ok) return { status: null };
+    if (!res.ok) return { status: null, joinDate: null };
     const json = await res.json();
-    const status =
-      (json && (json.status as string)) ??
-      (json && json.data && (json.data.status as string)) ??
+    const root = (json && json.data) ? json.data : json;
+    const status = (root && (root.status as string)) ?? null;
+    const joinDate =
+      (root && (root.date_joined as string)) ??
+      (root && (root.updated_at as string)) ??
       null;
-    return { status: status ?? null };
+    return { status, joinDate };
   } catch (e) {
     console.error("[antaris] membershipStatus exception", e);
-    return { status: null };
+    return { status: null, joinDate: null };
   }
 }
 
@@ -142,6 +144,7 @@ export type MemberMatch = {
   confidence: number;
   clientId: string | null;
   status: string | null;
+  joinDate: string | null;
 };
 
 function hasPhoneMatch(c: AntarisClient, phone: string): boolean {
@@ -160,14 +163,12 @@ export async function checkMemberMatch(
     confidence: 0,
     clientId: null,
     status: null,
+    joinDate: null,
   };
   try {
     const token = await login();
     if (!token) return fallback;
 
-    // Antaris q= is single-term. Try email, then last name, then first name.
-    // Many real members have placeholder emails (noemail####@antaris.ca), so
-    // email search alone frequently returns zero — cascade to name terms.
     const words = name.trim().split(/\s+/).filter(Boolean);
     const first = words[0] ?? "";
     const last = words.slice(1).join(" ").trim();
@@ -184,7 +185,6 @@ export async function checkMemberMatch(
     }
     if (results.length === 0) return fallback;
 
-    // Score every candidate and take the best. On ties, prefer phone match.
     let best: { c: AntarisClient; score: number; phone: boolean } | null = null;
     for (const c of results) {
       const score = scoreClient(c, name, email, phone);
@@ -202,13 +202,14 @@ export async function checkMemberMatch(
     const clientId = String(best.c.id ?? best.c.client_id ?? "");
     if (!clientId) return fallback;
 
-    const { status } = await getMembershipStatus(token, clientId);
+    const { status, joinDate } = await getMembershipStatus(token, clientId);
 
     return {
       isMember: status === "Active" && best.score >= 80,
       confidence: best.score,
       clientId,
       status,
+      joinDate,
     };
   } catch (e) {
     console.error("[antaris] checkMemberMatch exception", e);
