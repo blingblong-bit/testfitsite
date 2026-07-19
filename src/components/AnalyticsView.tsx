@@ -232,6 +232,13 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
         </Grid>
       </Section>
 
+      {/* Day Pass Analytics */}
+      <Section title="Day Pass Analytics" subtitle="Walk-in vs. referral day passes and conversion to members">
+        <DayPassAnalytics leads={leads ?? []} />
+      </Section>
+
+
+
       {/* Referral Analytics */}
       <Section title="Referral Analytics" subtitle="Performance of the referral program">
         <Grid cols={4}>
