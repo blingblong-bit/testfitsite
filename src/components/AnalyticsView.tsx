@@ -668,7 +668,7 @@ function DayPassAnalytics({ leads }: { leads: AnalyticsLead[] }) {
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="range"
-                selected={range as { from?: Date; to?: Date }}
+                selected={range.from ? { from: range.from, to: range.to } : undefined}
                 onSelect={(r) => setRange(r ?? {})}
                 numberOfMonths={2}
                 initialFocus
