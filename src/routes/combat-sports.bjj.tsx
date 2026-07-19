@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { CombatLeadForm } from "@/components/CombatLeadForm";
 import { Phone, Mail, ArrowLeft, ArrowRight } from "lucide-react";
 import bjjAdultAsset from "@/assets/bjj-adult.jpg.asset.json";
 import bjjKidsAsset from "@/assets/bjj-kids.jpg.asset.json";
@@ -90,8 +91,8 @@ function BjjPage() {
             <p>
               BJJ rewards patience, problem-solving, and consistency. You'll learn to stay calm
               under pressure, use leverage instead of raw force, and control an opponent by
-              understanding position and timing. Beginners are welcome; the mat is a place to
-              learn, not to prove anything.
+              understanding position and timing. Beginners are welcome; the mat is a place to learn,
+              not to prove anything.
             </p>
             <p>
               Bring a clean gi (loaners available for your first class), a mouthguard, and
@@ -121,7 +122,12 @@ function BjjPage() {
               key={`${img.src}-${idx}`}
               className="overflow-hidden rounded-lg border border-border bg-card"
             >
-              <img src={img.src} alt={img.alt} className="w-full h-72 object-cover" loading="lazy" />
+              <img
+                src={img.src}
+                alt={img.alt}
+                className="w-full h-72 object-cover"
+                loading="lazy"
+              />
             </figure>
           ))}
         </div>
@@ -142,13 +148,13 @@ function BjjPage() {
             </p>
             <div className="mt-6 space-y-4 text-muted-foreground">
               <p>
-                A safe, structured environment where kids learn real Brazilian Jiu-Jitsu.
-                Classes focus on positional control, respectful sparring, discipline, and
-                self-defense fundamentals — no striking, no ego.
+                A safe, structured environment where kids learn real Brazilian Jiu-Jitsu. Classes
+                focus on positional control, respectful sparring, discipline, and self-defense
+                fundamentals — no striking, no ego.
               </p>
               <p>
-                Great for building confidence, focus, and coordination. Every student progresses
-                at their own pace with age-appropriate curriculum and hands-on coaching.
+                Great for building confidence, focus, and coordination. Every student progresses at
+                their own pace with age-appropriate curriculum and hands-on coaching.
               </p>
             </div>
           </div>
@@ -186,7 +192,13 @@ function BjjPage() {
   );
 }
 
-function ScheduleTable({ heading, rows }: { heading: string; rows: { day: string; time: string }[] }) {
+function ScheduleTable({
+  heading,
+  rows,
+}: {
+  heading: string;
+  rows: { day: string; time: string }[];
+}) {
   return (
     <div className="rounded-lg border border-border bg-card overflow-hidden">
       <div className="px-6 py-4 border-b border-border">
@@ -215,16 +227,11 @@ function ContactCTA() {
         <p className="text-xs tracking-[0.3em] text-primary">GET STARTED</p>
         <h2 className="mt-3 text-3xl md:text-4xl">Book a Free Trial Class</h2>
         <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-          Reach out directly and we'll get you scheduled for your first class — no obligation.
+          Drop your info below and we'll reach out to get your first class scheduled — no
+          obligation. Prefer to talk now? Call or email us directly.
         </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <a
-            href="tel:9318418272"
-            className="inline-flex h-12 items-center gap-2 rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
-            style={{ boxShadow: "var(--shadow-glow)" }}
-          >
-            <Phone className="h-4 w-4" /> Book a Free Trial Class
-          </a>
+        <CombatLeadForm discipline={"Brazilian Jiu-Jitsu"} />
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
           <a
             href="tel:9318418272"
             className="inline-flex h-12 items-center gap-2 rounded-md border border-border px-6 text-sm font-bold uppercase tracking-wide hover:bg-secondary transition"

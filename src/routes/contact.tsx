@@ -5,6 +5,11 @@ import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 
 export const Route = createFileRoute("/contact")({
+  validateSearch: (search: Record<string, unknown>): { plan?: string } => {
+    const plan =
+      typeof search.plan === "string" && search.plan.trim() ? search.plan.trim() : undefined;
+    return plan ? { plan } : {};
+  },
   head: () => ({
     meta: [
       { title: "Contact & Book a Tour — FIT Beyond Plus" },
@@ -77,6 +82,7 @@ export const Route = createFileRoute("/contact")({
 });
 
 function Contact() {
+  const { plan } = Route.useSearch();
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -114,6 +120,18 @@ function Contact() {
 
       <section className="container-page py-20 grid lg:grid-cols-5 gap-12">
         <div className="lg:col-span-3">
+          {plan && (
+            <div className="mb-8 rounded-lg border border-primary/40 bg-primary/10 p-5 text-sm">
+              <p className="font-semibold text-foreground">
+                Interested in the {plan} plan? Here's how it works:
+              </p>
+              <p className="mt-2 text-muted-foreground">
+                Memberships are set up in person at the front desk — stop by any time during staffed
+                hours and you can be training the same day. No appointment needed. If you have a
+                question first, send it below and we'll get right back to you.
+              </p>
+            </div>
+          )}
           <h2 className="text-2xl md:text-3xl">Send us a message</h2>
           {sent ? (
             <div className="mt-8 rounded-lg border border-primary bg-primary/10 p-8 text-center">
@@ -139,7 +157,7 @@ function Contact() {
                   <select
                     id="interest"
                     name="interest"
-                    defaultValue="Book a tour"
+                    defaultValue={plan ? "Membership question" : "Book a tour"}
                     className="w-full h-11 rounded-md bg-secondary border border-border px-3 text-sm focus:outline-none focus:border-primary"
                   >
                     <option>Book a tour</option>
@@ -158,6 +176,7 @@ function Contact() {
                   id="message"
                   name="message"
                   rows={5}
+                  defaultValue={plan ? `I'm interested in the ${plan} membership.` : undefined}
                   className="w-full rounded-md bg-secondary border border-border px-3 py-2 text-sm focus:outline-none focus:border-primary"
                   placeholder="Tell us a bit about your goals or what you're looking for."
                 />

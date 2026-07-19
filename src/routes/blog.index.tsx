@@ -57,6 +57,21 @@ function BlogIndex() {
 
       {error && <p className="mt-10 text-sm text-destructive">Unable to load posts: {error}</p>}
 
+      {!posts && !error && (
+        <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3" aria-hidden>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="animate-pulse rounded-lg border border-border bg-card">
+              <div className="aspect-[16/9] w-full bg-secondary" />
+              <div className="p-6 space-y-3">
+                <div className="h-3 w-24 rounded bg-secondary" />
+                <div className="h-5 w-3/4 rounded bg-secondary" />
+                <div className="h-4 w-full rounded bg-secondary" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {posts && posts.length === 0 && (
         <p className="mt-10 text-muted-foreground">No posts yet. Check back soon.</p>
       )}

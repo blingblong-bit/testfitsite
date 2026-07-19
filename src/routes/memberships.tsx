@@ -224,6 +224,15 @@ function Memberships() {
         <p className="text-xs tracking-[0.3em] text-primary">MONTHLY MEMBERSHIPS</p>
         <p className="mt-2 text-sm text-muted-foreground">$49 annual fee billed July 1st</p>
 
+        <div className="mt-6 rounded-lg border border-primary/40 bg-primary/10 p-5 text-sm">
+          <span className="font-semibold text-foreground">Signups are done in person</span>{" "}
+          <span className="text-muted-foreground">
+            — just stop by the front desk during staffed hours and we'll have you training the same
+            day. No appointment needed. Have a question first? Ask about any plan below and we'll
+            text or email you back.
+          </span>
+        </div>
+
         <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {monthlyPlans.map((p) => (
             <div
@@ -246,9 +255,10 @@ function Memberships() {
               </ul>
               <Link
                 to="/contact"
+                search={{ plan: p.name }}
                 className="mt-8 inline-flex h-11 items-center justify-center rounded-md text-sm font-bold uppercase tracking-wide transition border border-border hover:bg-secondary"
               >
-                Join the Gym
+                Ask About This Plan
               </Link>
             </div>
           ))}
@@ -268,6 +278,13 @@ function Memberships() {
                   <span className="text-3xl font-display font-bold">${p.price}</span>
                   <span className="text-xs text-muted-foreground">paid in full</span>
                 </div>
+                <Link
+                  to="/contact"
+                  search={{ plan: `${p.name} (paid in full)` }}
+                  className="mt-4 text-xs font-semibold uppercase tracking-wide text-primary hover:underline"
+                >
+                  Ask about this plan →
+                </Link>
               </div>
             ))}
           </div>

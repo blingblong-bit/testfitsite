@@ -24,13 +24,12 @@ export function SiteHeader() {
           <img src={logo} alt="FIT Beyond Plus" className="h-10 w-auto" />
         </Link>
 
-        <nav className="hidden lg:flex shrink-0 items-center gap-5 xl:gap-6 ml-8 xl:ml-12">
-
+        <nav className="hidden xl:flex shrink-0 items-center gap-4 2xl:gap-6 ml-6 2xl:ml-10">
           {nav.map((n) => (
             <Link
               key={n.to}
               to={n.to}
-              className="text-sm font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+              className="whitespace-nowrap text-sm font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
               activeProps={{ className: "text-foreground" }}
               activeOptions={{ exact: n.to === "/" }}
             >
@@ -39,16 +38,16 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden lg:flex items-center gap-2">
+        <div className="hidden xl:flex shrink-0 items-center gap-2">
           <Link
             to="/contact"
-            className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs font-semibold uppercase tracking-wide text-foreground transition-colors hover:bg-secondary"
+            className="inline-flex h-8 items-center whitespace-nowrap rounded-md border border-border px-3 text-xs font-semibold uppercase tracking-wide text-foreground transition-colors hover:bg-secondary"
           >
             Book a Tour
           </Link>
           <Link
             to="/memberships"
-            className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-semibold uppercase tracking-wide text-primary-foreground transition-all hover:brightness-110"
+            className="inline-flex h-8 items-center whitespace-nowrap rounded-md bg-primary px-3 text-xs font-semibold uppercase tracking-wide text-primary-foreground transition-all hover:brightness-110"
             style={{ boxShadow: "var(--shadow-glow)" }}
           >
             Join the Gym
@@ -56,7 +55,7 @@ export function SiteHeader() {
         </div>
 
         <button
-          className="lg:hidden inline-flex h-10 w-10 items-center justify-center rounded-md border border-border"
+          className="xl:hidden inline-flex h-10 w-10 items-center justify-center rounded-md border border-border"
           onClick={() => setOpen((v) => !v)}
           aria-label="Toggle menu"
         >
@@ -65,7 +64,7 @@ export function SiteHeader() {
       </div>
 
       {open && (
-        <div className="lg:hidden border-t border-border bg-background">
+        <div className="xl:hidden border-t border-border bg-background">
           <div className="container-page py-4 flex flex-col gap-1">
             {nav.map((n) => (
               <Link
@@ -73,7 +72,9 @@ export function SiteHeader() {
                 to={n.to}
                 onClick={() => setOpen(false)}
                 className="py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground"
-                activeProps={{ className: "py-2 text-sm font-semibold uppercase tracking-wide text-foreground" }}
+                activeProps={{
+                  className: "py-2 text-sm font-semibold uppercase tracking-wide text-foreground",
+                }}
                 activeOptions={{ exact: n.to === "/" }}
               >
                 {n.label}

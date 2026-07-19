@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { CombatLeadForm } from "@/components/CombatLeadForm";
 import { Phone, Mail, ArrowLeft, ArrowRight } from "lucide-react";
 import kickboxingAdultAsset from "@/assets/kickboxing-adult.jpg.asset.json";
 import kickboxingPadsTealAsset from "@/assets/kickboxing-pads-teal.jpg.asset.json";
@@ -59,8 +60,8 @@ function KickboxingPage() {
             <p className="text-xs tracking-[0.3em] text-primary">COMBAT SPORTS · KICKBOXING</p>
             <h1 className="mt-3 text-4xl md:text-6xl">Kickboxing Classes in Tullahoma, TN</h1>
             <p className="mt-5 text-lg text-muted-foreground max-w-xl">
-              Coached kickboxing at FIT Beyond Plus — technique, conditioning, and pad work
-              for adults and kids of every experience level.
+              Coached kickboxing at FIT Beyond Plus — technique, conditioning, and pad work for
+              adults and kids of every experience level.
             </p>
           </div>
           <img
@@ -78,19 +79,18 @@ function KickboxingPage() {
           <div className="mt-6 space-y-4 text-muted-foreground">
             <p>
               Our kickboxing classes teach the fundamentals of stance, footwork, punches, kicks,
-              elbows, and knees — then layer in combinations, defense, and pad work as you
-              progress. Every class blends skill development with real cardiovascular
-              conditioning, so you leave sharper AND more fit than when you walked in.
+              elbows, and knees — then layer in combinations, defense, and pad work as you progress.
+              Every class blends skill development with real cardiovascular conditioning, so you
+              leave sharper AND more fit than when you walked in.
             </p>
             <p>
               Classes are beginner-friendly by design. You don't need any prior martial arts or
-              boxing experience. Coaches scale drills to your level, whether it's your first
-              week or you've been training for years, and no sparring is required to
-              participate.
+              boxing experience. Coaches scale drills to your level, whether it's your first week or
+              you've been training for years, and no sparring is required to participate.
             </p>
             <p>
-              Bring athletic clothes, a water bottle, and hand wraps if you have them. Gloves
-              are available to borrow while you get started.
+              Bring athletic clothes, a water bottle, and hand wraps if you have them. Gloves are
+              available to borrow while you get started.
             </p>
           </div>
         </div>
@@ -116,7 +116,12 @@ function KickboxingPage() {
               key={img.src}
               className="overflow-hidden rounded-lg border border-border bg-card"
             >
-              <img src={img.src} alt={img.alt} className="w-full h-72 object-cover" loading="lazy" />
+              <img
+                src={img.src}
+                alt={img.alt}
+                className="w-full h-72 object-cover"
+                loading="lazy"
+              />
             </figure>
           ))}
         </div>
@@ -142,8 +147,8 @@ function KickboxingPage() {
                 supportive, age-appropriate environment.
               </p>
               <p>
-                No experience necessary. Coaches emphasize respect and effort over competition,
-                so every child can progress at their own pace.
+                No experience necessary. Coaches emphasize respect and effort over competition, so
+                every child can progress at their own pace.
               </p>
             </div>
           </div>
@@ -181,7 +186,13 @@ function KickboxingPage() {
   );
 }
 
-function ScheduleTable({ heading, rows }: { heading: string; rows: { day: string; time: string }[] }) {
+function ScheduleTable({
+  heading,
+  rows,
+}: {
+  heading: string;
+  rows: { day: string; time: string }[];
+}) {
   return (
     <div className="rounded-lg border border-border bg-card overflow-hidden">
       <div className="px-6 py-4 border-b border-border">
@@ -210,16 +221,11 @@ function ContactCTA() {
         <p className="text-xs tracking-[0.3em] text-primary">GET STARTED</p>
         <h2 className="mt-3 text-3xl md:text-4xl">Book a Free Trial Class</h2>
         <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-          Reach out directly and we'll get you scheduled for your first class — no obligation.
+          Drop your info below and we'll reach out to get your first class scheduled — no
+          obligation. Prefer to talk now? Call or email us directly.
         </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <a
-            href="tel:9318418272"
-            className="inline-flex h-12 items-center gap-2 rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
-            style={{ boxShadow: "var(--shadow-glow)" }}
-          >
-            <Phone className="h-4 w-4" /> Book a Free Trial Class
-          </a>
+        <CombatLeadForm discipline={"Kickboxing"} />
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
           <a
             href="tel:9318418272"
             className="inline-flex h-12 items-center gap-2 rounded-md border border-border px-6 text-sm font-bold uppercase tracking-wide hover:bg-secondary transition"
