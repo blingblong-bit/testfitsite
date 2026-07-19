@@ -35,13 +35,11 @@ const adultSchedule = [
   { day: "Monday", time: "6:30 – 7:30 PM" },
   { day: "Wednesday", time: "6:30 – 7:30 PM" },
   { day: "Friday", time: "6:00 – 7:00 PM" },
-  { day: "Saturday", time: "10:00 – 11:00 AM" },
 ];
 
 const kidsSchedule = [
   { day: "Monday", time: "5:30 – 6:15 PM" },
   { day: "Wednesday", time: "5:30 – 6:15 PM" },
-  { day: "Saturday", time: "9:00 – 9:45 AM" },
 ];
 
 function KickboxingPage() {
@@ -219,26 +217,30 @@ function ContactCTA() {
     <section className="container-page pb-16">
       <div className="rounded-lg border border-border bg-card p-8 md:p-10 text-center">
         <p className="text-xs tracking-[0.3em] text-primary">GET STARTED</p>
-        <h2 className="mt-3 text-3xl md:text-4xl">Book a Free Trial Class</h2>
+        <h2 className="mt-3 text-3xl md:text-4xl">Call Today to Get Started</h2>
         <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-          Drop your info below and we'll reach out to get your first class scheduled — no
-          obligation. Prefer to talk now? Call or email us directly.
+          Call or email us to get scheduled for your first class — no obligation. Prefer we reach
+          out? Drop your info below.
         </p>
-        <CombatLeadForm discipline={"Kickboxing"} />
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <a
             href="tel:9318418272"
-            className="inline-flex h-12 items-center gap-2 rounded-md border border-border px-6 text-sm font-bold uppercase tracking-wide hover:bg-secondary transition"
+            className="inline-flex h-12 items-center gap-2 rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
+            style={{ boxShadow: "var(--shadow-glow)" }}
           >
-            <Phone className="h-4 w-4" /> (931) 841-8272
+            <Phone className="h-4 w-4" /> Call (931) 841-8272
           </a>
           <a
             href="mailto:station.6.fitness@gmail.com"
             className="inline-flex h-12 items-center gap-2 rounded-md border border-border px-6 text-sm font-bold uppercase tracking-wide hover:bg-secondary transition"
           >
-            <Mail className="h-4 w-4" /> station.6.fitness@gmail.com
+            <Mail className="h-4 w-4" /> Email Us
           </a>
         </div>
+        <p className="mt-8 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          Or have us reach out
+        </p>
+        <CombatLeadForm discipline={"Kickboxing"} />
       </div>
     </section>
   );
