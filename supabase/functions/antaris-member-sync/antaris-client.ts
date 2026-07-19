@@ -163,14 +163,12 @@ export async function checkMemberMatch(
     confidence: 0,
     clientId: null,
     status: null,
+    joinDate: null,
   };
   try {
     const token = await login();
     if (!token) return fallback;
 
-    // Antaris q= is single-term. Try email, then last name, then first name.
-    // Many real members have placeholder emails (noemail####@antaris.ca), so
-    // email search alone frequently returns zero — cascade to name terms.
     const words = name.trim().split(/\s+/).filter(Boolean);
     const first = words[0] ?? "";
     const last = words.slice(1).join(" ").trim();
@@ -187,7 +185,6 @@ export async function checkMemberMatch(
     }
     if (results.length === 0) return fallback;
 
-    // Score every candidate and take the best. On ties, prefer phone match.
     let best: { c: AntarisClient; score: number; phone: boolean } | null = null;
     for (const c of results) {
       const score = scoreClient(c, name, email, phone);
@@ -205,13 +202,14 @@ export async function checkMemberMatch(
     const clientId = String(best.c.id ?? best.c.client_id ?? "");
     if (!clientId) return fallback;
 
-    const { status } = await getMembershipStatus(token, clientId);
+    const { status, joinDate } = await getMembershipStatus(token, clientId);
 
     return {
       isMember: status === "Active" && best.score >= 80,
       confidence: best.score,
       clientId,
       status,
+      joinDate,
     };
   } catch (e) {
     console.error("[antaris] checkMemberMatch exception", e);
