@@ -4,8 +4,8 @@ import {
   ArrowLeft, CalendarDays, CreditCard, DollarSign, Gift, LogOut, Star, Ticket, UserPlus, Check,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { submitLead } from "@/lib/leads";
 import { createReferral, redeemReferral, lookupReferral } from "@/lib/referrals";
+import { processDayPassCheckin } from "@/lib/process-day-pass-checkin.functions";
 import venmoQrAsset from "@/assets/venmo-qr.jpeg.asset.json";
 
 const WAIVER_TEXT =
