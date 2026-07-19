@@ -510,3 +510,194 @@ function OwnerInsights({
     </ul>
   );
 }
+
+/* -------- Day Pass Analytics -------- */
+
+function isDayPass(source: string | null | undefined): "walkin" | "referral" | null {
+  const s = (source ?? "").toLowerCase();
+  if (s === "day_pass_walkin") return "walkin";
+  if (s === "referral_day_pass") return "referral";
+  return null;
+}
+
+function startOfDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function countInRange(
+  leads: AnalyticsLead[],
+  start: Date,
+  end: Date,
+): { total: number; walkin: number; referral: number } {
+  let walkin = 0;
+  let referral = 0;
+  const s = start.getTime();
+  const e = end.getTime();
+  for (const l of leads) {
+    const kind = isDayPass(l.source);
+    if (!kind) continue;
+    const t = new Date(l.created_at).getTime();
+    if (t < s || t >= e) continue;
+    if (kind === "walkin") walkin++;
+    else referral++;
+  }
+  return { total: walkin + referral, walkin, referral };
+}
+
+function DayPassAnalytics({ leads }: { leads: AnalyticsLead[] }) {
+  const [range, setRange] = useState<{ from?: Date; to?: Date }>({});
+
+  const buckets = useMemo(() => {
+    const now = new Date();
+    const today = startOfDay(now);
+    const tomorrow = new Date(today.getTime() + 86_400_000);
+    const dow = today.getDay(); // 0=Sun
+    const weekStart = new Date(today.getTime() - dow * 86_400_000);
+    const monthStartD = new Date(today.getFullYear(), today.getMonth(), 1);
+    const yearStartD = new Date(today.getFullYear(), 0, 1);
+    const allStart = new Date(0);
+    const farFuture = new Date(now.getTime() + 365 * 86_400_000);
+
+    return {
+      today: countInRange(leads, today, tomorrow),
+      week: countInRange(leads, weekStart, farFuture),
+      month: countInRange(leads, monthStartD, farFuture),
+      year: countInRange(leads, yearStartD, farFuture),
+      all: countInRange(leads, allStart, farFuture),
+    };
+  }, [leads]);
+
+  const conversion = useMemo(() => {
+    const now = Date.now();
+    const cutoff90 = now - 90 * 86_400_000;
+    let allDP = 0;
+    let allJoined = 0;
+    let rec = 0;
+    let recJoined = 0;
+    for (const l of leads) {
+      if (!isDayPass(l.source)) continue;
+      allDP++;
+      if (l.became_member) allJoined++;
+      const t = new Date(l.created_at).getTime();
+      if (t >= cutoff90) {
+        rec++;
+        if (l.became_member) recJoined++;
+      }
+    }
+    const pct = (num: number, den: number) => (den === 0 ? 0 : Math.round((num / den) * 100));
+    return {
+      allTime: { pct: pct(allJoined, allDP), joined: allJoined, total: allDP },
+      last90: { pct: pct(recJoined, rec), joined: recJoined, total: rec },
+    };
+  }, [leads]);
+
+  const custom = useMemo(() => {
+    if (!range.from) return null;
+    const start = startOfDay(range.from);
+    const endBase = range.to ?? range.from;
+    const end = new Date(startOfDay(endBase).getTime() + 86_400_000);
+    return { ...countInRange(leads, start, end), start, end };
+  }, [leads, range]);
+
+  const periods: Array<{ label: string; key: keyof typeof buckets }> = [
+    { label: "Today", key: "today" },
+    { label: "This Week", key: "week" },
+    { label: "This Month", key: "month" },
+    { label: "This Year", key: "year" },
+    { label: "All Time", key: "all" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        {periods.map((p) => {
+          const b = buckets[p.key];
+          return (
+            <div key={p.key} className="rounded-lg border border-border bg-card p-4">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{p.label}</p>
+              <p className="mt-1 text-2xl font-bold">{b.total}</p>
+              <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                <span>Walk-in <span className="text-foreground font-medium">{b.walkin}</span></span>
+                <span>Referral <span className="text-foreground font-medium">{b.referral}</span></span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Day Pass → Member (All Time)</p>
+          <p className="mt-1 text-2xl font-bold">{conversion.allTime.pct}%</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {conversion.allTime.joined} joined out of {conversion.allTime.total} day pass users
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Day Pass → Member (Last 90 Days)</p>
+          <p className="mt-1 text-2xl font-bold">{conversion.last90.pct}%</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {conversion.last90.joined} joined out of {conversion.last90.total} day pass users
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border bg-card p-4">
+        <p className="text-sm font-semibold mb-3">Custom Date Range</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn("w-[260px] justify-start text-left font-normal", !range.from && "text-muted-foreground")}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {range.from ? (
+                  range.to ? (
+                    <>{format(range.from, "LLL d, y")} – {format(range.to, "LLL d, y")}</>
+                  ) : (
+                    format(range.from, "LLL d, y")
+                  )
+                ) : (
+                  <span>Pick a date range</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                selected={range as { from?: Date; to?: Date }}
+                onSelect={(r) => setRange(r ?? {})}
+                numberOfMonths={2}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+          {range.from && (
+            <Button variant="ghost" size="sm" onClick={() => setRange({})}>Clear</Button>
+          )}
+        </div>
+
+        {custom && (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-md border border-border bg-background p-3">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Total Day Passes</p>
+              <p className="mt-1 text-xl font-bold">{custom.total}</p>
+            </div>
+            <div className="rounded-md border border-border bg-background p-3">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Walk-In</p>
+              <p className="mt-1 text-xl font-bold">{custom.walkin}</p>
+            </div>
+            <div className="rounded-md border border-border bg-background p-3">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Referral</p>
+              <p className="mt-1 text-xl font-bold">{custom.referral}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
