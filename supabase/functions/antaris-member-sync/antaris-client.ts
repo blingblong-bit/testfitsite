@@ -118,22 +118,24 @@ function scoreClient(
 async function getMembershipStatus(
   token: string,
   clientId: string | number,
-): Promise<{ status: string | null }> {
+): Promise<{ status: string | null; joinDate: string | null }> {
   try {
     const res = await fetch(
       `${BASE_URL}/v1/clients/${encodeURIComponent(String(clientId))}/membershipStatus`,
       { headers: { Authorization: `Bearer ${token}` } },
     );
-    if (!res.ok) return { status: null };
+    if (!res.ok) return { status: null, joinDate: null };
     const json = await res.json();
-    const status =
-      (json && (json.status as string)) ??
-      (json && json.data && (json.data.status as string)) ??
+    const root = (json && json.data) ? json.data : json;
+    const status = (root && (root.status as string)) ?? null;
+    const joinDate =
+      (root && (root.date_joined as string)) ??
+      (root && (root.updated_at as string)) ??
       null;
-    return { status: status ?? null };
+    return { status, joinDate };
   } catch (e) {
     console.error("[antaris] membershipStatus exception", e);
-    return { status: null };
+    return { status: null, joinDate: null };
   }
 }
 
@@ -142,6 +144,7 @@ export type MemberMatch = {
   confidence: number;
   clientId: string | null;
   status: string | null;
+  joinDate: string | null;
 };
 
 function hasPhoneMatch(c: AntarisClient, phone: string): boolean {
