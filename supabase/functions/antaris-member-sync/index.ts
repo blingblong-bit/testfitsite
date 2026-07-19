@@ -102,7 +102,7 @@ Deno.serve(async (_req) => {
   const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
   const { data: leads, error } = await supabase
     .from("leads")
-    .select("id, name, email, phone, notes, last_sms_at")
+    .select("id, name, email, phone, notes, last_sms_at, created_at")
     .eq("became_member", false)
     .eq("lead_type", "customer_lead")
     .or("crm_status.is.null,and(crm_status.neq.Joined,crm_status.neq.Lost Lead)")
