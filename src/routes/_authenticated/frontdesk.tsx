@@ -333,17 +333,13 @@ function DayPassScreen({ onDone }: { onDone: () => void }) {
     if (!waiverAccepted) { setError("Please accept the liability waiver to continue."); return; }
     setSubmitting(true); setError(null);
     try {
-      await submitLead({
-        source: "paid_day_pass",
-        name: guest.name,
-        email: guest.email,
-        phone: guest.phone,
-        interest: "Day Pass ($10)",
-        message: `Day pass — paid via ${method}. $10 collected at front desk.`,
-        status: "checked_in",
-        payment_status: "confirmed",
-        payment_method: method,
-        day_pass_price: 10,
+      await processDayPassCheckin({
+        data: {
+          name: guest.name,
+          email: guest.email,
+          phone: guest.phone,
+          payment_method: method,
+        },
       });
       setSent(true);
     } catch (err) {
