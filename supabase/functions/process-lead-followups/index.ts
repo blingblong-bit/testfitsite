@@ -86,6 +86,26 @@ const FOLLOWUPS: Array<{ minDays: number; build: (fn: string, interest?: string 
   },
 ];
 
+// Post-visit sequence for day-pass walk-ins / referral day-pass leads with a completed tour.
+// Anchored on tour_date (hours since). Completes after step 2.
+const POSTVISIT: Array<{ minHours: number; build: (fn: string) => string }> = [
+  {
+    minHours: 3,
+    build: (fn) =>
+      `Hey ${fn}, hope you loved your visit today at FIT Beyond Plus! 💪 Any questions about membership or anything you want to know more about?`,
+  },
+  {
+    minHours: 24,
+    build: (fn) =>
+      `Hey ${fn}! Still thinking about it? We'd love to have you as a member — happy to answer any questions or set up a time to chat. Just reply here 🙏`,
+  },
+];
+
+function isDayPassSource(source: string | null): boolean {
+  const s = (source ?? "").toLowerCase();
+  return s === "day_pass_walkin" || s === "referral_day_pass";
+}
+
 Deno.serve(async (_req) => {
   try {
     const supabase = createClient(
@@ -96,7 +116,7 @@ Deno.serve(async (_req) => {
     const { data: leads, error } = await supabase
       .from("leads")
       .select(
-        "id, name, email, phone, interest, created_at, followup_count, sequence_status, crm_status, last_response_at",
+        "id, name, email, phone, interest, source, created_at, tour_completed, tour_date, followup_count, sequence_status, crm_status, last_response_at",
       )
       .eq("lead_type", "customer_lead")
       .eq("should_notify", true)
@@ -125,23 +145,46 @@ Deno.serve(async (_req) => {
       try {
         if (!lead.phone) continue;
         const idx = (lead.followup_count ?? 0) as number;
-        if (idx < 0 || idx >= FOLLOWUPS.length) continue;
 
-        const step = FOLLOWUPS[idx];
-        const createdMs = lead.created_at ? new Date(lead.created_at).getTime() : 0;
-        const daysSinceCreated = (now - createdMs) / (1000 * 60 * 60 * 24);
-        if (daysSinceCreated < step.minDays) continue;
+        // Post-visit sequence takes precedence for day-pass leads with a completed tour.
+        // These leads never run the cold FOLLOWUPS array.
+        const usePostVisit = isDayPassSource(lead.source) && lead.tour_completed === true;
+
+        let body: string;
+        let stepLabel: string;
+        let newCount: number;
+        let markCompleted: boolean;
+
+        if (usePostVisit) {
+          if (idx < 0 || idx >= POSTVISIT.length) continue;
+          const step = POSTVISIT[idx];
+          const anchorIso = lead.tour_date ?? lead.created_at;
+          const anchorMs = anchorIso ? new Date(anchorIso).getTime() : 0;
+          const hoursSince = (now - anchorMs) / (1000 * 60 * 60);
+          if (hoursSince < step.minHours) continue;
+          body = step.build(firstName(lead.name ?? ""));
+          newCount = idx + 1;
+          markCompleted = newCount >= POSTVISIT.length;
+          stepLabel = `postvisit_${newCount}`;
+        } else {
+          if (idx < 0 || idx >= FOLLOWUPS.length) continue;
+          const step = FOLLOWUPS[idx];
+          const createdMs = lead.created_at ? new Date(lead.created_at).getTime() : 0;
+          const daysSinceCreated = (now - createdMs) / (1000 * 60 * 60 * 24);
+          if (daysSinceCreated < step.minDays) continue;
+          body = step.build(firstName(lead.name ?? ""), lead.interest ?? null);
+          newCount = idx + 1;
+          markCompleted = newCount >= FOLLOWUPS.length;
+          stepLabel = `followup_${newCount}`;
+        }
 
         const to = normalizePhone(lead.phone);
-        const body = step.build(firstName(lead.name ?? ""), lead.interest ?? null);
-        const newCount = idx + 1;
         const update: Record<string, unknown> = {
           last_sms_at: new Date().toISOString(),
           followup_count: newCount,
         };
-        if (newCount >= 6) update.sequence_status = "completed";
+        if (markCompleted) update.sequence_status = "completed";
 
-        const stepLabel = `followup_${newCount}`;
         const isTest = (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL;
 
         if (isTest) {
@@ -154,7 +197,7 @@ Deno.serve(async (_req) => {
             from_ai: false,
             provider_message_id: null,
             status: "test_mode",
-            metadata: { kind: "drip", step: stepLabel, test_mode: true },
+            metadata: { kind: usePostVisit ? "postvisit" : "drip", step: stepLabel, test_mode: true },
           });
           sent++;
           results.push({ lead_id: lead.id, step: stepLabel, ok: true, test_mode: true });
@@ -180,7 +223,7 @@ Deno.serve(async (_req) => {
           from_ai: false,
           provider_message_id: send.sid ?? null,
           status: "sent",
-          metadata: { kind: "drip", step: stepLabel },
+          metadata: { kind: usePostVisit ? "postvisit" : "drip", step: stepLabel },
         });
         sent++;
         results.push({ lead_id: lead.id, step: stepLabel, ok: true });
