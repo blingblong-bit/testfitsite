@@ -223,7 +223,7 @@ Deno.serve(async (_req) => {
           from_ai: false,
           provider_message_id: send.sid ?? null,
           status: "sent",
-          metadata: { kind: "drip", step: stepLabel },
+          metadata: { kind: usePostVisit ? "postvisit" : "drip", step: stepLabel },
         });
         sent++;
         results.push({ lead_id: lead.id, step: stepLabel, ok: true });
