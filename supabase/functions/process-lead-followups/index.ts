@@ -133,7 +133,7 @@ Deno.serve(async (_req) => {
         if (daysSinceCreated < step.minDays) continue;
 
         const to = normalizePhone(lead.phone);
-        const body = step.build(firstName(lead.name ?? ""));
+        const body = step.build(firstName(lead.name ?? ""), lead.interest ?? null);
         const newCount = idx + 1;
         const update: Record<string, unknown> = {
           last_sms_at: new Date().toISOString(),
