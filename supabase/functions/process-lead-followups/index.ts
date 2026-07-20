@@ -145,23 +145,46 @@ Deno.serve(async (_req) => {
       try {
         if (!lead.phone) continue;
         const idx = (lead.followup_count ?? 0) as number;
-        if (idx < 0 || idx >= FOLLOWUPS.length) continue;
 
-        const step = FOLLOWUPS[idx];
-        const createdMs = lead.created_at ? new Date(lead.created_at).getTime() : 0;
-        const daysSinceCreated = (now - createdMs) / (1000 * 60 * 60 * 24);
-        if (daysSinceCreated < step.minDays) continue;
+        // Post-visit sequence takes precedence for day-pass leads with a completed tour.
+        // These leads never run the cold FOLLOWUPS array.
+        const usePostVisit = isDayPassSource(lead.source) && lead.tour_completed === true;
+
+        let body: string;
+        let stepLabel: string;
+        let newCount: number;
+        let markCompleted: boolean;
+
+        if (usePostVisit) {
+          if (idx < 0 || idx >= POSTVISIT.length) continue;
+          const step = POSTVISIT[idx];
+          const anchorIso = lead.tour_date ?? lead.created_at;
+          const anchorMs = anchorIso ? new Date(anchorIso).getTime() : 0;
+          const hoursSince = (now - anchorMs) / (1000 * 60 * 60);
+          if (hoursSince < step.minHours) continue;
+          body = step.build(firstName(lead.name ?? ""));
+          newCount = idx + 1;
+          markCompleted = newCount >= POSTVISIT.length;
+          stepLabel = `postvisit_${newCount}`;
+        } else {
+          if (idx < 0 || idx >= FOLLOWUPS.length) continue;
+          const step = FOLLOWUPS[idx];
+          const createdMs = lead.created_at ? new Date(lead.created_at).getTime() : 0;
+          const daysSinceCreated = (now - createdMs) / (1000 * 60 * 60 * 24);
+          if (daysSinceCreated < step.minDays) continue;
+          body = step.build(firstName(lead.name ?? ""), lead.interest ?? null);
+          newCount = idx + 1;
+          markCompleted = newCount >= FOLLOWUPS.length;
+          stepLabel = `followup_${newCount}`;
+        }
 
         const to = normalizePhone(lead.phone);
-        const body = step.build(firstName(lead.name ?? ""), lead.interest ?? null);
-        const newCount = idx + 1;
         const update: Record<string, unknown> = {
           last_sms_at: new Date().toISOString(),
           followup_count: newCount,
         };
-        if (newCount >= 6) update.sequence_status = "completed";
+        if (markCompleted) update.sequence_status = "completed";
 
-        const stepLabel = `followup_${newCount}`;
         const isTest = (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL;
 
         if (isTest) {
