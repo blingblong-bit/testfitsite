@@ -86,6 +86,26 @@ const FOLLOWUPS: Array<{ minDays: number; build: (fn: string, interest?: string 
   },
 ];
 
+// Post-visit sequence for day-pass walk-ins / referral day-pass leads with a completed tour.
+// Anchored on tour_date (hours since). Completes after step 2.
+const POSTVISIT: Array<{ minHours: number; build: (fn: string) => string }> = [
+  {
+    minHours: 3,
+    build: (fn) =>
+      `Hey ${fn}, hope you loved your visit today at FIT Beyond Plus! 💪 Any questions about membership or anything you want to know more about?`,
+  },
+  {
+    minHours: 24,
+    build: (fn) =>
+      `Hey ${fn}! Still thinking about it? We'd love to have you as a member — happy to answer any questions or set up a time to chat. Just reply here 🙏`,
+  },
+];
+
+function isDayPassSource(source: string | null): boolean {
+  const s = (source ?? "").toLowerCase();
+  return s === "day_pass_walkin" || s === "referral_day_pass";
+}
+
 Deno.serve(async (_req) => {
   try {
     const supabase = createClient(
