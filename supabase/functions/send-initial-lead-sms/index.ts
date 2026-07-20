@@ -42,11 +42,11 @@ function buildFirstMessage(
   const topic = (interest ?? "").toLowerCase();
   const src = (source ?? "").toLowerCase();
 
-  if (src.includes("referral")) {
-    return `Hey ${fn}! FIT Beyond Plus here — heard you got referred to us, awesome! Want to swing by on a free day pass so we can show you around? 💪`;
+  if (src === "day_pass_walkin") {
+    return `Hey ${fn}! Thanks for coming in to FIT Beyond Plus today 🎟️ Hope you're loving the gym so far. Let us know if you have any questions — we're happy to help you get set up with a membership whenever you're ready!`;
   }
-  if (src.includes("day pass")) {
-    return `Hey ${fn}! Thanks for grabbing a free day pass at FIT Beyond Plus 🎟️ Just show your text and name at the front desk — we'll take great care of you. Any questions before you come in?`;
+  if (src.includes("referral") || src.includes("day_pass") || src.includes("day pass")) {
+    return `Hey ${fn}! FIT Beyond Plus here — heard you got referred to us, awesome! Want to swing by on a free day pass so we can show you around? 💪`;
   }
   if (topic.includes("personal") || topic.includes("training")) {
     return `Hey ${fn}! This is FIT Beyond Plus in Tullahoma — got your note about personal training. Want to swing by for a free day pass so we can show you around and talk goals? 💪`;
