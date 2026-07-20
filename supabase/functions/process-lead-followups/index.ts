@@ -48,7 +48,7 @@ async function sendTwilioSms(
 
 // Hormozi Gym Launch cadence: 6 follow-ups after the initial welcome text.
 // Each entry: { minDays, build(fn) } — minimum days since lead created_at.
-const FOLLOWUPS: Array<{ minDays: number; build: (fn: string) => string }> = [
+const FOLLOWUPS: Array<{ minDays: number; build: (fn: string, interest?: string | null) => string }> = [
   {
     minDays: 1,
     build: (fn) =>
@@ -61,13 +61,18 @@ const FOLLOWUPS: Array<{ minDays: number; build: (fn: string) => string }> = [
   },
   {
     minDays: 5,
-    build: (_fn) =>
-      `A lot of our members came in not knowing exactly what they wanted and left with a real plan. That's kind of our thing at FIT Beyond Plus. Happy to do the same for you whenever you're ready.`,
+    build: (fn, interest) => {
+      const goal = interest?.trim();
+      if (goal) {
+        return `${fn}, a lot of people who come in wanting to ${goal} end up surprised how fast things click once they have a real plan. That's kind of our thing here. Whenever you're ready, we've got you.`;
+      }
+      return `A lot of our members came in not knowing exactly what they wanted and left with a real plan. That's kind of our thing at FIT Beyond Plus. Happy to do the same for you whenever you're ready.`;
+    },
   },
   {
     minDays: 7,
     build: (fn) =>
-      `${fn}, we're running free day passes this week — come try the gym with zero commitment. Just reply YES and I'll get you a code to use anytime in the next 14 days.`,
+      `${fn}, let's make this easy — come try FIT Beyond Plus completely free for 7 days. Full access, no strings, see if it's the right fit. Just reply YES and I'll get you set up.`,
   },
   {
     minDays: 10,
@@ -77,7 +82,7 @@ const FOLLOWUPS: Array<{ minDays: number; build: (fn: string) => string }> = [
   {
     minDays: 14,
     build: (fn) =>
-      `${fn}, I don't want to keep bugging you — this'll be my last message. If now's just not the right time, totally understand. But if you ever want to check us out, just reply here anytime. We're at 449 W Lincoln St in Tullahoma 🙏`,
+      `${fn}, last message from me — the 7-day free trial offer is still on the table if you want it, no pressure either way. Just reply here anytime, we're at 449 W Lincoln St in Tullahoma 🙏`,
   },
 ];
 
@@ -91,7 +96,7 @@ Deno.serve(async (_req) => {
     const { data: leads, error } = await supabase
       .from("leads")
       .select(
-        "id, name, email, phone, created_at, followup_count, sequence_status, crm_status, last_response_at",
+        "id, name, email, phone, interest, created_at, followup_count, sequence_status, crm_status, last_response_at",
       )
       .eq("lead_type", "customer_lead")
       .eq("should_notify", true)
@@ -128,7 +133,7 @@ Deno.serve(async (_req) => {
         if (daysSinceCreated < step.minDays) continue;
 
         const to = normalizePhone(lead.phone);
-        const body = step.build(firstName(lead.name ?? ""));
+        const body = step.build(firstName(lead.name ?? ""), lead.interest ?? null);
         const newCount = idx + 1;
         const update: Record<string, unknown> = {
           last_sms_at: new Date().toISOString(),
