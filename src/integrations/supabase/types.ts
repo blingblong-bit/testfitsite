@@ -74,6 +74,75 @@ export type Database = {
         }
         Relationships: []
       }
+      class_checkins: {
+        Row: {
+          added_manually: boolean
+          antaris_client_id: string | null
+          checked_in_at: string
+          class_day: string
+          class_name: string
+          class_time: string
+          id: string
+          name: string
+          notes: string | null
+          phone: string
+          verified: boolean
+        }
+        Insert: {
+          added_manually?: boolean
+          antaris_client_id?: string | null
+          checked_in_at?: string
+          class_day: string
+          class_name: string
+          class_time: string
+          id?: string
+          name: string
+          notes?: string | null
+          phone: string
+          verified?: boolean
+        }
+        Update: {
+          added_manually?: boolean
+          antaris_client_id?: string | null
+          checked_in_at?: string
+          class_day?: string
+          class_name?: string
+          class_time?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
+      class_sessions: {
+        Row: {
+          canceled_reason: string | null
+          class_name: string
+          created_at: string
+          id: string
+          session_date: string
+          status: string
+        }
+        Insert: {
+          canceled_reason?: string | null
+          class_name: string
+          created_at?: string
+          id?: string
+          session_date: string
+          status?: string
+        }
+        Update: {
+          canceled_reason?: string | null
+          class_name?: string
+          created_at?: string
+          id?: string
+          session_date?: string
+          status?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
