@@ -26,11 +26,14 @@ type Status =
   | { kind: "error"; message: string };
 
 function todayISO() {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+  // en-CA formats as YYYY-MM-DD; pin to America/Chicago so the date
+  // string matches Central time rather than the server's UTC clock.
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 }
 
 function ClassCheckIn() {

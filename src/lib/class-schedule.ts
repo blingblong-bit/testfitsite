@@ -55,7 +55,14 @@ export const DAYS: DayOfWeek[] = [
 ];
 
 export function getDayName(date: Date = new Date()): DayOfWeek {
-  return DAYS[date.getDay()];
+  // Compute the weekday explicitly in America/Chicago (Central) time.
+  // Using the server/local timezone here breaks during SSR because most
+  // hosts run in UTC, which rolls over to the next day at 7pm Central.
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    weekday: "long",
+  }).format(date) as DayOfWeek;
+  return weekday;
 }
 
 export function getClassesForDay(day: DayOfWeek): ClassEntry[] {

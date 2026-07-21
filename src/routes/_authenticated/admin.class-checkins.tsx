@@ -37,8 +37,14 @@ type CanceledSession = {
 };
 
 function todayISO() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  // Pin to America/Chicago so "today" matches Central time, not the
+  // server's UTC clock (which rolls over at 7pm Central during SSR).
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 }
 
 function dayFromISO(iso: string): DayOfWeek {
