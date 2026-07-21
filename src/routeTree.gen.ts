@@ -19,6 +19,7 @@ import { Route as FacilityRouteImport } from './routes/facility'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CombatSportsRouteImport } from './routes/combat-sports'
 import { Route as ClassesRouteImport } from './routes/classes'
+import { Route as ClassCheckinRouteImport } from './routes/class-checkin'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
@@ -39,6 +40,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
+import { Route as AuthenticatedAdminClassCheckinsRouteImport } from './routes/_authenticated/admin.class-checkins'
 import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
@@ -96,6 +98,11 @@ const CombatSportsRoute = CombatSportsRouteImport.update({
 const ClassesRoute = ClassesRouteImport.update({
   id: '/classes',
   path: '/classes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClassCheckinRoute = ClassCheckinRouteImport.update({
+  id: '/class-checkin',
+  path: '/class-checkin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogRoute = BlogRouteImport.update({
@@ -199,6 +206,12 @@ const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
   path: '/admin/leads',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminClassCheckinsRoute =
+  AuthenticatedAdminClassCheckinsRouteImport.update({
+    id: '/admin/class-checkins',
+    path: '/admin/class-checkins',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminBlogRoute = AuthenticatedAdminBlogRouteImport.update({
   id: '/admin/blog',
   path: '/admin/blog',
@@ -252,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
+  '/class-checkin': typeof ClassCheckinRoute
   '/classes': typeof ClassesRouteWithChildren
   '/combat-sports': typeof CombatSportsRouteWithChildren
   '/contact': typeof ContactRoute
@@ -277,6 +291,7 @@ export interface FileRoutesByFullPath {
   '/combat-sports/': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
+  '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
@@ -290,6 +305,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/class-checkin': typeof ClassCheckinRoute
   '/contact': typeof ContactRoute
   '/facility': typeof FacilityRoute
   '/mcp': typeof McpRoute
@@ -313,6 +329,7 @@ export interface FileRoutesByTo {
   '/combat-sports': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
+  '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
@@ -329,6 +346,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
+  '/class-checkin': typeof ClassCheckinRoute
   '/classes': typeof ClassesRouteWithChildren
   '/combat-sports': typeof CombatSportsRouteWithChildren
   '/contact': typeof ContactRoute
@@ -354,6 +372,7 @@ export interface FileRoutesById {
   '/combat-sports/': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/blog': typeof AuthenticatedAdminBlogRoute
+  '/_authenticated/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
@@ -370,6 +389,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/blog'
+    | '/class-checkin'
     | '/classes'
     | '/combat-sports'
     | '/contact'
@@ -395,6 +415,7 @@ export interface FileRouteTypes {
     | '/combat-sports/'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/blog'
+    | '/admin/class-checkins'
     | '/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/snapshot-month'
@@ -408,6 +429,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/class-checkin'
     | '/contact'
     | '/facility'
     | '/mcp'
@@ -431,6 +453,7 @@ export interface FileRouteTypes {
     | '/combat-sports'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/blog'
+    | '/admin/class-checkins'
     | '/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/snapshot-month'
@@ -446,6 +469,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/blog'
+    | '/class-checkin'
     | '/classes'
     | '/combat-sports'
     | '/contact'
@@ -471,6 +495,7 @@ export interface FileRouteTypes {
     | '/combat-sports/'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/blog'
+    | '/_authenticated/admin/class-checkins'
     | '/_authenticated/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/snapshot-month'
@@ -487,6 +512,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   BlogRoute: typeof BlogRouteWithChildren
+  ClassCheckinRoute: typeof ClassCheckinRoute
   ClassesRoute: typeof ClassesRouteWithChildren
   CombatSportsRoute: typeof CombatSportsRouteWithChildren
   ContactRoute: typeof ContactRoute
@@ -581,6 +607,13 @@ declare module '@tanstack/react-router' {
       path: '/classes'
       fullPath: '/classes'
       preLoaderRoute: typeof ClassesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/class-checkin': {
+      id: '/class-checkin'
+      path: '/class-checkin'
+      fullPath: '/class-checkin'
+      preLoaderRoute: typeof ClassCheckinRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog': {
@@ -723,6 +756,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/class-checkins': {
+      id: '/_authenticated/admin/class-checkins'
+      path: '/admin/class-checkins'
+      fullPath: '/admin/class-checkins'
+      preLoaderRoute: typeof AuthenticatedAdminClassCheckinsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/blog': {
       id: '/_authenticated/admin/blog'
       path: '/admin/blog'
@@ -786,6 +826,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFrontdeskRoute: typeof AuthenticatedFrontdeskRoute
   AuthenticatedStaffHomeRoute: typeof AuthenticatedStaffHomeRoute
   AuthenticatedAdminBlogRoute: typeof AuthenticatedAdminBlogRoute
+  AuthenticatedAdminClassCheckinsRoute: typeof AuthenticatedAdminClassCheckinsRoute
   AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
 }
 
@@ -793,6 +834,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFrontdeskRoute: AuthenticatedFrontdeskRoute,
   AuthenticatedStaffHomeRoute: AuthenticatedStaffHomeRoute,
   AuthenticatedAdminBlogRoute: AuthenticatedAdminBlogRoute,
+  AuthenticatedAdminClassCheckinsRoute: AuthenticatedAdminClassCheckinsRoute,
   AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
 }
 
@@ -846,6 +888,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   BlogRoute: BlogRouteWithChildren,
+  ClassCheckinRoute: ClassCheckinRoute,
   ClassesRoute: ClassesRouteWithChildren,
   CombatSportsRoute: CombatSportsRouteWithChildren,
   ContactRoute: ContactRoute,
