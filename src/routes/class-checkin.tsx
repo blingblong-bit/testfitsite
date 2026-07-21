@@ -36,6 +36,46 @@ function todayISO() {
   }).format(new Date());
 }
 
+// Check-in window: opens 15 minutes before class start, closes 30
+// minutes after. Outside that window the class is shown but disabled.
+const OPEN_BEFORE_MIN = 15;
+const CLOSE_AFTER_MIN = 30;
+
+function parseTimeToMinutes(time: string): number | null {
+  const m = time.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!m) return null;
+  let hour = parseInt(m[1], 10);
+  const minute = parseInt(m[2], 10);
+  const period = m[3].toUpperCase();
+  if (period === "PM" && hour !== 12) hour += 12;
+  if (period === "AM" && hour === 12) hour = 0;
+  return hour * 60 + minute;
+}
+
+function nowMinutesChicago(): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+  // formatToParts can return "24" for midnight hour in some locales/engines
+  return (hour % 24) * 60 + minute;
+}
+
+type CheckInWindow = "not-open" | "open" | "closed";
+
+function getCheckInWindow(time: string): CheckInWindow {
+  const classMinutes = parseTimeToMinutes(time);
+  if (classMinutes === null) return "open"; // fail open if time is unparseable
+  const now = nowMinutesChicago();
+  if (now < classMinutes - OPEN_BEFORE_MIN) return "not-open";
+  if (now > classMinutes + CLOSE_AFTER_MIN) return "closed";
+  return "open";
+}
+
 function ClassCheckIn() {
   const submit = useServerFn(submitClassCheckIn);
   const day = getDayName();
@@ -62,7 +102,11 @@ function ClassCheckIn() {
   }, []);
 
   useEffect(() => {
-    if (classes.length === 1 && !canceled[classes[0].name]) {
+    if (
+      classes.length === 1 &&
+      !canceled[classes[0].name] &&
+      getCheckInWindow(classes[0].time) === "open"
+    ) {
       setSelected(classes[0].name);
     }
   }, [classes, canceled]);
@@ -75,6 +119,13 @@ function ClassCheckIn() {
     e.preventDefault();
     if (!currentClass) {
       setStatus({ kind: "error", message: "Please select a class." });
+      return;
+    }
+    if (getCheckInWindow(currentClass.time) !== "open") {
+      setStatus({
+        kind: "error",
+        message: "Check-in isn't open for this class right now.",
+      });
       return;
     }
     setStatus({ kind: "loading" });
@@ -168,18 +219,24 @@ function ClassCheckIn() {
                 {classes.map((c) => {
                   const isCanceled = c.name in canceled;
                   const isSelected = selected === c.name;
+                  const window = getCheckInWindow(c.time);
+                  const isDisabled = isCanceled || window !== "open";
                   return (
                     <button
                       key={`${c.name}-${c.time}`}
                       type="button"
-                      disabled={isCanceled}
+                      disabled={isDisabled}
                       onClick={() => setSelected(c.name)}
                       className={`w-full text-left rounded-lg border p-4 transition ${
                         isCanceled
                           ? "border-destructive/40 bg-destructive/10 opacity-70 cursor-not-allowed"
-                          : isSelected
-                            ? "border-primary bg-primary/10"
-                            : "border-border hover:border-primary/50"
+                          : window === "closed"
+                            ? "border-border bg-muted/40 opacity-60 cursor-not-allowed"
+                            : window === "not-open"
+                              ? "border-border opacity-70 cursor-not-allowed"
+                              : isSelected
+                                ? "border-primary bg-primary/10"
+                                : "border-border hover:border-primary/50"
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -192,6 +249,16 @@ function ClassCheckIn() {
                         {isCanceled && (
                           <span className="text-xs uppercase tracking-wider text-destructive font-bold">
                             Canceled
+                          </span>
+                        )}
+                        {!isCanceled && window === "not-open" && (
+                          <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                            Not open yet
+                          </span>
+                        )}
+                        {!isCanceled && window === "closed" && (
+                          <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                            Check-in closed
                           </span>
                         )}
                       </div>
