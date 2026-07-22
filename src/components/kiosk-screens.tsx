@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import { createReferral, redeemReferral, lookupReferral } from "@/lib/referrals";
 import { processDayPassCheckin } from "@/lib/process-day-pass-checkin.functions";
 import venmoQrAsset from "@/assets/venmo-qr.jpeg.asset.json";
+import { SmsConsentCheckbox } from "@/components/SmsConsent";
 
 export const WAIVER_TEXT =
   "I have read and understood the foregoing assumption of risk and release of liability and I understand that by signing this document it obligates me to indemnify FIT Beyond Plus for any liability for injury or death of any person and damage of property caused by negligent or intentional act or omission. I understand that by signing, I am waiving my valuable legal rights.";
@@ -164,6 +165,7 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
   const [guest, setGuest] = useState({ name: "", email: "", phone: "" });
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [waiverAccepted, setWaiverAccepted] = useState(false);
+  const [smsConsent, setSmsConsent] = useState(false);
 
   function handleInfoSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -184,6 +186,10 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
     }
     if (!waiverAccepted) {
       setError("Please accept the liability waiver to continue.");
+      return;
+    }
+    if (!smsConsent) {
+      setError("Please check the box to consent to text messages.");
       return;
     }
     setSubmitting(true);
@@ -273,6 +279,7 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
         </div>
 
         <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
+        <SmsConsentCheckbox checked={smsConsent} onChange={setSmsConsent} />
 
         {error && <p className="text-sm text-destructive">{error}</p>}
         <SubmitButton submitting={submitting} label="Confirm Payment & Check In" />
@@ -299,6 +306,7 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState("");
   const [referrerName, setReferrerName] = useState<string | null>(null);
   const [waiverAccepted, setWaiverAccepted] = useState(false);
+  const [smsConsent, setSmsConsent] = useState(false);
 
   async function handleCodeSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -321,6 +329,10 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
     e.preventDefault();
     if (!waiverAccepted) {
       setError("Please accept the liability waiver to continue.");
+      return;
+    }
+    if (!smsConsent) {
+      setError("Please check the box to consent to text messages.");
       return;
     }
     setSubmitting(true);
@@ -391,6 +403,7 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
         <KioskField label="Phone" name="phone" type="tel" required />
         <KioskField label="Email" name="email" type="email" required />
         <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
+        <SmsConsentCheckbox checked={smsConsent} onChange={setSmsConsent} />
         {error && <p className="text-sm text-destructive">{error}</p>}
         <SubmitButton submitting={submitting} label="Complete Check-In" />
         <button

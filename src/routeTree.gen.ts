@@ -9,128 +9,58 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ReferAFriendRouteImport } from './routes/refer-a-friend'
-import { Route as RedeemReferralRouteImport } from './routes/redeem-referral'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as PersonalTrainingRouteImport } from './routes/personal-training'
-import { Route as MembershipsRouteImport } from './routes/memberships'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as FacilityRouteImport } from './routes/facility'
-import { Route as DayPassRouteImport } from './routes/day-pass'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as CombatSportsRouteImport } from './routes/combat-sports'
-import { Route as ClassesRouteImport } from './routes/classes'
-import { Route as ClassCheckinRouteImport } from './routes/class-checkin'
-import { Route as BlogRouteImport } from './routes/blog'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CombatSportsIndexRouteImport } from './routes/combat-sports.index'
-import { Route as ClassesIndexRouteImport } from './routes/classes.index'
-import { Route as BlogIndexRouteImport } from './routes/blog.index'
-import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
-import { Route as CombatSportsKickboxingRouteImport } from './routes/combat-sports.kickboxing'
-import { Route as CombatSportsBjjRouteImport } from './routes/combat-sports.bjj'
-import { Route as ClassesScheduleRouteImport } from './routes/classes.schedule'
-import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
-import { Route as AdminLoginRouteImport } from './routes/admin.login'
-import { Route as AuthenticatedStaffHomeRouteImport } from './routes/_authenticated/staff-home'
-import { Route as AuthenticatedFrontdeskRouteImport } from './routes/_authenticated/frontdesk'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BlogRouteImport } from './routes/blog'
+import { Route as ClassCheckinRouteImport } from './routes/class-checkin'
+import { Route as ClassesRouteImport } from './routes/classes'
+import { Route as CombatSportsRouteImport } from './routes/combat-sports'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DayPassRouteImport } from './routes/day-pass'
+import { Route as FacilityRouteImport } from './routes/facility'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MembershipsRouteImport } from './routes/memberships'
+import { Route as PersonalTrainingRouteImport } from './routes/personal-training'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RedeemReferralRouteImport } from './routes/redeem-referral'
+import { Route as ReferAFriendRouteImport } from './routes/refer-a-friend'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
-import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
-import { Route as AuthenticatedAdminClassCheckinsRouteImport } from './routes/_authenticated/admin.class-checkins'
-import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedFrontdeskRouteImport } from './routes/_authenticated/frontdesk'
+import { Route as AuthenticatedStaffHomeRouteImport } from './routes/_authenticated/staff-home'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as ClassesIndexRouteImport } from './routes/classes.index'
+import { Route as ClassesScheduleRouteImport } from './routes/classes.schedule'
+import { Route as CombatSportsIndexRouteImport } from './routes/combat-sports.index'
+import { Route as CombatSportsBjjRouteImport } from './routes/combat-sports.bjj'
+import { Route as CombatSportsKickboxingRouteImport } from './routes/combat-sports.kickboxing'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
-import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as ApiPublicWebhooksMakeLeadUpdateRouteImport } from './routes/api/public/webhooks/make-lead-update'
-import { Route as ApiPublicWebhooksCalendlyRouteImport } from './routes/api/public/webhooks/calendly'
+import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
+import { Route as AuthenticatedAdminClassCheckinsRouteImport } from './routes/_authenticated/admin.class-checkins'
+import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicHooksSnapshotMonthRouteImport } from './routes/api/public/hooks/snapshot-month'
+import { Route as ApiPublicWebhooksCalendlyRouteImport } from './routes/api/public/webhooks/calendly'
+import { Route as ApiPublicWebhooksMakeLeadUpdateRouteImport } from './routes/api/public/webhooks/make-lead-update'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 
-const UnsubscribeRoute = UnsubscribeRouteImport.update({
-  id: '/unsubscribe',
-  path: '/unsubscribe',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReferAFriendRoute = ReferAFriendRouteImport.update({
-  id: '/refer-a-friend',
-  path: '/refer-a-friend',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RedeemReferralRoute = RedeemReferralRouteImport.update({
-  id: '/redeem-referral',
-  path: '/redeem-referral',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PersonalTrainingRoute = PersonalTrainingRouteImport.update({
-  id: '/personal-training',
-  path: '/personal-training',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MembershipsRoute = MembershipsRouteImport.update({
-  id: '/memberships',
-  path: '/memberships',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FacilityRoute = FacilityRouteImport.update({
-  id: '/facility',
-  path: '/facility',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DayPassRoute = DayPassRouteImport.update({
-  id: '/day-pass',
-  path: '/day-pass',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CombatSportsRoute = CombatSportsRouteImport.update({
-  id: '/combat-sports',
-  path: '/combat-sports',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClassesRoute = ClassesRouteImport.update({
-  id: '/classes',
-  path: '/classes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClassCheckinRoute = ClassCheckinRouteImport.update({
-  id: '/class-checkin',
-  path: '/class-checkin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogRoute = BlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -138,38 +68,141 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CombatSportsIndexRoute = CombatSportsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => CombatSportsRoute,
+const ClassCheckinRoute = ClassCheckinRouteImport.update({
+  id: '/class-checkin',
+  path: '/class-checkin',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const ClassesIndexRoute = ClassesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ClassesRoute,
+const ClassesRoute = ClassesRouteImport.update({
+  id: '/classes',
+  path: '/classes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CombatSportsRoute = CombatSportsRouteImport.update({
+  id: '/combat-sports',
+  path: '/combat-sports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DayPassRoute = DayPassRouteImport.update({
+  id: '/day-pass',
+  path: '/day-pass',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FacilityRoute = FacilityRouteImport.update({
+  id: '/facility',
+  path: '/facility',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembershipsRoute = MembershipsRouteImport.update({
+  id: '/memberships',
+  path: '/memberships',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonalTrainingRoute = PersonalTrainingRouteImport.update({
+  id: '/personal-training',
+  path: '/personal-training',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedeemReferralRoute = RedeemReferralRouteImport.update({
+  id: '/redeem-referral',
+  path: '/redeem-referral',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReferAFriendRoute = ReferAFriendRouteImport.update({
+  id: '/refer-a-friend',
+  path: '/refer-a-friend',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedFrontdeskRoute = AuthenticatedFrontdeskRouteImport.update({
+  id: '/frontdesk',
+  path: '/frontdesk',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStaffHomeRoute = AuthenticatedStaffHomeRouteImport.update({
+  id: '/staff-home',
+  path: '/staff-home',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => BlogRoute,
 } as any)
-const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
-  id: '/email/unsubscribe',
-  path: '/email/unsubscribe',
-  getParentRoute: () => rootRouteImport,
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
-const CombatSportsKickboxingRoute = CombatSportsKickboxingRouteImport.update({
-  id: '/kickboxing',
-  path: '/kickboxing',
+const ClassesIndexRoute = ClassesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ClassesRoute,
+} as any)
+const ClassesScheduleRoute = ClassesScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
+  getParentRoute: () => ClassesRoute,
+} as any)
+const CombatSportsIndexRoute = CombatSportsIndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => CombatSportsRoute,
 } as any)
 const CombatSportsBjjRoute = CombatSportsBjjRouteImport.update({
@@ -177,51 +210,25 @@ const CombatSportsBjjRoute = CombatSportsBjjRouteImport.update({
   path: '/bjj',
   getParentRoute: () => CombatSportsRoute,
 } as any)
-const ClassesScheduleRoute = ClassesScheduleRouteImport.update({
-  id: '/schedule',
-  path: '/schedule',
-  getParentRoute: () => ClassesRoute,
+const CombatSportsKickboxingRoute = CombatSportsKickboxingRouteImport.update({
+  id: '/kickboxing',
+  path: '/kickboxing',
+  getParentRoute: () => CombatSportsRoute,
 } as any)
-const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => BlogRoute,
-} as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/admin/login',
-  path: '/admin/login',
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedStaffHomeRoute = AuthenticatedStaffHomeRouteImport.update({
-  id: '/staff-home',
-  path: '/staff-home',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedFrontdeskRoute = AuthenticatedFrontdeskRouteImport.update({
-  id: '/frontdesk',
-  path: '/frontdesk',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
-  id: '/lovable/email/suppression',
-  path: '/lovable/email/suppression',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
-  id: '/admin/leads',
-  path: '/admin/leads',
+const AuthenticatedAdminBlogRoute = AuthenticatedAdminBlogRouteImport.update({
+  id: '/admin/blog',
+  path: '/admin/blog',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminClassCheckinsRoute =
@@ -230,39 +237,20 @@ const AuthenticatedAdminClassCheckinsRoute =
     path: '/admin/class-checkins',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminBlogRoute = AuthenticatedAdminBlogRouteImport.update({
-  id: '/admin/blog',
-  path: '/admin/blog',
+const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
+  id: '/admin/leads',
+  path: '/admin/leads',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const Char91DotmcpChar93InvokeToolToolRoute =
-  Char91DotmcpChar93InvokeToolToolRouteImport.update({
-    id: '/.mcp/invoke-tool/$tool',
-    path: '/.mcp/invoke-tool/$tool',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailTransactionalSendRoute =
-  LovableEmailTransactionalSendRouteImport.update({
-    id: '/lovable/email/transactional/send',
-    path: '/lovable/email/transactional/send',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicWebhooksMakeLeadUpdateRoute =
-  ApiPublicWebhooksMakeLeadUpdateRouteImport.update({
-    id: '/api/public/webhooks/make-lead-update',
-    path: '/api/public/webhooks/make-lead-update',
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksSnapshotMonthRoute =
+  ApiPublicHooksSnapshotMonthRouteImport.update({
+    id: '/api/public/hooks/snapshot-month',
+    path: '/api/public/hooks/snapshot-month',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicWebhooksCalendlyRoute =
@@ -271,10 +259,28 @@ const ApiPublicWebhooksCalendlyRoute =
     path: '/api/public/webhooks/calendly',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksSnapshotMonthRoute =
-  ApiPublicHooksSnapshotMonthRouteImport.update({
-    id: '/api/public/hooks/snapshot-month',
-    path: '/api/public/hooks/snapshot-month',
+const ApiPublicWebhooksMakeLeadUpdateRoute =
+  ApiPublicWebhooksMakeLeadUpdateRouteImport.update({
+    id: '/api/public/webhooks/make-lead-update',
+    path: '/api/public/webhooks/make-lead-update',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -296,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/redeem-referral': typeof RedeemReferralRoute
   '/refer-a-friend': typeof ReferAFriendRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -337,6 +344,7 @@ export interface FileRoutesByTo {
   '/redeem-referral': typeof RedeemReferralRoute
   '/refer-a-friend': typeof ReferAFriendRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -383,6 +391,7 @@ export interface FileRoutesById {
   '/redeem-referral': typeof RedeemReferralRoute
   '/refer-a-friend': typeof ReferAFriendRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -429,6 +438,7 @@ export interface FileRouteTypes {
     | '/redeem-referral'
     | '/refer-a-friend'
     | '/sitemap.xml'
+    | '/terms'
     | '/unsubscribe'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -470,6 +480,7 @@ export interface FileRouteTypes {
     | '/redeem-referral'
     | '/refer-a-friend'
     | '/sitemap.xml'
+    | '/terms'
     | '/unsubscribe'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -515,6 +526,7 @@ export interface FileRouteTypes {
     | '/redeem-referral'
     | '/refer-a-friend'
     | '/sitemap.xml'
+    | '/terms'
     | '/unsubscribe'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -561,6 +573,7 @@ export interface RootRouteChildren {
   RedeemReferralRoute: typeof RedeemReferralRoute
   ReferAFriendRoute: typeof ReferAFriendRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -578,123 +591,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/unsubscribe': {
-      id: '/unsubscribe'
-      path: '/unsubscribe'
-      fullPath: '/unsubscribe'
-      preLoaderRoute: typeof UnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/refer-a-friend': {
-      id: '/refer-a-friend'
-      path: '/refer-a-friend'
-      fullPath: '/refer-a-friend'
-      preLoaderRoute: typeof ReferAFriendRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/redeem-referral': {
-      id: '/redeem-referral'
-      path: '/redeem-referral'
-      fullPath: '/redeem-referral'
-      preLoaderRoute: typeof RedeemReferralRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/personal-training': {
-      id: '/personal-training'
-      path: '/personal-training'
-      fullPath: '/personal-training'
-      preLoaderRoute: typeof PersonalTrainingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/memberships': {
-      id: '/memberships'
-      path: '/memberships'
-      fullPath: '/memberships'
-      preLoaderRoute: typeof MembershipsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/facility': {
-      id: '/facility'
-      path: '/facility'
-      fullPath: '/facility'
-      preLoaderRoute: typeof FacilityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/day-pass': {
-      id: '/day-pass'
-      path: '/day-pass'
-      fullPath: '/day-pass'
-      preLoaderRoute: typeof DayPassRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/combat-sports': {
-      id: '/combat-sports'
-      path: '/combat-sports'
-      fullPath: '/combat-sports'
-      preLoaderRoute: typeof CombatSportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/classes': {
-      id: '/classes'
-      path: '/classes'
-      fullPath: '/classes'
-      preLoaderRoute: typeof ClassesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/class-checkin': {
-      id: '/class-checkin'
-      path: '/class-checkin'
-      fullPath: '/class-checkin'
-      preLoaderRoute: typeof ClassCheckinRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -704,95 +605,130 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/combat-sports/': {
-      id: '/combat-sports/'
-      path: '/'
-      fullPath: '/combat-sports/'
-      preLoaderRoute: typeof CombatSportsIndexRouteImport
-      parentRoute: typeof CombatSportsRoute
-    }
-    '/classes/': {
-      id: '/classes/'
-      path: '/'
-      fullPath: '/classes/'
-      preLoaderRoute: typeof ClassesIndexRouteImport
-      parentRoute: typeof ClassesRoute
-    }
-    '/blog/': {
-      id: '/blog/'
-      path: '/'
-      fullPath: '/blog/'
-      preLoaderRoute: typeof BlogIndexRouteImport
-      parentRoute: typeof BlogRoute
-    }
-    '/email/unsubscribe': {
-      id: '/email/unsubscribe'
-      path: '/email/unsubscribe'
-      fullPath: '/email/unsubscribe'
-      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/combat-sports/kickboxing': {
-      id: '/combat-sports/kickboxing'
-      path: '/kickboxing'
-      fullPath: '/combat-sports/kickboxing'
-      preLoaderRoute: typeof CombatSportsKickboxingRouteImport
-      parentRoute: typeof CombatSportsRoute
-    }
-    '/combat-sports/bjj': {
-      id: '/combat-sports/bjj'
-      path: '/bjj'
-      fullPath: '/combat-sports/bjj'
-      preLoaderRoute: typeof CombatSportsBjjRouteImport
-      parentRoute: typeof CombatSportsRoute
-    }
-    '/classes/schedule': {
-      id: '/classes/schedule'
-      path: '/schedule'
-      fullPath: '/classes/schedule'
-      preLoaderRoute: typeof ClassesScheduleRouteImport
-      parentRoute: typeof ClassesRoute
-    }
-    '/blog/$slug': {
-      id: '/blog/$slug'
-      path: '/$slug'
-      fullPath: '/blog/$slug'
-      preLoaderRoute: typeof BlogSlugRouteImport
-      parentRoute: typeof BlogRoute
-    }
-    '/admin/login': {
-      id: '/admin/login'
-      path: '/admin/login'
-      fullPath: '/admin/login'
-      preLoaderRoute: typeof AdminLoginRouteImport
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/staff-home': {
-      id: '/_authenticated/staff-home'
-      path: '/staff-home'
-      fullPath: '/staff-home'
-      preLoaderRoute: typeof AuthenticatedStaffHomeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/class-checkin': {
+      id: '/class-checkin'
+      path: '/class-checkin'
+      fullPath: '/class-checkin'
+      preLoaderRoute: typeof ClassCheckinRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/frontdesk': {
-      id: '/_authenticated/frontdesk'
-      path: '/frontdesk'
-      fullPath: '/frontdesk'
-      preLoaderRoute: typeof AuthenticatedFrontdeskRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/classes': {
+      id: '/classes'
+      path: '/classes'
+      fullPath: '/classes'
+      preLoaderRoute: typeof ClassesRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/combat-sports': {
+      id: '/combat-sports'
+      path: '/combat-sports'
+      fullPath: '/combat-sports'
+      preLoaderRoute: typeof CombatSportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/day-pass': {
+      id: '/day-pass'
+      path: '/day-pass'
+      fullPath: '/day-pass'
+      preLoaderRoute: typeof DayPassRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/facility': {
+      id: '/facility'
+      path: '/facility'
+      fullPath: '/facility'
+      preLoaderRoute: typeof FacilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/memberships': {
+      id: '/memberships'
+      path: '/memberships'
+      fullPath: '/memberships'
+      preLoaderRoute: typeof MembershipsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personal-training': {
+      id: '/personal-training'
+      path: '/personal-training'
+      fullPath: '/personal-training'
+      preLoaderRoute: typeof PersonalTrainingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redeem-referral': {
+      id: '/redeem-referral'
+      path: '/redeem-referral'
+      fullPath: '/redeem-referral'
+      preLoaderRoute: typeof RedeemReferralRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refer-a-friend': {
+      id: '/refer-a-friend'
+      path: '/refer-a-friend'
+      fullPath: '/refer-a-friend'
+      preLoaderRoute: typeof ReferAFriendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -802,18 +738,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/suppression': {
-      id: '/lovable/email/suppression'
-      path: '/lovable/email/suppression'
-      fullPath: '/lovable/email/suppression'
-      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/leads': {
-      id: '/_authenticated/admin/leads'
-      path: '/admin/leads'
-      fullPath: '/admin/leads'
-      preLoaderRoute: typeof AuthenticatedAdminLeadsRouteImport
+    '/_authenticated/frontdesk': {
+      id: '/_authenticated/frontdesk'
+      path: '/frontdesk'
+      fullPath: '/frontdesk'
+      preLoaderRoute: typeof AuthenticatedFrontdeskRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/staff-home': {
+      id: '/_authenticated/staff-home'
+      path: '/staff-home'
+      fullPath: '/staff-home'
+      preLoaderRoute: typeof AuthenticatedStaffHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof BlogRoute
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
+    '/classes/': {
+      id: '/classes/'
+      path: '/'
+      fullPath: '/classes/'
+      preLoaderRoute: typeof ClassesIndexRouteImport
+      parentRoute: typeof ClassesRoute
+    }
+    '/classes/schedule': {
+      id: '/classes/schedule'
+      path: '/schedule'
+      fullPath: '/classes/schedule'
+      preLoaderRoute: typeof ClassesScheduleRouteImport
+      parentRoute: typeof ClassesRoute
+    }
+    '/combat-sports/': {
+      id: '/combat-sports/'
+      path: '/'
+      fullPath: '/combat-sports/'
+      preLoaderRoute: typeof CombatSportsIndexRouteImport
+      parentRoute: typeof CombatSportsRoute
+    }
+    '/combat-sports/bjj': {
+      id: '/combat-sports/bjj'
+      path: '/bjj'
+      fullPath: '/combat-sports/bjj'
+      preLoaderRoute: typeof CombatSportsBjjRouteImport
+      parentRoute: typeof CombatSportsRoute
+    }
+    '/combat-sports/kickboxing': {
+      id: '/combat-sports/kickboxing'
+      path: '/kickboxing'
+      fullPath: '/combat-sports/kickboxing'
+      preLoaderRoute: typeof CombatSportsKickboxingRouteImport
+      parentRoute: typeof CombatSportsRoute
+    }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin/blog': {
+      id: '/_authenticated/admin/blog'
+      path: '/admin/blog'
+      fullPath: '/admin/blog'
+      preLoaderRoute: typeof AuthenticatedAdminBlogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/class-checkins': {
@@ -823,46 +843,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminClassCheckinsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/blog': {
-      id: '/_authenticated/admin/blog'
-      path: '/admin/blog'
-      fullPath: '/admin/blog'
-      preLoaderRoute: typeof AuthenticatedAdminBlogRouteImport
+    '/_authenticated/admin/leads': {
+      id: '/_authenticated/admin/leads'
+      path: '/admin/leads'
+      fullPath: '/admin/leads'
+      preLoaderRoute: typeof AuthenticatedAdminLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/send': {
-      id: '/lovable/email/transactional/send'
-      path: '/lovable/email/transactional/send'
-      fullPath: '/lovable/email/transactional/send'
-      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/webhooks/make-lead-update': {
-      id: '/api/public/webhooks/make-lead-update'
-      path: '/api/public/webhooks/make-lead-update'
-      fullPath: '/api/public/webhooks/make-lead-update'
-      preLoaderRoute: typeof ApiPublicWebhooksMakeLeadUpdateRouteImport
+    '/api/public/hooks/snapshot-month': {
+      id: '/api/public/hooks/snapshot-month'
+      path: '/api/public/hooks/snapshot-month'
+      fullPath: '/api/public/hooks/snapshot-month'
+      preLoaderRoute: typeof ApiPublicHooksSnapshotMonthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/webhooks/calendly': {
@@ -872,11 +871,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksCalendlyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/snapshot-month': {
-      id: '/api/public/hooks/snapshot-month'
-      path: '/api/public/hooks/snapshot-month'
-      fullPath: '/api/public/hooks/snapshot-month'
-      preLoaderRoute: typeof ApiPublicHooksSnapshotMonthRouteImport
+    '/api/public/webhooks/make-lead-update': {
+      id: '/api/public/webhooks/make-lead-update'
+      path: '/api/public/webhooks/make-lead-update'
+      fullPath: '/api/public/webhooks/make-lead-update'
+      preLoaderRoute: typeof ApiPublicWebhooksMakeLeadUpdateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -961,6 +981,7 @@ const rootRouteChildren: RootRouteChildren = {
   RedeemReferralRoute: RedeemReferralRoute,
   ReferAFriendRoute: ReferAFriendRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:

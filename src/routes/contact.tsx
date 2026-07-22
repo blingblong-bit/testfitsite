@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { submitLead } from "@/lib/leads";
+import { SmsConsentCheckbox } from "@/components/SmsConsent";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 
@@ -86,19 +87,29 @@ function Contact() {
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [smsConsent, setSmsConsent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setSubmitting(true);
     setError(null);
     const form = e.currentTarget;
     const data = new FormData(form);
+    const phone = String(data.get("phone") ?? "").trim();
+
+    // Only require SMS consent if the person actually gave us a phone
+    // number to text — no phone means nothing to opt in to.
+    if (phone && !smsConsent) {
+      setError("Please check the box to consent to text messages, or leave the phone field blank.");
+      return;
+    }
+
+    setSubmitting(true);
     try {
       await submitLead({
         source: "general_contact",
         name: String(data.get("name") ?? ""),
         email: String(data.get("email") ?? ""),
-        phone: String(data.get("phone") ?? ""),
+        phone,
         interest: String(data.get("interest") ?? ""),
         message: String(data.get("message") ?? ""),
       });
@@ -181,6 +192,7 @@ function Contact() {
                   placeholder="Tell us a bit about your goals or what you're looking for."
                 />
               </div>
+              <SmsConsentCheckbox checked={smsConsent} onChange={setSmsConsent} />
               {error && <p className="text-sm text-destructive">{error}</p>}
               <button
                 type="submit"

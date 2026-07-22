@@ -110,6 +110,30 @@ function Privacy() {
           </div>
 
           <div>
+            <h2 className="text-2xl text-foreground">Text messaging (SMS)</h2>
+            <p className="mt-3">
+              If you provide your phone number and consent to receive text messages, FIT Beyond
+              Plus may send you messages related to your inquiry, scheduled visits, membership
+              updates, and customer service. Message frequency varies depending on your
+              interaction with us. Message and data rates may apply.
+            </p>
+            <p className="mt-3">
+              We do not sell, rent, or share your mobile phone number with third parties or
+              affiliates for marketing or promotional purposes. Your number is used solely to
+              communicate with you about FIT Beyond Plus.
+            </p>
+            <p className="mt-3">
+              You can opt out of text messages at any time by replying <strong>STOP</strong> to
+              any message. For help, reply <strong>HELP</strong> or contact us at (931) 222-4449.
+              See our{" "}
+              <Link to="/terms" className="text-primary hover:underline">
+                Terms and Conditions
+              </Link>{" "}
+              for the full SMS program terms.
+            </p>
+          </div>
+
+          <div>
             <h2 className="text-2xl text-foreground">Contact us</h2>
             <p className="mt-3">
               Questions about this policy? Email{" "}
