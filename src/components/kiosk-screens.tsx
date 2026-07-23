@@ -159,6 +159,7 @@ type PaymentMethod = "venmo" | "paid_at_desk";
 
 export function DayPassScreen({ onDone }: { onDone: () => void }) {
   const [sent, setSent] = useState(false);
+  const [pending, setPending] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<"info" | "pay">("info");
@@ -166,10 +167,25 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [waiverAccepted, setWaiverAccepted] = useState(false);
   const [smsConsent, setSmsConsent] = useState(false);
+  // Timestamp the form rendered — used to reject submissions that come in
+  // suspiciously fast (bots filling and submitting in under a second).
+  const [renderedAt] = useState(() => Date.now());
 
   function handleInfoSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const d = new FormData(e.currentTarget);
+    // Honeypot: a field real humans never see or fill. If it's populated,
+    // fake a success screen without ever touching the real submit path —
+    // don't tip the bot off, and don't let it reach processDayPassCheckin.
+    const honeypot = String(d.get("company_website") ?? "").trim();
+    if (honeypot) {
+      setSent(true);
+      return;
+    }
+    if (Date.now() - renderedAt < 3000) {
+      setError("Please take a moment to fill out the form.");
+      return;
+    }
     setGuest({
       name: String(d.get("name") ?? ""),
       email: String(d.get("email") ?? ""),
@@ -195,7 +211,7 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
     setSubmitting(true);
     setError(null);
     try {
-      await processDayPassCheckin({
+      const result = await processDayPassCheckin({
         data: {
           name: guest.name,
           email: guest.email,
@@ -203,13 +219,41 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
           payment_method: method,
         },
       });
-      setSent(true);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      if (result.pending) {
+        setPending(true);
+      } else {
+        setSent(true);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not submit.");
     } finally {
       setSubmitting(false);
     }
   }
+
+  if (pending)
+    return (
+      <div className="max-w-xl mx-auto rounded-2xl border border-primary bg-primary/10 p-10 text-center">
+        <div className="mx-auto h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center animate-pulse">
+          <Check className="h-8 w-8" />
+        </div>
+        <h2 className="mt-6 text-3xl">Almost there!</h2>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Let the front desk know you're ready to pay — a staff member will confirm your
+          payment and check you in.
+        </p>
+        <button
+          onClick={onDone}
+          className="mt-6 inline-flex h-11 items-center rounded-md border border-border px-5 text-sm hover:bg-secondary"
+        >
+          Done
+        </button>
+      </div>
+    );
 
   if (sent)
     return (
@@ -224,6 +268,20 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
     return (
       <FormShell eyebrow="DAY PASS" title="Buy a Day Pass" sub="$10 single-day access.">
         <form onSubmit={handleInfoSubmit} className="space-y-5">
+          {/* Honeypot — hidden from real users, bots often fill every field they find */}
+          <div
+            aria-hidden="true"
+            style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}
+          >
+            <label htmlFor="company_website">Company website</label>
+            <input
+              id="company_website"
+              name="company_website"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
           <KioskField label="Full name" name="name" required />
           <KioskField label="Email" name="email" type="email" required />
           <KioskField label="Phone" name="phone" type="tel" required />
@@ -251,7 +309,7 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
             />
           </div>
           <p className="mt-4 text-sm text-foreground font-semibold">
-            Scan to pay $10 through Venmo, or pay at the front desk.
+            Scan to pay $10 through Venmo, or select Paid at desk below.
           </p>
         </div>
 
@@ -276,13 +334,21 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
               );
             })}
           </div>
+          {method === "paid_at_desk" && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              A staff member will confirm your payment before you're checked in.
+            </p>
+          )}
         </div>
 
         <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
         <SmsConsentCheckbox checked={smsConsent} onChange={setSmsConsent} />
 
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <SubmitButton submitting={submitting} label="Confirm Payment & Check In" />
+        <SubmitButton
+          submitting={submitting}
+          label={method === "paid_at_desk" ? "Request Check-In" : "Confirm Payment & Check In"}
+        />
         <button
           type="button"
           onClick={() => {
