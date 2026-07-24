@@ -496,14 +496,40 @@ or
         bookVisitType = parsed.visit_type === "day_pass" ? "day_pass" : "tour";
       } catch (e) {
         const preview = text.slice(0, 300).replace(/\s+/g, " ");
+        const errMsg = (e as Error).message;
         console.error(
           "[twilio-inbound-sms] parse error — falling back to staff alert:",
-          (e as Error).message,
+          errMsg,
           "| raw response (truncated):",
           preview,
         );
         needsHuman = true;
         reason = "parse_error";
+
+        // Durable, queryable record of the failure — Edge Function log
+        // retention rolls over, this doesn't. Query with:
+        // .eq("metadata->>kind", "parse_error")
+        const { error: parseLogErr } = await supabase.from("sms_conversation_log").insert({
+          lead_id: lead.id,
+          phone: from,
+          direction: "system",
+          body: `[parse_error] ${errMsg}`,
+          from_ai: false,
+          provider_message_id: null,
+          status: "parse_error",
+          metadata: {
+            kind: "parse_error",
+            error_message: errMsg,
+            raw_response_preview: preview,
+            inbound_body: body,
+          },
+        });
+        if (parseLogErr) {
+          console.error(
+            "[twilio-inbound-sms] failed to log parse_error to sms_conversation_log:",
+            parseLogErr.message,
+          );
+        }
       }
     }
 
