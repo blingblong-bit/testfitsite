@@ -74,13 +74,21 @@ Deno.serve(async (req) => {
     const from = normalizePhone(fromRaw);
     const body = bodyRaw.trim();
 
-    // Find lead by phone (try normalized and raw)
+    // Find lead by last-10-digits of phone (format-agnostic). Fetch candidates
+    // whose stored phone contains the last 4 digits, then filter in-memory by
+    // matching the normalized last-10-digits — leads may be stored as
+    // "9314342243", "(931) 434-2243", "+19314342243", etc.
+    const fromDigits = fromRaw.replace(/\D/g, "").slice(-10);
+    const last4 = fromDigits.slice(-4);
     const { data: leadRows } = await supabase
       .from("leads")
-      .select("id, name, phone, interest, goal, sms_opted_out, notes, lead_type")
-      .or(`phone.eq.${from},phone.eq.${fromRaw}`)
-      .limit(1);
-    const lead = leadRows?.[0];
+      .select("id, name, phone, interest, goal, sms_opted_out, notes, lead_type, created_at")
+      .ilike("phone", `%${last4}%`)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    const lead = (leadRows ?? []).find(
+      (r) => (r.phone ?? "").replace(/\D/g, "").slice(-10) === fromDigits,
+    );
     if (!lead) {
       console.log("[twilio-inbound-sms] no lead for", from);
       return twiml();
