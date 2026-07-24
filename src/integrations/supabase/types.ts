@@ -143,6 +143,51 @@ export type Database = {
         }
         Relationships: []
       }
+      day_pass_pending_checkins: {
+        Row: {
+          approved_at: string | null
+          created_at: string
+          email: string
+          id: string
+          lead_id: string | null
+          name: string
+          payment_method: string
+          phone: string
+          rejected_at: string | null
+          requested_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          lead_id?: string | null
+          name: string
+          payment_method?: string
+          phone: string
+          rejected_at?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          lead_id?: string | null
+          name?: string
+          payment_method?: string
+          phone?: string
+          rejected_at?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
