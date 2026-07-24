@@ -309,7 +309,10 @@ Deno.serve(async (req) => {
         await supabase
           .from("leads")
           .update({
+            tour_scheduled: true,
+            tour_date: altAppt.suggested_time,
             crm_status: "Tour Scheduled",
+            sequence_status: "paused",
             last_sms_at: nowIso,
             last_response_at: nowIso,
           })
