@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { generateDayPassCode } from "./generate-day-pass-code.functions";
 import {
   slotsForDate,
   filterAvailable,
@@ -106,6 +107,7 @@ const SubmitSchema = z.object({
   phone: z.string().trim().min(7).max(40),
   requested_time: z.string().datetime(),
   sms_consent: z.boolean(),
+  visit_type: z.enum(["tour", "day_pass"]).default("tour"),
 });
 
 function looksFake(name: string, email: string): boolean {
@@ -192,7 +194,7 @@ export const submitAppointmentRequest = createServerFn({ method: "POST" })
         email,
         requested_time: data.requested_time,
         status: "pending",
-        type: "tour",
+        type: data.visit_type,
       })
       .select("id")
       .single();
@@ -236,7 +238,7 @@ export const approveAppointment = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("appointments")
-      .select("id, name, phone, requested_time, status, lead_id")
+      .select("id, name, phone, email, requested_time, status, lead_id, type")
       .eq("id", data.appointment_id)
       .single();
     if (error || !row) return { ok: false as const, error: "Not found." };
@@ -267,6 +269,36 @@ export const approveAppointment = createServerFn({ method: "POST" })
 
     const to = normalizePhoneE164(row.phone);
     const firstName = String(row.name ?? "there").split(/\s+/)[0] || "there";
+
+    if (row.type === "day_pass") {
+      // Day pass approvals get a referral/day-pass code instead of the
+      // generic tour confirmation — the code text itself confirms the visit.
+      if (row.lead_id && row.email) {
+        const codeResult = await generateDayPassCode({
+          data: {
+            lead_id: row.lead_id,
+            name: row.name ?? "there",
+            email: row.email,
+            phone: row.phone,
+          },
+        });
+        if (codeResult.ok) {
+          return { ok: true as const };
+        }
+        console.error(
+          "[approveAppointment] generateDayPassCode failed, falling back to generic confirmation",
+          codeResult.error,
+        );
+        // Fall through to the generic confirmation below rather than leave
+        // the person with no message at all.
+      } else {
+        console.error(
+          "[approveAppointment] day_pass approval missing lead_id or email, falling back to generic confirmation",
+          { leadId: row.lead_id, hasEmail: Boolean(row.email) },
+        );
+      }
+    }
+
     const msg = `You're all set, ${firstName}! Your visit to FIT Beyond Plus is confirmed for ${formatChicagoDateTime(
       confirmed,
     )}. See you then at 449 W Lincoln St, Tullahoma!`;

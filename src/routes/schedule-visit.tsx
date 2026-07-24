@@ -47,6 +47,7 @@ function ScheduleVisit() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [visitType, setVisitType] = useState<"tour" | "day_pass">("tour");
   const [smsConsent, setSmsConsent] = useState(false);
   const [website, setWebsite] = useState(""); // honeypot
   const [submitting, setSubmitting] = useState(false);
@@ -102,6 +103,7 @@ function ScheduleVisit() {
           phone,
           requested_time: selectedSlot,
           sms_consent: smsConsent,
+          visit_type: visitType,
         },
       });
       if (!result.ok) {
@@ -130,7 +132,8 @@ function ScheduleVisit() {
             <strong className="text-foreground">
               {formatChicagoDateTime(confirmed)}
             </strong>{" "}
-            — we'll confirm shortly! Look out for a text at {phone}.
+            — we'll confirm shortly! Look out for a text at {phone}
+            {visitType === "day_pass" ? " with your day pass code" : ""}.
           </p>
         </div>
       </section>
@@ -148,6 +151,35 @@ function ScheduleVisit() {
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              What are you here for?
+            </label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setVisitType("tour")}
+                className={`flex-1 rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                  visitType === "tour"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:border-primary/50"
+                }`}
+              >
+                Tour / Membership
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisitType("day_pass")}
+                className={`flex-1 rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
+                  visitType === "day_pass"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:border-primary/50"
+                }`}
+              >
+                Day Pass
+              </button>
+            </div>
+          </div>
           <div>
             <label className="text-sm font-semibold uppercase tracking-wide">
               Choose a day

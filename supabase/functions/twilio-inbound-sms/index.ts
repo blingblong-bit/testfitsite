@@ -237,6 +237,25 @@ Deno.serve(async (req) => {
       return twiml();
     }
 
+    // If this lead has no email on file yet, check if they just texted one
+    // (e.g. replying to Claude's "what's your email?" prompt for booking a
+    // day pass). Save it so the same conversation turn can pick it up.
+    if (!lead.email) {
+      const emailMatch = body.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);
+      if (emailMatch) {
+        const capturedEmail = emailMatch[0].toLowerCase();
+        const { error: emailUpdateErr } = await supabase
+          .from("leads")
+          .update({ email: capturedEmail })
+          .eq("id", lead.id);
+        if (!emailUpdateErr) {
+          lead.email = capturedEmail;
+        } else {
+          console.error("[twilio-inbound-sms] email capture failed", emailUpdateErr.message);
+        }
+      }
+    }
+
     // Opt-out handling
     const upper = body.toUpperCase();
     if (OPT_OUT_KEYWORDS.has(upper)) {
@@ -361,7 +380,7 @@ Deno.serve(async (req) => {
       const slots = await getAvailableSlotsForNextDays(supabase, 3);
       const trimmed = slots.slice(0, 8);
       if (trimmed.length > 0) {
-        slotsBlock = `\n\nOPEN VISIT SLOTS (next 3 days, Central time). If the customer wants to schedule a visit/tour, offer 2 or 3 of these specific times AND always also mention they can pick their own time at fitbeyondplus.com/schedule-visit. Use this exact pattern: "We have [slot], [slot], or [slot] open — or you can schedule a time yourself here: fitbeyondplus.com/schedule-visit."\n${trimmed.map((s) => `- ${s.label}  [iso: ${s.iso}]`).join("\n")}\n\nIf the customer clearly picks ONE of these exact slots, include the "book_slot" field with that iso value in your JSON.`;
+        slotsBlock = `\n\nOPEN VISIT SLOTS (next 3 days, Central time). If the customer wants to schedule a visit/tour, offer 2 or 3 of these specific times AND always also mention they can pick their own time at fitbeyondplus.com/schedule-visit. Use this exact pattern: "We have [slot], [slot], or [slot] open — or you can schedule a time yourself here: fitbeyondplus.com/schedule-visit."\n${trimmed.map((s) => `- ${s.label}  [iso: ${s.iso}]`).join("\n")}\n\nIf the customer clearly picks ONE of these exact slots, include the "book_slot" field with that iso value in your JSON.\n\nAlso include "visit_type" as either "tour" (default — a membership/gym tour) or "day_pass" (if the customer's context clearly indicates they just want a single-day pass rather than a membership tour, e.g. their stated interest mentions "day pass").\n\nIMPORTANT — if visit_type is "day_pass" and we do NOT have an email on file for this customer (see CUSTOMER EMAIL ON FILE below), do NOT include book_slot yet. Instead, ask for their email in your reply first (e.g. "What's your email? We'll text your day pass code once it's confirmed!") — we need a valid email to generate their day pass code. Once they reply with an email in a future message, you can then include book_slot with visit_type "day_pass".\n\nCUSTOMER EMAIL ON FILE: ${lead.email ? lead.email : "none — ask for it before booking a day_pass visit"}`;
       } else {
         slotsBlock = `\n\nNo specific open slots are loaded right now. If the customer wants to schedule a visit/tour, direct them to fitbeyondplus.com/schedule-visit to pick a time themselves.`;
       }
@@ -397,7 +416,7 @@ Respond with ONLY a raw JSON object. No other text. No markdown formatting. No c
 Use exactly this shape:
 { "reply": "your text reply here", "needs_human": false }
 or with a booked slot:
-{ "reply": "your text reply here", "needs_human": false, "book_slot": "2025-11-14T20:00:00.000Z" }
+{ "reply": "your text reply here", "needs_human": false, "book_slot": "2025-11-14T20:00:00.000Z", "visit_type": "tour" }
 or when escalating:
 { "reply": null, "needs_human": true, "reason": "brief reason" }`;
 
@@ -443,6 +462,7 @@ or
     let needsHuman = true;
     let reason = "ai_error";
     let bookSlot: string | null = null;
+    let bookVisitType: "tour" | "day_pass" = "tour";
 
     if (!claudeRes.ok) {
       const t = await claudeRes.text();
@@ -467,11 +487,13 @@ or
           needs_human?: boolean;
           reason?: string;
           book_slot?: string | null;
+          visit_type?: "tour" | "day_pass" | null;
         };
         aiReply = parsed.reply ?? null;
         needsHuman = Boolean(parsed.needs_human);
         reason = parsed.reason ?? "";
         bookSlot = parsed.book_slot ?? null;
+        bookVisitType = parsed.visit_type === "day_pass" ? "day_pass" : "tour";
       } catch (e) {
         const preview = text.slice(0, 300).replace(/\s+/g, " ");
         console.error(
@@ -487,6 +509,16 @@ or
 
     // If Claude picked a valid slot, create a pending appointment.
     if (bookSlot && !isExistingMember) {
+      // Server-side safety net: never create a day_pass appointment without
+      // a real email on file, regardless of what the model decided — the
+      // approval step later calls generateDayPassCode, which hard-requires
+      // a valid email to create and send the code.
+      if (bookVisitType === "day_pass" && !lead.email) {
+        bookSlot = null;
+      }
+    }
+
+    if (bookSlot && !isExistingMember) {
       // Confirm the slot is still open (not already confirmed by someone else).
       const { data: conflict } = await supabase
         .from("appointments")
@@ -499,10 +531,10 @@ or
           lead_id: lead.id,
           name: lead.name ?? "Lead",
           phone: from,
-          email: null,
+          email: lead.email ?? null,
           requested_time: bookSlot,
           status: "pending",
-          type: "tour",
+          type: bookVisitType,
         });
       } else {
         // Slot got taken between prompt build and reply — escalate to staff.

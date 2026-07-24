@@ -39,6 +39,7 @@ type Row = {
   suggested_time: string | null;
   status: "pending" | "alternative_suggested";
   created_at: string;
+  type: "tour" | "enrollment" | "day_pass" | null;
 };
 
 const POLL_MS = 5000;
@@ -56,7 +57,7 @@ function AdminAppointmentApprovals() {
   const load = useCallback(async () => {
     const { data, error } = await supabase
       .from("appointments")
-      .select("id, name, phone, email, requested_time, suggested_time, status, created_at")
+      .select("id, name, phone, email, requested_time, suggested_time, status, created_at, type")
       .in("status", ["pending", "alternative_suggested"])
       .order("requested_time", { ascending: true });
     if (!error && data) setRows(data as Row[]);
@@ -137,7 +138,24 @@ function AdminAppointmentApprovals() {
               >
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
-                    <p className="text-lg font-semibold">{r.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-lg font-semibold">{r.name}</p>
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          r.type === "day_pass"
+                            ? "bg-primary/15 text-primary"
+                            : r.type === "enrollment"
+                              ? "bg-secondary text-secondary-foreground"
+                              : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {r.type === "day_pass"
+                          ? "Day Pass"
+                          : r.type === "enrollment"
+                            ? "Enrollment"
+                            : "Tour"}
+                      </span>
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       {r.phone} {r.email ? `• ${r.email}` : ""}
                     </p>
