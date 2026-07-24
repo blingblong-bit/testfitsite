@@ -171,7 +171,10 @@ Set needs_human to true and stop responding if:
 - This is the 5th or more exchange in the conversation
 - Their message is emotionally complex or ambiguous
 
-Always respond in this exact JSON format:
+CRITICAL OUTPUT FORMAT — READ CAREFULLY:
+Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
+
+Use exactly this shape:
 { "reply": "your text reply here", "needs_human": false }
 or
 { "reply": null, "needs_human": true, "reason": "brief reason" }`;
@@ -184,7 +187,10 @@ About FIT Beyond Plus:
 - Email: info@fitbeyondplus.com
 - Offerings: Strength training, cardio, group fitness, kickboxing, Brazilian Jiu-Jitsu (adult and kids), athlete performance training, sauna, connected physical therapy
 
-Always respond in this exact JSON format:
+CRITICAL OUTPUT FORMAT — READ CAREFULLY:
+Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
+
+Use exactly this shape:
 { "reply": "your text reply here", "needs_human": false }
 or
 { "reply": null, "needs_human": true, "reason": "brief reason" }`;
