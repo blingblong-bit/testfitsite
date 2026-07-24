@@ -89,6 +89,7 @@ Deno.serve(async (req) => {
     const lead = (leadRows ?? []).find(
       (r) => (r.phone ?? "").replace(/\D/g, "").slice(-10) === fromDigits,
     );
+    console.log("[twilio-inbound-sms] lookup", { fromDigits, last4, candidates: leadRows?.length ?? 0, phones: (leadRows ?? []).map((r) => r.phone) });
     if (!lead) {
       console.log("[twilio-inbound-sms] no lead for", from);
       return twiml();
