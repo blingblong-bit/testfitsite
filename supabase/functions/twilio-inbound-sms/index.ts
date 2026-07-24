@@ -80,16 +80,17 @@ Deno.serve(async (req) => {
     // "9314342243", "(931) 434-2243", "+19314342243", etc.
     const fromDigits = fromRaw.replace(/\D/g, "").slice(-10);
     const last4 = fromDigits.slice(-4);
-    const { data: leadRows } = await supabase
+    const { data: leadRows, error: leadErr } = await supabase
       .from("leads")
       .select("id, name, phone, interest, goal, sms_opted_out, notes, lead_type, created_at")
       .ilike("phone", `%${last4}%`)
       .order("created_at", { ascending: false })
       .limit(50);
+    if (leadErr) console.error("[twilio-inbound-sms] select error", leadErr);
     const lead = (leadRows ?? []).find(
       (r) => (r.phone ?? "").replace(/\D/g, "").slice(-10) === fromDigits,
     );
-    console.log("[twilio-inbound-sms] lookup", { fromDigits, last4, candidates: leadRows?.length ?? 0, phones: (leadRows ?? []).map((r) => r.phone) });
+    console.log("[twilio-inbound-sms] lookup", { fromDigits, last4, candidates: leadRows?.length ?? 0, phones: (leadRows ?? []).map((r) => r.phone), err: leadErr?.message });
     if (!lead) {
       console.log("[twilio-inbound-sms] no lead for", from);
       return twiml();
