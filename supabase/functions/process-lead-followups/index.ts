@@ -35,7 +35,13 @@ async function sendTwilioSms(
         Authorization: `Basic ${auth}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({ To: to, From: from, Body: body }),
+      body: new URLSearchParams({
+        To: to,
+        From: from,
+        Body: body,
+        StatusCallback:
+          "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
+      }),
     },
   );
   if (!res.ok) {

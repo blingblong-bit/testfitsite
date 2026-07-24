@@ -951,6 +951,8 @@ type SmsMessage = {
   direction: "inbound" | "outbound";
   body: string;
   status: string | null;
+  delivery_status: string | null;
+  error_code: string | null;
   from_ai: boolean;
   created_at: string;
   metadata: { sent_by?: string; kind?: string; test_mode?: boolean } | null;
