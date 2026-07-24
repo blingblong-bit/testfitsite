@@ -35,6 +35,62 @@ export type Database = {
         }
         Relationships: []
       }
+      appointments: {
+        Row: {
+          confirmed_at: string | null
+          confirmed_time: string | null
+          created_at: string
+          email: string | null
+          id: string
+          lead_id: string | null
+          name: string
+          phone: string
+          reminders_sent: Json
+          requested_time: string
+          status: string
+          suggested_time: string | null
+          type: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          confirmed_time?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_id?: string | null
+          name: string
+          phone: string
+          reminders_sent?: Json
+          requested_time: string
+          status?: string
+          suggested_time?: string | null
+          type?: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          confirmed_time?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_id?: string | null
+          name?: string
+          phone?: string
+          reminders_sent?: Json
+          requested_time?: string
+          status?: string
+          suggested_time?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_posts: {
         Row: {
           content: string
@@ -477,7 +533,9 @@ export type Database = {
         Row: {
           body: string
           created_at: string
+          delivery_status: string | null
           direction: string
+          error_code: string | null
           from_ai: boolean
           id: string
           lead_id: string | null
@@ -490,7 +548,9 @@ export type Database = {
         Insert: {
           body: string
           created_at?: string
+          delivery_status?: string | null
           direction: string
+          error_code?: string | null
           from_ai?: boolean
           id?: string
           lead_id?: string | null
@@ -503,7 +563,9 @@ export type Database = {
         Update: {
           body?: string
           created_at?: string
+          delivery_status?: string | null
           direction?: string
+          error_code?: string | null
           from_ai?: boolean
           id?: string
           lead_id?: string | null
