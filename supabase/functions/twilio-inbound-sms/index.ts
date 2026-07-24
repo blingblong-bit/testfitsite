@@ -361,7 +361,9 @@ Deno.serve(async (req) => {
       const slots = await getAvailableSlotsForNextDays(supabase, 3);
       const trimmed = slots.slice(0, 8);
       if (trimmed.length > 0) {
-        slotsBlock = `\n\nOPEN VISIT SLOTS (next 3 days, Central time). If the customer wants to schedule a visit/tour, offer 2 or 3 of these specific times in your reply and ask which works best:\n${trimmed.map((s) => `- ${s.label}  [iso: ${s.iso}]`).join("\n")}\n\nIf the customer clearly picks ONE of these exact slots, include the "book_slot" field with that iso value in your JSON.`;
+        slotsBlock = `\n\nOPEN VISIT SLOTS (next 3 days, Central time). If the customer wants to schedule a visit/tour, offer 2 or 3 of these specific times AND always also mention they can pick their own time at fitbeyondplus.com/schedule-visit. Use this exact pattern: "We have [slot], [slot], or [slot] open — or you can schedule a time yourself here: fitbeyondplus.com/schedule-visit."\n${trimmed.map((s) => `- ${s.label}  [iso: ${s.iso}]`).join("\n")}\n\nIf the customer clearly picks ONE of these exact slots, include the "book_slot" field with that iso value in your JSON.`;
+      } else {
+        slotsBlock = `\n\nNo specific open slots are loaded right now. If the customer wants to schedule a visit/tour, direct them to fitbeyondplus.com/schedule-visit to pick a time themselves.`;
       }
     }
 
