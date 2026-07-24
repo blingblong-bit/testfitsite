@@ -171,7 +171,10 @@ Set needs_human to true and stop responding if:
 - This is the 5th or more exchange in the conversation
 - Their message is emotionally complex or ambiguous
 
-Always respond in this exact JSON format:
+CRITICAL OUTPUT FORMAT — READ CAREFULLY:
+Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
+
+Use exactly this shape:
 { "reply": "your text reply here", "needs_human": false }
 or
 { "reply": null, "needs_human": true, "reason": "brief reason" }`;
@@ -184,7 +187,10 @@ About FIT Beyond Plus:
 - Email: info@fitbeyondplus.com
 - Offerings: Strength training, cardio, group fitness, kickboxing, Brazilian Jiu-Jitsu (adult and kids), athlete performance training, sauna, connected physical therapy
 
-Always respond in this exact JSON format:
+CRITICAL OUTPUT FORMAT — READ CAREFULLY:
+Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
+
+Use exactly this shape:
 { "reply": "your text reply here", "needs_human": false }
 or
 { "reply": null, "needs_human": true, "reason": "brief reason" }`;
@@ -235,9 +241,16 @@ or
         .map((b) => (b.type === "text" ? b.text ?? "" : ""))
         .join("")
         .trim();
+      // Strip markdown code fences if Claude wrapped the JSON despite the prompt.
+      let cleaned = text;
+      const fenced = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+      if (fenced) cleaned = fenced[1].trim();
+      // Fall back to extracting the first {...} block if there's surrounding prose.
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+      const candidate = jsonMatch ? jsonMatch[0] : cleaned;
+
       try {
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text) as {
+        const parsed = JSON.parse(candidate) as {
           reply?: string | null;
           needs_human?: boolean;
           reason?: string;
@@ -246,7 +259,13 @@ or
         needsHuman = Boolean(parsed.needs_human);
         reason = parsed.reason ?? "";
       } catch (e) {
-        console.error("[twilio-inbound-sms] parse error", e, text);
+        const preview = text.slice(0, 300).replace(/\s+/g, " ");
+        console.error(
+          "[twilio-inbound-sms] parse error — falling back to staff alert:",
+          (e as Error).message,
+          "| raw response (truncated):",
+          preview,
+        );
         needsHuman = true;
         reason = "parse_error";
       }
