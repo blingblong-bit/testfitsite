@@ -321,10 +321,26 @@ export const declineAppointment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     if (!(await requireAdmin(context))) return { ok: false as const, error: "forbidden" };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("appointments")
+      .select("id, lead_id")
+      .eq("id", data.appointment_id)
+      .single();
     const { error } = await supabaseAdmin
       .from("appointments")
       .update({ status: "declined" })
       .eq("id", data.appointment_id);
     if (error) return { ok: false as const, error: error.message };
+    if (row?.lead_id) {
+      await supabaseAdmin
+        .from("leads")
+        .update({
+          tour_scheduled: false,
+          tour_date: null,
+          crm_status: "Contacted",
+          sequence_status: "active",
+        })
+        .eq("id", row.lead_id);
+    }
     return { ok: true as const };
   });
