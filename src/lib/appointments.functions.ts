@@ -253,6 +253,18 @@ export const approveAppointment = createServerFn({ method: "POST" })
       })
       .eq("id", row.id);
 
+    if (row.lead_id) {
+      await supabaseAdmin
+        .from("leads")
+        .update({
+          tour_scheduled: true,
+          tour_date: confirmed,
+          crm_status: "Tour Scheduled",
+          sequence_status: "paused",
+        })
+        .eq("id", row.lead_id);
+    }
+
     const to = normalizePhoneE164(row.phone);
     const firstName = String(row.name ?? "there").split(/\s+/)[0] || "there";
     const msg = `You're all set, ${firstName}! Your visit to FIT Beyond Plus is confirmed for ${formatChicagoDateTime(
