@@ -280,6 +280,7 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
+    let declinedAltLabel: string | null = null;
     if (altAppt?.suggested_time && anthropicKey) {
       const label = formatChicagoDateTimeLabel(altAppt.suggested_time);
       const verdict = await classifyAlternativeResponse(anthropicKey, label, body);
@@ -319,8 +320,9 @@ Deno.serve(async (req) => {
           .eq("id", lead.id);
         return twiml();
       }
-      // "decline" or "unclear" — fall through to normal Claude flow; the model will
-      // see the conversation history including the alternative offer.
+      // "decline" or "unclear" — fall through to Claude with explicit context
+      // so it proactively offers other real open slots instead of replying generically.
+      declinedAltLabel = label;
     }
 
     // Mark lead as waiting on response / paused
