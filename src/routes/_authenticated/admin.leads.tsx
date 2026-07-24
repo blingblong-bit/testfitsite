@@ -979,7 +979,7 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
     setThreadLoading(true);
     supabase
       .from("sms_conversation_log")
-      .select("id, direction, body, status, from_ai, created_at, metadata")
+      .select("id, direction, body, status, delivery_status, error_code, from_ai, created_at, metadata")
       .eq("lead_id", lead.id)
       .order("created_at", { ascending: true })
       .then(({ data, error }) => {
@@ -1013,7 +1013,7 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
         // Optimistically append; realistic timestamp from server via reload
         const { data } = await supabase
           .from("sms_conversation_log")
-          .select("id, direction, body, status, from_ai, created_at, metadata")
+          .select("id, direction, body, status, delivery_status, error_code, from_ai, created_at, metadata")
           .eq("lead_id", lead.id)
           .order("created_at", { ascending: true });
         setThread((data ?? []) as SmsMessage[]);
