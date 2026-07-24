@@ -48,6 +48,7 @@ import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminDayPassApprovalsRouteImport } from './routes/_authenticated/admin.day-pass-approvals'
 import { Route as AuthenticatedAdminClassCheckinsRouteImport } from './routes/_authenticated/admin.class-checkins'
 import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
+import { Route as AuthenticatedAdminAppointmentApprovalsRouteImport } from './routes/_authenticated/admin.appointment-approvals'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -254,6 +255,12 @@ const AuthenticatedAdminBlogRoute = AuthenticatedAdminBlogRouteImport.update({
   path: '/admin/blog',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminAppointmentApprovalsRoute =
+  AuthenticatedAdminAppointmentApprovalsRouteImport.update({
+    id: '/admin/appointment-approvals',
+    path: '/admin/appointment-approvals',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -332,6 +339,7 @@ export interface FileRoutesByFullPath {
   '/classes/': typeof ClassesIndexRoute
   '/combat-sports/': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/appointment-approvals': typeof AuthenticatedAdminAppointmentApprovalsRoute
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
@@ -376,6 +384,7 @@ export interface FileRoutesByTo {
   '/classes': typeof ClassesIndexRoute
   '/combat-sports': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/appointment-approvals': typeof AuthenticatedAdminAppointmentApprovalsRoute
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
@@ -425,6 +434,7 @@ export interface FileRoutesById {
   '/classes/': typeof ClassesIndexRoute
   '/combat-sports/': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/admin/appointment-approvals': typeof AuthenticatedAdminAppointmentApprovalsRoute
   '/_authenticated/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/_authenticated/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/_authenticated/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
@@ -474,6 +484,7 @@ export interface FileRouteTypes {
     | '/classes/'
     | '/combat-sports/'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/appointment-approvals'
     | '/admin/blog'
     | '/admin/class-checkins'
     | '/admin/day-pass-approvals'
@@ -518,6 +529,7 @@ export interface FileRouteTypes {
     | '/classes'
     | '/combat-sports'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/appointment-approvals'
     | '/admin/blog'
     | '/admin/class-checkins'
     | '/admin/day-pass-approvals'
@@ -566,6 +578,7 @@ export interface FileRouteTypes {
     | '/classes/'
     | '/combat-sports/'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/admin/appointment-approvals'
     | '/_authenticated/admin/blog'
     | '/_authenticated/admin/class-checkins'
     | '/_authenticated/admin/day-pass-approvals'
@@ -890,6 +903,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBlogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/appointment-approvals': {
+      id: '/_authenticated/admin/appointment-approvals'
+      path: '/admin/appointment-approvals'
+      fullPath: '/admin/appointment-approvals'
+      preLoaderRoute: typeof AuthenticatedAdminAppointmentApprovalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -945,6 +965,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedFrontdeskRoute: typeof AuthenticatedFrontdeskRoute
   AuthenticatedStaffHomeRoute: typeof AuthenticatedStaffHomeRoute
+  AuthenticatedAdminAppointmentApprovalsRoute: typeof AuthenticatedAdminAppointmentApprovalsRoute
   AuthenticatedAdminBlogRoute: typeof AuthenticatedAdminBlogRoute
   AuthenticatedAdminClassCheckinsRoute: typeof AuthenticatedAdminClassCheckinsRoute
   AuthenticatedAdminDayPassApprovalsRoute: typeof AuthenticatedAdminDayPassApprovalsRoute
@@ -954,6 +975,8 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFrontdeskRoute: AuthenticatedFrontdeskRoute,
   AuthenticatedStaffHomeRoute: AuthenticatedStaffHomeRoute,
+  AuthenticatedAdminAppointmentApprovalsRoute:
+    AuthenticatedAdminAppointmentApprovalsRoute,
   AuthenticatedAdminBlogRoute: AuthenticatedAdminBlogRoute,
   AuthenticatedAdminClassCheckinsRoute: AuthenticatedAdminClassCheckinsRoute,
   AuthenticatedAdminDayPassApprovalsRoute:
