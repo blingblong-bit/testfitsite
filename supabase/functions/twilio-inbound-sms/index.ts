@@ -74,13 +74,22 @@ Deno.serve(async (req) => {
     const from = normalizePhone(fromRaw);
     const body = bodyRaw.trim();
 
-    // Find lead by phone (try normalized and raw)
-    const { data: leadRows } = await supabase
+    // Find lead by last-10-digits of phone (format-agnostic). Fetch candidates
+    // whose stored phone contains the last 4 digits, then filter in-memory by
+    // matching the normalized last-10-digits — leads may be stored as
+    // "9314342243", "(931) 434-2243", "+19314342243", etc.
+    const fromDigits = fromRaw.replace(/\D/g, "").slice(-10);
+    const last4 = fromDigits.slice(-4);
+    const { data: leadRows, error: leadErr } = await supabase
       .from("leads")
-      .select("id, name, phone, interest, goal, sms_opted_out, notes, lead_type")
-      .or(`phone.eq.${from},phone.eq.${fromRaw}`)
-      .limit(1);
-    const lead = leadRows?.[0];
+      .select("id, name, phone, interest, sms_opted_out, notes, lead_type, created_at")
+      .ilike("phone", `%${last4}%`)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (leadErr) console.error("[twilio-inbound-sms] select error", leadErr.message);
+    const lead = (leadRows ?? []).find(
+      (r) => (r.phone ?? "").replace(/\D/g, "").slice(-10) === fromDigits,
+    );
     if (!lead) {
       console.log("[twilio-inbound-sms] no lead for", from);
       return twiml();
@@ -138,7 +147,7 @@ Deno.serve(async (req) => {
 
     const isExistingMember = lead.lead_type === "existing_member";
 
-    const prospectPrompt = `You are the friendly front desk assistant for FIT Beyond Plus, a full-service gym in Tullahoma, Tennessee. You are texting with a potential member named ${lead.name ?? "there"} who is interested in ${lead.interest ?? lead.goal ?? "getting started"}.
+    const prospectPrompt = `You are the friendly front desk assistant for FIT Beyond Plus, a full-service gym in Tullahoma, Tennessee. You are texting with a potential member named ${lead.name ?? "there"} who is interested in ${lead.interest ?? "getting started"}.
 
 About FIT Beyond Plus:
 - Address: 449 W Lincoln St, Tullahoma, TN 37388
@@ -162,7 +171,10 @@ Set needs_human to true and stop responding if:
 - This is the 5th or more exchange in the conversation
 - Their message is emotionally complex or ambiguous
 
-Always respond in this exact JSON format:
+CRITICAL OUTPUT FORMAT — READ CAREFULLY:
+Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
+
+Use exactly this shape:
 { "reply": "your text reply here", "needs_human": false }
 or
 { "reply": null, "needs_human": true, "reason": "brief reason" }`;
@@ -175,7 +187,10 @@ About FIT Beyond Plus:
 - Email: info@fitbeyondplus.com
 - Offerings: Strength training, cardio, group fitness, kickboxing, Brazilian Jiu-Jitsu (adult and kids), athlete performance training, sauna, connected physical therapy
 
-Always respond in this exact JSON format:
+CRITICAL OUTPUT FORMAT — READ CAREFULLY:
+Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
+
+Use exactly this shape:
 { "reply": "your text reply here", "needs_human": false }
 or
 { "reply": null, "needs_human": true, "reason": "brief reason" }`;
@@ -226,9 +241,16 @@ or
         .map((b) => (b.type === "text" ? b.text ?? "" : ""))
         .join("")
         .trim();
+      // Strip markdown code fences if Claude wrapped the JSON despite the prompt.
+      let cleaned = text;
+      const fenced = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+      if (fenced) cleaned = fenced[1].trim();
+      // Fall back to extracting the first {...} block if there's surrounding prose.
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+      const candidate = jsonMatch ? jsonMatch[0] : cleaned;
+
       try {
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text) as {
+        const parsed = JSON.parse(candidate) as {
           reply?: string | null;
           needs_human?: boolean;
           reason?: string;
@@ -237,7 +259,13 @@ or
         needsHuman = Boolean(parsed.needs_human);
         reason = parsed.reason ?? "";
       } catch (e) {
-        console.error("[twilio-inbound-sms] parse error", e, text);
+        const preview = text.slice(0, 300).replace(/\s+/g, " ");
+        console.error(
+          "[twilio-inbound-sms] parse error — falling back to staff alert:",
+          (e as Error).message,
+          "| raw response (truncated):",
+          preview,
+        );
         needsHuman = true;
         reason = "parse_error";
       }

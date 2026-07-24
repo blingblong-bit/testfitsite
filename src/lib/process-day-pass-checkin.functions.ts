@@ -61,17 +61,25 @@ async function finalizeDayPassLead(data: FinalizeInput): Promise<FinalizeResult>
     console.error("[dayPassCheckin] antaris check failed", e);
   }
 
+  // Match by email OR by last-10-digits of phone (format-agnostic).
+  const phoneDigits = phone.replace(/\D/g, "").slice(-10);
+  const last4 = phoneDigits.slice(-4);
   const orFilters = [`email.ilike.${email}`];
-  if (phone) orFilters.push(`phone.eq.${phone}`);
-  const { data: existing, error: findErr } = await supabaseAdmin
+  if (last4.length === 4) orFilters.push(`phone.ilike.%${last4}%`);
+  const { data: existingCandidates, error: findErr } = await supabaseAdmin
     .from("leads")
-    .select("id, notes")
+    .select("id, notes, email, phone")
     .or(orFilters.join(","))
-    .limit(1);
+    .limit(50);
   if (findErr) {
     console.error("[dayPassCheckin] find error", findErr.message);
   }
-  const existingLead = existing?.[0];
+  const existingLead = (existingCandidates ?? []).find((r) => {
+    if ((r.email ?? "").trim().toLowerCase() === email) return true;
+    if (phoneDigits.length === 10 &&
+        (r.phone ?? "").replace(/\D/g, "").slice(-10) === phoneDigits) return true;
+    return false;
+  });
 
   if (existingMember) {
     const noteEntry = `[${now}] Existing Antaris member checked in for day pass (paid via ${payment_status})`;

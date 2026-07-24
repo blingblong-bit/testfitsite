@@ -146,6 +146,7 @@ export type Database = {
       day_pass_pending_checkins: {
         Row: {
           approved_at: string | null
+          created_at: string
           email: string
           id: string
           lead_id: string | null
@@ -155,9 +156,11 @@ export type Database = {
           rejected_at: string | null
           requested_at: string
           status: string
+          updated_at: string
         }
         Insert: {
           approved_at?: string | null
+          created_at?: string
           email: string
           id?: string
           lead_id?: string | null
@@ -167,9 +170,11 @@ export type Database = {
           rejected_at?: string | null
           requested_at?: string
           status?: string
+          updated_at?: string
         }
         Update: {
           approved_at?: string | null
+          created_at?: string
           email?: string
           id?: string
           lead_id?: string | null
@@ -179,16 +184,9 @@ export type Database = {
           rejected_at?: string | null
           requested_at?: string
           status?: string
+          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "day_pass_pending_checkins_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       email_send_log: {
         Row: {
