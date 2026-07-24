@@ -86,11 +86,10 @@ Deno.serve(async (req) => {
       .ilike("phone", `%${last4}%`)
       .order("created_at", { ascending: false })
       .limit(50);
-    if (leadErr) console.error("[twilio-inbound-sms] select error", leadErr);
+    if (leadErr) console.error("[twilio-inbound-sms] select error", leadErr.message);
     const lead = (leadRows ?? []).find(
       (r) => (r.phone ?? "").replace(/\D/g, "").slice(-10) === fromDigits,
     );
-    console.log("[twilio-inbound-sms] lookup", { fromDigits, last4, candidates: leadRows?.length ?? 0, phones: (leadRows ?? []).map((r) => r.phone), err: leadErr?.message });
     if (!lead) {
       console.log("[twilio-inbound-sms] no lead for", from);
       return twiml();
