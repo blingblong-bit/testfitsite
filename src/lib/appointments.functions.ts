@@ -306,6 +306,16 @@ export const suggestAlternativeAppointment = createServerFn({ method: "POST" })
       })
       .eq("id", row.id);
 
+    if (row.lead_id) {
+      await supabaseAdmin
+        .from("leads")
+        .update({
+          sequence_status: "paused",
+          crm_status: "Waiting on Response",
+        })
+        .eq("id", row.lead_id);
+    }
+
     const to = normalizePhoneE164(row.phone);
     const msg = `That time doesn't work, but how about ${formatChicagoDateTime(
       data.suggested_time,
