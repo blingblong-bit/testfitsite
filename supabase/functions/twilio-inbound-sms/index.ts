@@ -241,9 +241,16 @@ or
         .map((b) => (b.type === "text" ? b.text ?? "" : ""))
         .join("")
         .trim();
+      // Strip markdown code fences if Claude wrapped the JSON despite the prompt.
+      let cleaned = text;
+      const fenced = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+      if (fenced) cleaned = fenced[1].trim();
+      // Fall back to extracting the first {...} block if there's surrounding prose.
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+      const candidate = jsonMatch ? jsonMatch[0] : cleaned;
+
       try {
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text) as {
+        const parsed = JSON.parse(candidate) as {
           reply?: string | null;
           needs_human?: boolean;
           reason?: string;
@@ -252,7 +259,13 @@ or
         needsHuman = Boolean(parsed.needs_human);
         reason = parsed.reason ?? "";
       } catch (e) {
-        console.error("[twilio-inbound-sms] parse error", e, text);
+        const preview = text.slice(0, 300).replace(/\s+/g, " ");
+        console.error(
+          "[twilio-inbound-sms] parse error — falling back to staff alert:",
+          (e as Error).message,
+          "| raw response (truncated):",
+          preview,
+        );
         needsHuman = true;
         reason = "parse_error";
       }
