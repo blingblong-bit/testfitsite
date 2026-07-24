@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ScheduleVisitRouteImport } from './routes/schedule-visit'
 import { Route as ReferAFriendRouteImport } from './routes/refer-a-friend'
 import { Route as RedeemReferralRouteImport } from './routes/redeem-referral'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -68,6 +69,11 @@ const TermsRoute = TermsRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScheduleVisitRoute = ScheduleVisitRouteImport.update({
+  id: '/schedule-visit',
+  path: '/schedule-visit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReferAFriendRoute = ReferAFriendRouteImport.update({
@@ -308,6 +314,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/redeem-referral': typeof RedeemReferralRoute
   '/refer-a-friend': typeof ReferAFriendRoute
+  '/schedule-visit': typeof ScheduleVisitRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -351,6 +358,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/redeem-referral': typeof RedeemReferralRoute
   '/refer-a-friend': typeof ReferAFriendRoute
+  '/schedule-visit': typeof ScheduleVisitRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -399,6 +407,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/redeem-referral': typeof RedeemReferralRoute
   '/refer-a-friend': typeof ReferAFriendRoute
+  '/schedule-visit': typeof ScheduleVisitRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -447,6 +456,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/redeem-referral'
     | '/refer-a-friend'
+    | '/schedule-visit'
     | '/sitemap.xml'
     | '/terms'
     | '/unsubscribe'
@@ -490,6 +500,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/redeem-referral'
     | '/refer-a-friend'
+    | '/schedule-visit'
     | '/sitemap.xml'
     | '/terms'
     | '/unsubscribe'
@@ -537,6 +548,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/redeem-referral'
     | '/refer-a-friend'
+    | '/schedule-visit'
     | '/sitemap.xml'
     | '/terms'
     | '/unsubscribe'
@@ -585,6 +597,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   RedeemReferralRoute: typeof RedeemReferralRoute
   ReferAFriendRoute: typeof ReferAFriendRoute
+  ScheduleVisitRoute: typeof ScheduleVisitRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
@@ -623,6 +636,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/schedule-visit': {
+      id: '/schedule-visit'
+      path: '/schedule-visit'
+      fullPath: '/schedule-visit'
+      preLoaderRoute: typeof ScheduleVisitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/refer-a-friend': {
@@ -1003,6 +1023,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   RedeemReferralRoute: RedeemReferralRoute,
   ReferAFriendRoute: ReferAFriendRoute,
+  ScheduleVisitRoute: ScheduleVisitRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
