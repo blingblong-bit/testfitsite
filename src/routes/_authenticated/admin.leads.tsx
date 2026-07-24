@@ -951,6 +951,8 @@ type SmsMessage = {
   direction: "inbound" | "outbound";
   body: string;
   status: string | null;
+  delivery_status: string | null;
+  error_code: string | null;
   from_ai: boolean;
   created_at: string;
   metadata: { sent_by?: string; kind?: string; test_mode?: boolean } | null;
@@ -977,7 +979,7 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
     setThreadLoading(true);
     supabase
       .from("sms_conversation_log")
-      .select("id, direction, body, status, from_ai, created_at, metadata")
+      .select("id, direction, body, status, delivery_status, error_code, from_ai, created_at, metadata")
       .eq("lead_id", lead.id)
       .order("created_at", { ascending: true })
       .then(({ data, error }) => {
@@ -1011,7 +1013,7 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
         // Optimistically append; realistic timestamp from server via reload
         const { data } = await supabase
           .from("sms_conversation_log")
-          .select("id, direction, body, status, from_ai, created_at, metadata")
+          .select("id, direction, body, status, delivery_status, error_code, from_ai, created_at, metadata")
           .eq("lead_id", lead.id)
           .order("created_at", { ascending: true });
         setThread((data ?? []) as SmsMessage[]);
@@ -1389,6 +1391,15 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
                         {m.from_ai && " · AI"}
                         {m.metadata?.sent_by === "staff" && " · Staff"}
                         {m.status === "test_mode" && " · TEST"}
+                        {outbound && m.status !== "test_mode" && (() => {
+                          const ds = m.delivery_status;
+                          if (ds === "delivered") return <span title="Delivered"> · ✓ Delivered</span>;
+                          if (ds === "sent") return <span title="Sent to carrier"> · ✓ Sent</span>;
+                          if (ds === "undelivered" || ds === "failed")
+                            return <span title={`Error ${m.error_code ?? ""}`} className="font-semibold text-red-300"> · ✗ {ds === "failed" ? "Failed" : "Undelivered"}{m.error_code ? ` (${m.error_code})` : ""}</span>;
+                          if (ds === "queued" || ds === "accepted" || ds === "sending" || !ds) return <span title="Pending"> · ⏳ Pending</span>;
+                          return <span> · {ds}</span>;
+                        })()}
                       </p>
                     </div>
                   </div>

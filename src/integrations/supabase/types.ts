@@ -477,7 +477,9 @@ export type Database = {
         Row: {
           body: string
           created_at: string
+          delivery_status: string | null
           direction: string
+          error_code: string | null
           from_ai: boolean
           id: string
           lead_id: string | null
@@ -490,7 +492,9 @@ export type Database = {
         Insert: {
           body: string
           created_at?: string
+          delivery_status?: string | null
           direction: string
+          error_code?: string | null
           from_ai?: boolean
           id?: string
           lead_id?: string | null
@@ -503,7 +507,9 @@ export type Database = {
         Update: {
           body?: string
           created_at?: string
+          delivery_status?: string | null
           direction?: string
+          error_code?: string | null
           from_ai?: boolean
           id?: string
           lead_id?: string | null

@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.process-lead-followups]
 verify_jwt = false
+
+[functions.twilio-status-callback]
+verify_jwt = false
