@@ -1391,6 +1391,15 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
                         {m.from_ai && " · AI"}
                         {m.metadata?.sent_by === "staff" && " · Staff"}
                         {m.status === "test_mode" && " · TEST"}
+                        {outbound && m.status !== "test_mode" && (() => {
+                          const ds = m.delivery_status;
+                          if (ds === "delivered") return <span title="Delivered"> · ✓ Delivered</span>;
+                          if (ds === "sent") return <span title="Sent to carrier"> · ✓ Sent</span>;
+                          if (ds === "undelivered" || ds === "failed")
+                            return <span title={`Error ${m.error_code ?? ""}`} className="font-semibold text-red-300"> · ✗ {ds === "failed" ? "Failed" : "Undelivered"}{m.error_code ? ` (${m.error_code})` : ""}</span>;
+                          if (ds === "queued" || ds === "accepted" || ds === "sending" || !ds) return <span title="Pending"> · ⏳ Pending</span>;
+                          return <span> · {ds}</span>;
+                        })()}
                       </p>
                     </div>
                   </div>
