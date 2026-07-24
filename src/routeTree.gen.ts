@@ -56,6 +56,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as ApiPublicWebhooksMakeLeadUpdateRouteImport } from './routes/api/public/webhooks/make-lead-update'
 import { Route as ApiPublicWebhooksCalendlyRouteImport } from './routes/api/public/webhooks/calendly'
 import { Route as ApiPublicHooksSnapshotMonthRouteImport } from './routes/api/public/hooks/snapshot-month'
+import { Route as ApiPublicHooksProcessAppointmentRemindersRouteImport } from './routes/api/public/hooks/process-appointment-reminders'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -303,6 +304,12 @@ const ApiPublicHooksSnapshotMonthRoute =
     path: '/api/public/hooks/snapshot-month',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksProcessAppointmentRemindersRoute =
+  ApiPublicHooksProcessAppointmentRemindersRouteImport.update({
+    id: '/api/public/hooks/process-appointment-reminders',
+    path: '/api/public/hooks/process-appointment-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -345,6 +352,7 @@ export interface FileRoutesByFullPath {
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
@@ -390,6 +398,7 @@ export interface FileRoutesByTo {
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
@@ -440,6 +449,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
@@ -490,6 +500,7 @@ export interface FileRouteTypes {
     | '/admin/day-pass-approvals'
     | '/admin/leads'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/make-lead-update'
@@ -535,6 +546,7 @@ export interface FileRouteTypes {
     | '/admin/day-pass-approvals'
     | '/admin/leads'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/make-lead-update'
@@ -584,6 +596,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/day-pass-approvals'
     | '/_authenticated/admin/leads'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/make-lead-update'
@@ -620,6 +633,7 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicHooksProcessAppointmentRemindersRoute: typeof ApiPublicHooksProcessAppointmentRemindersRoute
   ApiPublicHooksSnapshotMonthRoute: typeof ApiPublicHooksSnapshotMonthRoute
   ApiPublicWebhooksCalendlyRoute: typeof ApiPublicWebhooksCalendlyRoute
   ApiPublicWebhooksMakeLeadUpdateRoute: typeof ApiPublicWebhooksMakeLeadUpdateRoute
@@ -959,6 +973,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSnapshotMonthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/process-appointment-reminders': {
+      id: '/api/public/hooks/process-appointment-reminders'
+      path: '/api/public/hooks/process-appointment-reminders'
+      fullPath: '/api/public/hooks/process-appointment-reminders'
+      preLoaderRoute: typeof ApiPublicHooksProcessAppointmentRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1057,6 +1078,8 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicHooksProcessAppointmentRemindersRoute:
+    ApiPublicHooksProcessAppointmentRemindersRoute,
   ApiPublicHooksSnapshotMonthRoute: ApiPublicHooksSnapshotMonthRoute,
   ApiPublicWebhooksCalendlyRoute: ApiPublicWebhooksCalendlyRoute,
   ApiPublicWebhooksMakeLeadUpdateRoute: ApiPublicWebhooksMakeLeadUpdateRoute,
