@@ -162,10 +162,10 @@ export const Route = createFileRoute("/api/public/hooks/process-appointment-remi
               continue;
             }
 
-            const updated = { ...reminders, [kind]: true };
+            const updated = { ...reminders, [kind]: true } as Record<string, boolean>;
             await supabase
               .from("appointments")
-              .update({ reminders_sent: updated })
+              .update({ reminders_sent: updated as unknown as Database["public"]["Tables"]["appointments"]["Update"]["reminders_sent"] })
               .eq("id", appt.id);
 
             if (appt.lead_id) {
