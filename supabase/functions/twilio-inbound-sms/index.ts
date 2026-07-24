@@ -74,13 +74,22 @@ Deno.serve(async (req) => {
     const from = normalizePhone(fromRaw);
     const body = bodyRaw.trim();
 
-    // Find lead by phone (try normalized and raw)
-    const { data: leadRows } = await supabase
+    // Find lead by last-10-digits of phone (format-agnostic). Fetch candidates
+    // whose stored phone contains the last 4 digits, then filter in-memory by
+    // matching the normalized last-10-digits — leads may be stored as
+    // "9314342243", "(931) 434-2243", "+19314342243", etc.
+    const fromDigits = fromRaw.replace(/\D/g, "").slice(-10);
+    const last4 = fromDigits.slice(-4);
+    const { data: leadRows, error: leadErr } = await supabase
       .from("leads")
-      .select("id, name, phone, interest, goal, sms_opted_out, notes, lead_type")
-      .or(`phone.eq.${from},phone.eq.${fromRaw}`)
-      .limit(1);
-    const lead = leadRows?.[0];
+      .select("id, name, phone, interest, sms_opted_out, notes, lead_type, created_at")
+      .ilike("phone", `%${last4}%`)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (leadErr) console.error("[twilio-inbound-sms] select error", leadErr.message);
+    const lead = (leadRows ?? []).find(
+      (r) => (r.phone ?? "").replace(/\D/g, "").slice(-10) === fromDigits,
+    );
     if (!lead) {
       console.log("[twilio-inbound-sms] no lead for", from);
       return twiml();
@@ -138,7 +147,7 @@ Deno.serve(async (req) => {
 
     const isExistingMember = lead.lead_type === "existing_member";
 
-    const prospectPrompt = `You are the friendly front desk assistant for FIT Beyond Plus, a full-service gym in Tullahoma, Tennessee. You are texting with a potential member named ${lead.name ?? "there"} who is interested in ${lead.interest ?? lead.goal ?? "getting started"}.
+    const prospectPrompt = `You are the friendly front desk assistant for FIT Beyond Plus, a full-service gym in Tullahoma, Tennessee. You are texting with a potential member named ${lead.name ?? "there"} who is interested in ${lead.interest ?? "getting started"}.
 
 About FIT Beyond Plus:
 - Address: 449 W Lincoln St, Tullahoma, TN 37388
