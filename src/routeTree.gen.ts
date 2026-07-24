@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ScheduleVisitRouteImport } from './routes/schedule-visit'
 import { Route as ReferAFriendRouteImport } from './routes/refer-a-friend'
 import { Route as RedeemReferralRouteImport } from './routes/redeem-referral'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -47,6 +48,7 @@ import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminDayPassApprovalsRouteImport } from './routes/_authenticated/admin.day-pass-approvals'
 import { Route as AuthenticatedAdminClassCheckinsRouteImport } from './routes/_authenticated/admin.class-checkins'
 import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
+import { Route as AuthenticatedAdminAppointmentApprovalsRouteImport } from './routes/_authenticated/admin.appointment-approvals'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -54,6 +56,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as ApiPublicWebhooksMakeLeadUpdateRouteImport } from './routes/api/public/webhooks/make-lead-update'
 import { Route as ApiPublicWebhooksCalendlyRouteImport } from './routes/api/public/webhooks/calendly'
 import { Route as ApiPublicHooksSnapshotMonthRouteImport } from './routes/api/public/hooks/snapshot-month'
+import { Route as ApiPublicHooksProcessAppointmentRemindersRouteImport } from './routes/api/public/hooks/process-appointment-reminders'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -68,6 +71,11 @@ const TermsRoute = TermsRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScheduleVisitRoute = ScheduleVisitRouteImport.update({
+  id: '/schedule-visit',
+  path: '/schedule-visit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReferAFriendRoute = ReferAFriendRouteImport.update({
@@ -248,6 +256,12 @@ const AuthenticatedAdminBlogRoute = AuthenticatedAdminBlogRouteImport.update({
   path: '/admin/blog',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminAppointmentApprovalsRoute =
+  AuthenticatedAdminAppointmentApprovalsRouteImport.update({
+    id: '/admin/appointment-approvals',
+    path: '/admin/appointment-approvals',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -290,6 +304,12 @@ const ApiPublicHooksSnapshotMonthRoute =
     path: '/api/public/hooks/snapshot-month',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksProcessAppointmentRemindersRoute =
+  ApiPublicHooksProcessAppointmentRemindersRouteImport.update({
+    id: '/api/public/hooks/process-appointment-reminders',
+    path: '/api/public/hooks/process-appointment-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -308,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/redeem-referral': typeof RedeemReferralRoute
   '/refer-a-friend': typeof ReferAFriendRoute
+  '/schedule-visit': typeof ScheduleVisitRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -325,11 +346,13 @@ export interface FileRoutesByFullPath {
   '/classes/': typeof ClassesIndexRoute
   '/combat-sports/': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/appointment-approvals': typeof AuthenticatedAdminAppointmentApprovalsRoute
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
@@ -351,6 +374,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/redeem-referral': typeof RedeemReferralRoute
   '/refer-a-friend': typeof ReferAFriendRoute
+  '/schedule-visit': typeof ScheduleVisitRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -368,11 +392,13 @@ export interface FileRoutesByTo {
   '/classes': typeof ClassesIndexRoute
   '/combat-sports': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/appointment-approvals': typeof AuthenticatedAdminAppointmentApprovalsRoute
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
@@ -399,6 +425,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/redeem-referral': typeof RedeemReferralRoute
   '/refer-a-friend': typeof ReferAFriendRoute
+  '/schedule-visit': typeof ScheduleVisitRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -416,11 +443,13 @@ export interface FileRoutesById {
   '/classes/': typeof ClassesIndexRoute
   '/combat-sports/': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/admin/appointment-approvals': typeof AuthenticatedAdminAppointmentApprovalsRoute
   '/_authenticated/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/_authenticated/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/_authenticated/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
@@ -447,6 +476,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/redeem-referral'
     | '/refer-a-friend'
+    | '/schedule-visit'
     | '/sitemap.xml'
     | '/terms'
     | '/unsubscribe'
@@ -464,11 +494,13 @@ export interface FileRouteTypes {
     | '/classes/'
     | '/combat-sports/'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/appointment-approvals'
     | '/admin/blog'
     | '/admin/class-checkins'
     | '/admin/day-pass-approvals'
     | '/admin/leads'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/make-lead-update'
@@ -490,6 +522,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/redeem-referral'
     | '/refer-a-friend'
+    | '/schedule-visit'
     | '/sitemap.xml'
     | '/terms'
     | '/unsubscribe'
@@ -507,11 +540,13 @@ export interface FileRouteTypes {
     | '/classes'
     | '/combat-sports'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/appointment-approvals'
     | '/admin/blog'
     | '/admin/class-checkins'
     | '/admin/day-pass-approvals'
     | '/admin/leads'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/make-lead-update'
@@ -537,6 +572,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/redeem-referral'
     | '/refer-a-friend'
+    | '/schedule-visit'
     | '/sitemap.xml'
     | '/terms'
     | '/unsubscribe'
@@ -554,11 +590,13 @@ export interface FileRouteTypes {
     | '/classes/'
     | '/combat-sports/'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/admin/appointment-approvals'
     | '/_authenticated/admin/blog'
     | '/_authenticated/admin/class-checkins'
     | '/_authenticated/admin/day-pass-approvals'
     | '/_authenticated/admin/leads'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/make-lead-update'
@@ -585,6 +623,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   RedeemReferralRoute: typeof RedeemReferralRoute
   ReferAFriendRoute: typeof ReferAFriendRoute
+  ScheduleVisitRoute: typeof ScheduleVisitRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
@@ -594,6 +633,7 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicHooksProcessAppointmentRemindersRoute: typeof ApiPublicHooksProcessAppointmentRemindersRoute
   ApiPublicHooksSnapshotMonthRoute: typeof ApiPublicHooksSnapshotMonthRoute
   ApiPublicWebhooksCalendlyRoute: typeof ApiPublicWebhooksCalendlyRoute
   ApiPublicWebhooksMakeLeadUpdateRoute: typeof ApiPublicWebhooksMakeLeadUpdateRoute
@@ -623,6 +663,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/schedule-visit': {
+      id: '/schedule-visit'
+      path: '/schedule-visit'
+      fullPath: '/schedule-visit'
+      preLoaderRoute: typeof ScheduleVisitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/refer-a-friend': {
@@ -870,6 +917,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBlogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/appointment-approvals': {
+      id: '/_authenticated/admin/appointment-approvals'
+      path: '/admin/appointment-approvals'
+      fullPath: '/admin/appointment-approvals'
+      preLoaderRoute: typeof AuthenticatedAdminAppointmentApprovalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -919,12 +973,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSnapshotMonthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/process-appointment-reminders': {
+      id: '/api/public/hooks/process-appointment-reminders'
+      path: '/api/public/hooks/process-appointment-reminders'
+      fullPath: '/api/public/hooks/process-appointment-reminders'
+      preLoaderRoute: typeof ApiPublicHooksProcessAppointmentRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedFrontdeskRoute: typeof AuthenticatedFrontdeskRoute
   AuthenticatedStaffHomeRoute: typeof AuthenticatedStaffHomeRoute
+  AuthenticatedAdminAppointmentApprovalsRoute: typeof AuthenticatedAdminAppointmentApprovalsRoute
   AuthenticatedAdminBlogRoute: typeof AuthenticatedAdminBlogRoute
   AuthenticatedAdminClassCheckinsRoute: typeof AuthenticatedAdminClassCheckinsRoute
   AuthenticatedAdminDayPassApprovalsRoute: typeof AuthenticatedAdminDayPassApprovalsRoute
@@ -934,6 +996,8 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFrontdeskRoute: AuthenticatedFrontdeskRoute,
   AuthenticatedStaffHomeRoute: AuthenticatedStaffHomeRoute,
+  AuthenticatedAdminAppointmentApprovalsRoute:
+    AuthenticatedAdminAppointmentApprovalsRoute,
   AuthenticatedAdminBlogRoute: AuthenticatedAdminBlogRoute,
   AuthenticatedAdminClassCheckinsRoute: AuthenticatedAdminClassCheckinsRoute,
   AuthenticatedAdminDayPassApprovalsRoute:
@@ -1003,6 +1067,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   RedeemReferralRoute: RedeemReferralRoute,
   ReferAFriendRoute: ReferAFriendRoute,
+  ScheduleVisitRoute: ScheduleVisitRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
@@ -1013,6 +1078,8 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicHooksProcessAppointmentRemindersRoute:
+    ApiPublicHooksProcessAppointmentRemindersRoute,
   ApiPublicHooksSnapshotMonthRoute: ApiPublicHooksSnapshotMonthRoute,
   ApiPublicWebhooksCalendlyRoute: ApiPublicWebhooksCalendlyRoute,
   ApiPublicWebhooksMakeLeadUpdateRoute: ApiPublicWebhooksMakeLeadUpdateRoute,
