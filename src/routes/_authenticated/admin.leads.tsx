@@ -6,6 +6,32 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { sendWelcomeSms } from "@/lib/send-welcome-sms.functions";
 import { sendManualSms } from "@/lib/send-manual-sms.functions";
+import { chicagoWallToUTC } from "@/lib/appointment-availability";
+
+// Format a UTC ISO timestamp into the "YYYY-MM-DDTHH:mm" value expected by
+// <input type="datetime-local">, rendered in America/Chicago wall-clock time.
+function utcIsoToChicagoLocalInput(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  }).formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  let hh = get("hour");
+  if (hh === "24") hh = "00";
+  return `${get("year")}-${get("month")}-${get("day")}T${hh}:${get("minute")}`;
+}
+
+// Parse a datetime-local input's value ("YYYY-MM-DDTHH:mm") as America/Chicago
+// wall-clock time and convert to a UTC ISO string.
+function chicagoLocalInputToUtcIso(v: string): string | null {
+  if (!v) return null;
+  const m = v.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!m) return null;
+  const [, y, mo, d, h, mi] = m;
+  return chicagoWallToUTC(Number(y), Number(mo), Number(d), Number(h), Number(mi));
+}
 import { AnalyticsView } from "@/components/AnalyticsView";
 
 type CrmStatus =
@@ -1320,8 +1346,13 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
                 <Field label="Tour Date (optional)">
                   <input
                     type="datetime-local"
-                    defaultValue={lead.tour_date ? new Date(lead.tour_date).toISOString().slice(0, 16) : ""}
-                    onBlur={(e) => updateLead(lead.id, { tour_date: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                    defaultValue={utcIsoToChicagoLocalInput(lead.tour_date)}
+                    onBlur={(e) => {
+                      const nextIso = chicagoLocalInputToUtcIso(e.target.value);
+                      if (nextIso !== (lead.tour_date ?? null)) {
+                        updateLead(lead.id, { tour_date: nextIso });
+                      }
+                    }}
                     className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
                   />
                 </Field>
