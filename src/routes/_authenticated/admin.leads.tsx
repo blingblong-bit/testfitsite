@@ -1346,8 +1346,13 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
                 <Field label="Tour Date (optional)">
                   <input
                     type="datetime-local"
-                    defaultValue={lead.tour_date ? new Date(lead.tour_date).toISOString().slice(0, 16) : ""}
-                    onBlur={(e) => updateLead(lead.id, { tour_date: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                    defaultValue={utcIsoToChicagoLocalInput(lead.tour_date)}
+                    onBlur={(e) => {
+                      const nextIso = chicagoLocalInputToUtcIso(e.target.value);
+                      if (nextIso !== (lead.tour_date ?? null)) {
+                        updateLead(lead.id, { tour_date: nextIso });
+                      }
+                    }}
                     className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
                   />
                 </Field>
