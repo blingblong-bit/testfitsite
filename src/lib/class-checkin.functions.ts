@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { checkMemberMatch } from "@/lib/antaris/client";
+import { checkClassCheckinMatch } from "@/lib/antaris/client";
 
 type CheckInInput = {
   name: string;
