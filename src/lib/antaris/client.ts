@@ -271,6 +271,9 @@ export async function checkClassCheckinMatch(
     let firstAndLastWithPhoneMismatch: AntarisClient | null = null;
     let anyFirst: AntarisClient | null = null;
 
+    // Track first-only-no-phone candidates for the no-last-name fallback.
+    const firstOnlyNoPhoneCandidates: AntarisClient[] = [];
+
     for (const c of results) {
       const firstOk = !!first && eqCI(c.first_name ?? "", first);
       const lastOk = !!last && eqCI(c.last_name ?? "", last);
@@ -286,11 +289,26 @@ export async function checkClassCheckinMatch(
       if (firstOk && lastOk && hasPhoneOnFile && !phoneOk && !firstAndLastWithPhoneMismatch)
         firstAndLastWithPhoneMismatch = c;
       if (firstOk && !anyFirst) anyFirst = c;
+
+      if (firstOk && !hasPhoneOnFile) firstOnlyNoPhoneCandidates.push(c);
+    }
+
+    // Fallback: user typed first name only (no last name) AND the matched
+    // Antaris candidate has no phone on file AND is a unique first-name match.
+    let firstOnlyUniqueNoPhone: AntarisClient | null = null;
+    let ambiguousFirstOnly = false;
+    if (!last && firstOnlyNoPhoneCandidates.length > 0) {
+      if (firstOnlyNoPhoneCandidates.length === 1) {
+        firstOnlyUniqueNoPhone = firstOnlyNoPhoneCandidates[0];
+      } else {
+        ambiguousFirstOnly = true;
+      }
     }
 
     const picked =
       phoneAndFirst ??
       firstAndLastNoPhone ??
+      firstOnlyUniqueNoPhone ??
       firstAndLastWithPhoneMismatch ??
       anyFirst;
     if (!picked) return base;
@@ -315,6 +333,14 @@ export async function checkClassCheckinMatch(
         reason: "verified_name_no_phone_on_file",
       };
     }
+    if (picked === firstOnlyUniqueNoPhone) {
+      return {
+        isMember: true,
+        clientId,
+        status,
+        reason: "verified_first_only_unique_no_phone",
+      };
+    }
     if (picked === firstAndLastWithPhoneMismatch) {
       return {
         isMember: false,
@@ -322,6 +348,9 @@ export async function checkClassCheckinMatch(
         status,
         reason: "phone_mismatch_on_file",
       };
+    }
+    if (ambiguousFirstOnly) {
+      return { isMember: false, clientId, status, reason: "ambiguous_first_only" };
     }
     return { isMember: false, clientId, status, reason: "no_candidate" };
   } catch (e) {
