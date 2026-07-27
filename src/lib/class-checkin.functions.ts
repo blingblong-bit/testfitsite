@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { checkMemberMatch } from "@/lib/antaris/client";
+import { checkClassCheckinMatch } from "@/lib/antaris/client";
 
 type CheckInInput = {
   name: string;
@@ -68,8 +68,8 @@ export const submitClassCheckIn = createServerFn({ method: "POST" })
       }
     }
 
-    const match = await checkMemberMatch(name, "", phone);
-    const verified = match.isMember && match.confidence >= 80;
+    const match = await checkClassCheckinMatch(name, phone);
+    const verified = match.isMember;
 
     const { error } = await supabaseAdmin.from("class_checkins").insert({
       name,
@@ -80,6 +80,9 @@ export const submitClassCheckIn = createServerFn({ method: "POST" })
       class_time: data.class_time,
       verified,
       added_manually: false,
+      notes: match.reason === "phone_mismatch_on_file"
+        ? "Antaris phone on file doesn't match submitted phone — please verify record."
+        : null,
     });
 
     if (error) {
