@@ -82,7 +82,9 @@ export const submitClassCheckIn = createServerFn({ method: "POST" })
       added_manually: false,
       notes: match.reason === "phone_mismatch_on_file"
         ? "Antaris phone on file doesn't match submitted phone — please verify record."
-        : null,
+        : match.reason === "ambiguous_first_only"
+          ? "First name only — multiple Antaris members share this first name. Please verify at desk."
+          : null,
     });
 
     if (error) {
