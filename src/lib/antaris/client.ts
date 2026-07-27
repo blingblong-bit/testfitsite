@@ -223,6 +223,8 @@ export type ClassCheckinMatch = {
   reason:
     | "verified_phone_first"
     | "verified_name_no_phone_on_file"
+    | "verified_first_only_unique_no_phone"
+    | "ambiguous_first_only"
     | "phone_mismatch_on_file"
     | "inactive"
     | "no_candidate"
