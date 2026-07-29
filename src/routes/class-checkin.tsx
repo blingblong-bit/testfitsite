@@ -67,13 +67,7 @@ function nowMinutesChicago(): number {
 
 type CheckInWindow = "not-open" | "open" | "closed";
 
-// ⚠️ TESTING MODE — set back to false before real use. When true, the
-// time-window restriction is bypassed entirely so check-in is open all
-// day regardless of class time, for testing the check-in flow itself.
-const TESTING_MODE_ALWAYS_OPEN = true;
-
 function getCheckInWindow(time: string): CheckInWindow {
-  if (TESTING_MODE_ALWAYS_OPEN) return "open";
   const classMinutes = parseTimeToMinutes(time);
   if (classMinutes === null) return "open"; // fail open if time is unparseable
   const now = nowMinutesChicago();
