@@ -374,17 +374,7 @@ Deno.serve(async (req) => {
 
     const isExistingMember = lead.lead_type === "existing_member";
 
-    // For prospects, offer real open slots so Claude can propose concrete times.
-    let slotsBlock = "";
-    if (!isExistingMember) {
-      const slots = await getAvailableSlotsForNextDays(supabase, 3);
-      const trimmed = slots.slice(0, 8);
-      if (trimmed.length > 0) {
-        slotsBlock = `\n\nOPEN VISIT SLOTS (next 3 days, Central time). If the customer wants to schedule a visit/tour, offer 2 or 3 of these specific times AND always also mention they can pick their own time at fitbeyondplus.com/schedule-visit. Use this exact pattern: "We have [slot], [slot], or [slot] open — or you can schedule a time yourself here: fitbeyondplus.com/schedule-visit."\n${trimmed.map((s) => `- ${s.label}  [iso: ${s.iso}]`).join("\n")}\n\nIf the customer clearly picks ONE of these exact slots, include the "book_slot" field with that iso value in your JSON.\n\nAlso include "visit_type" as either "tour" (default — a membership/gym tour) or "day_pass" (if the customer's context clearly indicates they just want a single-day pass rather than a membership tour, e.g. their stated interest mentions "day pass").\n\nIMPORTANT — if visit_type is "day_pass" and we do NOT have an email on file for this customer (see CUSTOMER EMAIL ON FILE below), do NOT include book_slot yet. Instead, ask for their email in your reply first (e.g. "What's your email? We'll text your day pass code once it's confirmed!") — we need a valid email to generate their day pass code. Once they reply with an email in a future message, you can then include book_slot with visit_type "day_pass".\n\nCUSTOMER EMAIL ON FILE: ${lead.email ? lead.email : "none — ask for it before booking a day_pass visit"}`;
-      } else {
-        slotsBlock = `\n\nNo specific open slots are loaded right now. If the customer wants to schedule a visit/tour, direct them to fitbeyondplus.com/schedule-visit to pick a time themselves.`;
-      }
-    }
+    const scheduleLine = `\n\nIf the customer wants to schedule a visit, tour, or day pass, simply direct them to fitbeyondplus.com/schedule-visit to pick a time that works for them — do not try to offer or book specific times yourself.`;
 
     const prospectPrompt = `You are the friendly front desk assistant for FIT Beyond Plus, a full-service gym in Tullahoma, Tennessee. You are texting with a potential member named ${lead.name ?? "there"} who is interested in ${lead.interest ?? "getting started"}.
 
@@ -408,15 +398,13 @@ Set needs_human to true and stop responding if:
 - They say call me, speak to someone, or manager
 - You cannot confidently answer their question
 - This is the 5th or more exchange in the conversation
-- Their message is emotionally complex or ambiguous${slotsBlock}${declinedAltLabel ? `\n\nIMPORTANT CONTEXT — RECENT ALTERNATIVE TIME OFFER:\nOur staff previously suggested "${declinedAltLabel}" as an alternative visit time. The customer's latest reply was NOT a clear yes to that time (they either declined it or were ambiguous). Do NOT ignore this. In your reply:\n1. Briefly acknowledge that "${declinedAltLabel}" doesn't work (or ask if it doesn't, if their reply was unclear).\n2. Proactively offer 2-3 DIFFERENT specific times from the OPEN VISIT SLOTS list above (do not re-offer "${declinedAltLabel}") and ask which works best.\n3. If they clearly pick one of those exact slots in a future reply, use the "book_slot" field as described below.\nDo not respond generically or as if the alternative offer never happened.` : ""}
+- Their message is emotionally complex or ambiguous${scheduleLine}${declinedAltLabel ? `\n\nIMPORTANT CONTEXT — RECENT ALTERNATIVE TIME OFFER:\nOur staff previously suggested "${declinedAltLabel}" as an alternative visit time. The customer's latest reply was NOT a clear yes to that time (they either declined it or were ambiguous). Do NOT ignore this. In your reply, briefly acknowledge that "${declinedAltLabel}" doesn't work, and let them know you'll have staff reach out with another time, or point them to fitbeyondplus.com/schedule-visit to pick something themselves. Do not respond generically or as if the alternative offer never happened.` : ""}
 
 CRITICAL OUTPUT FORMAT — READ CAREFULLY:
 Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
 
 Use exactly this shape:
 { "reply": "your text reply here", "needs_human": false }
-or with a booked slot:
-{ "reply": "your text reply here", "needs_human": false, "book_slot": "2025-11-14T20:00:00.000Z", "visit_type": "tour" }
 or when escalating:
 { "reply": null, "needs_human": true, "reason": "brief reason" }`;
 
@@ -461,8 +449,6 @@ or
     let aiReply: string | null = null;
     let needsHuman = true;
     let reason = "ai_error";
-    let bookSlot: string | null = null;
-    let bookVisitType: "tour" | "day_pass" = "tour";
 
     if (!claudeRes.ok) {
       const t = await claudeRes.text();
@@ -486,14 +472,10 @@ or
           reply?: string | null;
           needs_human?: boolean;
           reason?: string;
-          book_slot?: string | null;
-          visit_type?: "tour" | "day_pass" | null;
         };
         aiReply = parsed.reply ?? null;
         needsHuman = Boolean(parsed.needs_human);
         reason = parsed.reason ?? "";
-        bookSlot = parsed.book_slot ?? null;
-        bookVisitType = parsed.visit_type === "day_pass" ? "day_pass" : "tour";
       } catch (e) {
         const preview = text.slice(0, 300).replace(/\s+/g, " ");
         const errMsg = (e as Error).message;
@@ -533,43 +515,6 @@ or
       }
     }
 
-    // If Claude picked a valid slot, create a pending appointment.
-    if (bookSlot && !isExistingMember) {
-      // Server-side safety net: never create a day_pass appointment without
-      // a real email on file, regardless of what the model decided — the
-      // approval step later calls generateDayPassCode, which hard-requires
-      // a valid email to create and send the code.
-      if (bookVisitType === "day_pass" && !lead.email) {
-        bookSlot = null;
-      }
-    }
-
-    if (bookSlot && !isExistingMember) {
-      // Confirm the slot is still open (not already confirmed by someone else).
-      const { data: conflict } = await supabase
-        .from("appointments")
-        .select("id")
-        .eq("status", "confirmed")
-        .eq("confirmed_time", bookSlot)
-        .maybeSingle();
-      if (!conflict) {
-        await supabase.from("appointments").insert({
-          lead_id: lead.id,
-          name: lead.name ?? "Lead",
-          phone: from,
-          email: lead.email ?? null,
-          requested_time: bookSlot,
-          status: "pending",
-          type: bookVisitType,
-        });
-      } else {
-        // Slot got taken between prompt build and reply — escalate to staff.
-        needsHuman = true;
-        reason = "slot_conflict";
-        aiReply = null;
-      }
-    }
-
     if (needsHuman || !aiReply) {
       await supabase
         .from("leads")
@@ -599,7 +544,7 @@ or
         from_ai: true,
         provider_message_id: sendResult.sid ?? null,
         status: "sent",
-        metadata: bookSlot ? { kind: "appt_booked_via_ai", requested_time: bookSlot } : null,
+        metadata: null,
       });
       await supabase
         .from("leads")

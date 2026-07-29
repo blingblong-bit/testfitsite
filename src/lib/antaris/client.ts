@@ -215,3 +215,146 @@ export async function checkMemberMatch(
     return fallback;
   }
 }
+
+export type ClassCheckinMatch = {
+  isMember: boolean;
+  clientId: string | null;
+  status: string | null;
+  reason:
+    | "verified_phone_first"
+    | "verified_name_no_phone_on_file"
+    | "verified_first_only_unique_no_phone"
+    | "ambiguous_first_only"
+    | "phone_mismatch_on_file"
+    | "inactive"
+    | "no_candidate"
+    | "insufficient_name";
+};
+
+// Class check-in verification rule (scoped ONLY to the kiosk check-in path).
+// Does NOT use the 80-point threshold. See leads/sync flows for that.
+export async function checkClassCheckinMatch(
+  name: string,
+  phone: string,
+): Promise<ClassCheckinMatch> {
+  const base: ClassCheckinMatch = {
+    isMember: false,
+    clientId: null,
+    status: null,
+    reason: "no_candidate",
+  };
+  try {
+    const token = await login();
+    if (!token) return base;
+
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    const first = words[0] ?? "";
+    const last = words.slice(1).join(" ").trim();
+
+    const queries: string[] = [];
+    if (last) queries.push(last);
+    if (first) queries.push(first);
+    if (queries.length === 0) return { ...base, reason: "insufficient_name" };
+
+    let results: AntarisClient[] = [];
+    for (const q of queries) {
+      results = await searchClients(token, q);
+      if (results.length > 0) break;
+    }
+    if (results.length === 0) return base;
+
+    const target = last10(phone);
+
+    // Prefer phone match, then first+last, then first-only.
+    let phoneAndFirst: AntarisClient | null = null;
+    let firstAndLastNoPhone: AntarisClient | null = null;
+    let firstAndLastWithPhoneMismatch: AntarisClient | null = null;
+    let anyFirst: AntarisClient | null = null;
+
+    // Track first-only-no-phone candidates for the no-last-name fallback.
+    const firstOnlyNoPhoneCandidates: AntarisClient[] = [];
+
+    for (const c of results) {
+      const firstOk = !!first && eqCI(c.first_name ?? "", first);
+      const lastOk = !!last && eqCI(c.last_name ?? "", last);
+      const cCell = last10(c.cell_phone);
+      const cHome = last10(c.home_phone);
+      const hasPhoneOnFile = cCell.length === 10 || cHome.length === 10;
+      const phoneOk =
+        target.length === 10 && (cCell === target || cHome === target);
+
+      if (firstOk && phoneOk && !phoneAndFirst) phoneAndFirst = c;
+      if (firstOk && lastOk && !hasPhoneOnFile && !firstAndLastNoPhone)
+        firstAndLastNoPhone = c;
+      if (firstOk && lastOk && hasPhoneOnFile && !phoneOk && !firstAndLastWithPhoneMismatch)
+        firstAndLastWithPhoneMismatch = c;
+      if (firstOk && !anyFirst) anyFirst = c;
+
+      if (firstOk && !hasPhoneOnFile) firstOnlyNoPhoneCandidates.push(c);
+    }
+
+    // Fallback: user typed first name only (no last name) AND the matched
+    // Antaris candidate has no phone on file AND is a unique first-name match.
+    let firstOnlyUniqueNoPhone: AntarisClient | null = null;
+    let ambiguousFirstOnly = false;
+    if (!last && firstOnlyNoPhoneCandidates.length > 0) {
+      if (firstOnlyNoPhoneCandidates.length === 1) {
+        firstOnlyUniqueNoPhone = firstOnlyNoPhoneCandidates[0];
+      } else {
+        ambiguousFirstOnly = true;
+      }
+    }
+
+    const picked =
+      phoneAndFirst ??
+      firstAndLastNoPhone ??
+      firstOnlyUniqueNoPhone ??
+      firstAndLastWithPhoneMismatch ??
+      anyFirst;
+    if (!picked) return base;
+
+    const clientId = String(picked.id ?? picked.client_id ?? "");
+    if (!clientId) return base;
+
+    const { status } = await getMembershipStatus(token, clientId);
+    const active = status === "Active";
+
+    if (!active) {
+      return { isMember: false, clientId, status, reason: "inactive" };
+    }
+    if (picked === phoneAndFirst) {
+      return { isMember: true, clientId, status, reason: "verified_phone_first" };
+    }
+    if (picked === firstAndLastNoPhone) {
+      return {
+        isMember: true,
+        clientId,
+        status,
+        reason: "verified_name_no_phone_on_file",
+      };
+    }
+    if (picked === firstOnlyUniqueNoPhone) {
+      return {
+        isMember: true,
+        clientId,
+        status,
+        reason: "verified_first_only_unique_no_phone",
+      };
+    }
+    if (picked === firstAndLastWithPhoneMismatch) {
+      return {
+        isMember: false,
+        clientId,
+        status,
+        reason: "phone_mismatch_on_file",
+      };
+    }
+    if (ambiguousFirstOnly) {
+      return { isMember: false, clientId, status, reason: "ambiguous_first_only" };
+    }
+    return { isMember: false, clientId, status, reason: "no_candidate" };
+  } catch (e) {
+    console.error("[antaris] checkClassCheckinMatch exception", e);
+    return base;
+  }
+}
