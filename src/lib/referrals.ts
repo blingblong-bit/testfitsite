@@ -138,6 +138,17 @@ export const createReferral = createServerFn({ method: "POST" })
         .select("id")
         .single();
       if (!error && inserted) {
+        // The referral email template hardcodes "free day pass" language,
+        // which would be misleading for a free-week claim. Skip it for
+        // free_week — the on-screen QR confirmation is the primary
+        // interface for that flow instead.
+        if (input.promo_type !== "day_pass") {
+          await supabaseAdmin
+            .from("referrals")
+            .update({ email_status: "pending" })
+            .eq("id", inserted.id);
+          return { ok: true, code };
+        }
         try {
           const result = await sendReferralEmail({
             data: {
@@ -239,12 +250,17 @@ export const redeemReferral = createServerFn({ method: "POST" })
       status: string;
       redeemed_at: string;
       redeemed_by: string;
+      friend_contact: string;
       access_starts_at?: string;
       access_ends_at?: string;
     } = {
       status: "redeemed",
       redeemed_at: nowIso,
       redeemed_by: full_name,
+      // Persist the redeemer's phone here so class check-in can later
+      // match "does this person have an active free-week promo" — this
+      // wasn't stored on the referral row before, only on the lead.
+      friend_contact: phone,
     };
     if (isFreeWeek) {
       referralUpdate.access_starts_at = nowIso;

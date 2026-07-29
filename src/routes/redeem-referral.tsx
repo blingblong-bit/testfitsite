@@ -4,6 +4,10 @@ import { PageHero } from "@/components/PageHero";
 import { RedeemScreen } from "@/components/kiosk-screens";
 
 export const Route = createFileRoute("/redeem-referral")({
+  validateSearch: (search: Record<string, unknown>): { code?: string } => {
+    const code = typeof search.code === "string" && search.code.trim() ? search.code.trim() : undefined;
+    return code ? { code } : {};
+  },
   head: () => ({
     meta: [
       { title: "Redeem Your Referral Code | FIT Beyond Plus" },
@@ -18,6 +22,7 @@ export const Route = createFileRoute("/redeem-referral")({
 });
 
 function RedeemReferralPage() {
+  const { code } = Route.useSearch();
   const [resetKey, setResetKey] = useState(0);
 
   return (
@@ -28,7 +33,11 @@ function RedeemReferralPage() {
         description="Enter the code your friend shared with you to claim your free visit."
       />
       <section className="container-page py-16 md:py-20">
-        <RedeemScreen key={resetKey} onDone={() => setResetKey((k) => k + 1)} />
+        <RedeemScreen
+          key={resetKey}
+          initialCode={code}
+          onDone={() => setResetKey((k) => k + 1)}
+        />
       </section>
     </>
   );

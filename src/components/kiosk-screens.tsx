@@ -364,7 +364,13 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
   );
 }
 
-export function RedeemScreen({ onDone }: { onDone: () => void }) {
+export function RedeemScreen({
+  onDone,
+  initialCode,
+}: {
+  onDone: () => void;
+  initialCode?: string;
+}) {
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -373,6 +379,30 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
   const [referrerName, setReferrerName] = useState<string | null>(null);
   const [waiverAccepted, setWaiverAccepted] = useState(false);
   const [smsConsent, setSmsConsent] = useState(false);
+  const [autoLookupTried, setAutoLookupTried] = useState(false);
+  const [promoType, setPromoType] = useState<"day_pass" | "free_week">("day_pass");
+
+  // If a code is provided (e.g. from a QR code linking here with
+  // ?code=XXX), skip the manual entry step and look it up automatically.
+  useEffect(() => {
+    if (!initialCode || autoLookupTried) return;
+    setAutoLookupTried(true);
+    const clean = initialCode.trim().toUpperCase();
+    if (!clean) return;
+    setSubmitting(true);
+    setError(null);
+    lookupReferral({ data: { code: clean } }).then((result) => {
+      setSubmitting(false);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setCode(clean);
+      setReferrerName(result.referral.referrer_name ?? null);
+      setPromoType(result.referral.promo_type ?? "day_pass");
+      setStep("checkin");
+    });
+  }, [initialCode, autoLookupTried]);
 
   async function handleCodeSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -388,6 +418,7 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
     }
     setCode(entered);
     setReferrerName(result.referral.referrer_name ?? null);
+    setPromoType(result.referral.promo_type ?? "day_pass");
     setStep("checkin");
   }
 
@@ -424,10 +455,22 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
     return (
       <ConfirmationCard
         title="Referral redeemed successfully"
-        message="Free day pass approved. Welcome to FIT Beyond Plus!"
+        message={
+          promoType === "free_week"
+            ? "Your free week is active! Welcome to FIT Beyond Plus — see you soon."
+            : "Free day pass approved. Welcome to FIT Beyond Plus!"
+        }
         onDone={onDone}
       />
     );
+
+  if (initialCode && submitting && step === "code") {
+    return (
+      <div className="max-w-xl mx-auto text-center py-16 text-muted-foreground">
+        Looking up your code...
+      </div>
+    );
+  }
 
   if (step === "code") {
     return (
