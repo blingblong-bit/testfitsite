@@ -424,7 +424,10 @@ export function RedeemScreen({
 
   async function handleCheckinSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!waiverAccepted) {
+    // Free-week claimants get walked through a real waiver in person when
+    // they come in — the online checkbox is only required for the
+    // same-day day-pass walk-in flow, which has no separate in-person step.
+    if (promoType !== "free_week" && !waiverAccepted) {
       setError("Please accept the liability waiver to continue.");
       return;
     }
@@ -514,7 +517,9 @@ export function RedeemScreen({
         <KioskField label="Full name" name="name" required />
         <KioskField label="Phone" name="phone" type="tel" required />
         <KioskField label="Email" name="email" type="email" required />
-        <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
+        {promoType !== "free_week" && (
+          <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
+        )}
         <SmsConsentCheckbox checked={smsConsent} onChange={setSmsConsent} />
         {error && <p className="text-sm text-destructive">{error}</p>}
         <SubmitButton submitting={submitting} label="Complete Check-In" />
