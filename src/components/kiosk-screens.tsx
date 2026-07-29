@@ -380,7 +380,7 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
     setError(null);
     const d = new FormData(e.currentTarget);
     const entered = String(d.get("code") ?? "").trim().toUpperCase();
-    const result = await lookupReferral(entered);
+    const result = await lookupReferral({ data: { code: entered } });
     setSubmitting(false);
     if (!result.ok) {
       setError(result.error);
@@ -404,10 +404,13 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
     setSubmitting(true);
     setError(null);
     const d = new FormData(e.currentTarget);
-    const result = await redeemReferral(code, {
-      full_name: String(d.get("name") ?? ""),
-      email: String(d.get("email") ?? ""),
-      phone: String(d.get("phone") ?? ""),
+    const result = await redeemReferral({
+      data: {
+        code,
+        full_name: String(d.get("name") ?? ""),
+        email: String(d.get("email") ?? ""),
+        phone: String(d.get("phone") ?? ""),
+      },
     });
     setSubmitting(false);
     if (!result.ok) {
@@ -498,10 +501,14 @@ export function ReferScreen({ onDone }: { onDone: () => void }) {
     setError(null);
     const d = new FormData(e.currentTarget);
     const result = await createReferral({
-      referrer_name: String(d.get("referrer_name") ?? ""),
-      referrer_email: String(d.get("referrer_email") ?? ""),
-      friend_name: String(d.get("friend_name") ?? ""),
-      friend_email: String(d.get("friend_email") ?? ""),
+      data: {
+        referrer_name: String(d.get("referrer_name") ?? ""),
+        referrer_email: String(d.get("referrer_email") ?? ""),
+        friend_name: String(d.get("friend_name") ?? ""),
+        friend_email: String(d.get("friend_email") ?? ""),
+        promo_type: "day_pass",
+        is_self_referral: false,
+      },
     });
     setSubmitting(false);
     if (!result.ok) {
