@@ -386,3 +386,40 @@ export const declineAppointment = createServerFn({ method: "POST" })
     }
     return { ok: true as const };
   });
+
+const LeadContactSchema = z.object({ lead_id: z.string().uuid() });
+
+/**
+ * Resolves minimal contact info for a personalized schedule-visit link
+ * (fitbeyondplus.com/schedule-visit?lead=<uuid>), so someone who already
+ * gave us their info (e.g. via a text conversation) doesn't have to
+ * retype name/email/phone just to book a time.
+ *
+ * Deliberately returns ONLY name/email/phone — nothing else about the
+ * lead record (no notes, no conversation history, no internal status) —
+ * since the lead's own UUID doubles as the access token for this lookup
+ * and shouldn't expose more than what's needed to pre-fill a form.
+ */
+export const getLeadContactByToken = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => LeadContactSchema.parse(d))
+  .handler(async ({
+    data,
+  }): Promise<
+    | { ok: true; name: string; email: string; phone: string }
+    | { ok: false; error: string }
+  > => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin
+      .from("leads")
+      .select("name, email, phone")
+      .eq("id", data.lead_id)
+      .maybeSingle();
+    if (error) return { ok: false, error: error.message };
+    if (!row) return { ok: false, error: "not_found" };
+    return {
+      ok: true,
+      name: row.name ?? "",
+      email: row.email ?? "",
+      phone: row.phone ?? "",
+    };
+  });

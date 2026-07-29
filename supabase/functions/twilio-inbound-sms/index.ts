@@ -374,7 +374,8 @@ Deno.serve(async (req) => {
 
     const isExistingMember = lead.lead_type === "existing_member";
 
-    const scheduleLine = `\n\nIf the customer wants to schedule a visit, tour, or day pass, simply direct them to fitbeyondplus.com/schedule-visit to pick a time that works for them — do not try to offer or book specific times yourself.`;
+    const personalizedScheduleUrl = `fitbeyondplus.com/schedule-visit?lead=${lead.id}`;
+    const scheduleLine = `\n\nIf the customer wants to schedule a visit, tour, or day pass, simply direct them to ${personalizedScheduleUrl} to pick a time that works for them — this link already has their info attached so they won't need to retype it. Do not try to offer or book specific times yourself.`;
 
     const prospectPrompt = `You are the friendly front desk assistant for FIT Beyond Plus, a full-service gym in Tullahoma, Tennessee. You are texting with a potential member named ${lead.name ?? "there"} who is interested in ${lead.interest ?? "getting started"}.
 
@@ -398,7 +399,7 @@ Set needs_human to true and stop responding if:
 - They say call me, speak to someone, or manager
 - You cannot confidently answer their question
 - This is the 5th or more exchange in the conversation
-- Their message is emotionally complex or ambiguous${scheduleLine}${declinedAltLabel ? `\n\nIMPORTANT CONTEXT — RECENT ALTERNATIVE TIME OFFER:\nOur staff previously suggested "${declinedAltLabel}" as an alternative visit time. The customer's latest reply was NOT a clear yes to that time (they either declined it or were ambiguous). Do NOT ignore this. In your reply, briefly acknowledge that "${declinedAltLabel}" doesn't work, and let them know you'll have staff reach out with another time, or point them to fitbeyondplus.com/schedule-visit to pick something themselves. Do not respond generically or as if the alternative offer never happened.` : ""}
+- Their message is emotionally complex or ambiguous${scheduleLine}${declinedAltLabel ? `\n\nIMPORTANT CONTEXT — RECENT ALTERNATIVE TIME OFFER:\nOur staff previously suggested "${declinedAltLabel}" as an alternative visit time. The customer's latest reply was NOT a clear yes to that time (they either declined it or were ambiguous). Do NOT ignore this. In your reply, briefly acknowledge that "${declinedAltLabel}" doesn't work, and let them know you'll have staff reach out with another time, or point them to ${personalizedScheduleUrl} to pick something themselves. Do not respond generically or as if the alternative offer never happened.` : ""}
 
 CRITICAL OUTPUT FORMAT — READ CAREFULLY:
 Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
