@@ -69,34 +69,7 @@ export const submitClassCheckIn = createServerFn({ method: "POST" })
     }
 
     const match = await checkClassCheckinMatch(name, phone);
-    let verified = match.isMember;
-    let promoNote: string | null = null;
-
-    // If Antaris doesn't verify them, check for an active free-week promo
-    // redemption matching their phone — someone mid free-week trial won't
-    // be an Antaris member yet, but should still be able to check in.
-    if (!verified) {
-      const nowIso = new Date().toISOString();
-      const { data: activePromos, error: promoErr } = await supabaseAdmin
-        .from("referrals")
-        .select("id, friend_contact, access_starts_at, access_ends_at")
-        .eq("promo_type", "free_week")
-        .eq("status", "redeemed")
-        .lte("access_starts_at", nowIso)
-        .gte("access_ends_at", nowIso);
-
-      if (promoErr) {
-        console.error("[class-checkin] free-week promo lookup failed", promoErr.message);
-      } else if (activePromos) {
-        const activeMatch = activePromos.some(
-          (row) => last10(row.friend_contact ?? "") === target,
-        );
-        if (activeMatch) {
-          verified = true;
-          promoNote = "Verified via active free-week promo (not an Antaris member yet).";
-        }
-      }
-    }
+    const verified = match.isMember;
 
     const { error } = await supabaseAdmin.from("class_checkins").insert({
       name,
@@ -108,12 +81,11 @@ export const submitClassCheckIn = createServerFn({ method: "POST" })
       verified,
       added_manually: false,
       notes:
-        promoNote ??
-        (match.reason === "phone_mismatch_on_file"
+        match.reason === "phone_mismatch_on_file"
           ? "Antaris phone on file doesn't match submitted phone — please verify record."
           : match.reason === "ambiguous_first_only"
             ? "First name only — multiple Antaris members share this first name. Please verify at desk."
-            : null),
+            : null,
     });
 
     if (error) {
