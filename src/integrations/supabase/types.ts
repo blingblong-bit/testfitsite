@@ -491,6 +491,7 @@ export type Database = {
           referral_code: string
           referrer_contact: string | null
           referrer_email: string | null
+          referrer_is_member: boolean | null
           referrer_name: string
           status: string
         }
@@ -512,6 +513,7 @@ export type Database = {
           referral_code: string
           referrer_contact?: string | null
           referrer_email?: string | null
+          referrer_is_member?: boolean | null
           referrer_name: string
           status?: string
         }
@@ -533,6 +535,7 @@ export type Database = {
           referral_code?: string
           referrer_contact?: string | null
           referrer_email?: string | null
+          referrer_is_member?: boolean | null
           referrer_name?: string
           status?: string
         }

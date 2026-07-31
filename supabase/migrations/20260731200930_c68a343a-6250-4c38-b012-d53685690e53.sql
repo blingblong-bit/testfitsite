@@ -1,0 +1,1 @@
+ALTER TABLE public.referrals ADD COLUMN IF NOT EXISTS referrer_is_member boolean DEFAULT NULL;
