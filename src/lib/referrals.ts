@@ -123,23 +123,35 @@ export const createReferral = createServerFn({ method: "POST" })
   }): Promise<{ ok: true; code: string } | { ok: false; error: string }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const isFreeWeek = input.promo_type === "free_week";
+
     const referrer_name = titleCase(input.referrer_name);
     const friend_name = titleCase(input.friend_name);
-    const referrer_email_raw = normalizeEmail(input.referrer_email);
-    const friend_email_raw = normalizeEmail(input.friend_email);
+    const referrer_email_raw = normalizeEmail(input.referrer_email ?? "");
+    const friend_email_raw = normalizeEmail(input.friend_email ?? "");
+    const referrer_phone_raw = (input.referrer_phone ?? "").trim();
+    const friend_phone_raw = (input.friend_phone ?? "").trim();
 
     const emailRe = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
     if (!referrer_name) return { ok: false, error: "Your name is required." };
     if (!friend_name) return { ok: false, error: "Name is required." };
-    if (!referrer_email_raw || !emailRe.test(referrer_email_raw))
-      return { ok: false, error: "Please enter a valid email address." };
-    if (!friend_email_raw || !emailRe.test(friend_email_raw))
-      return { ok: false, error: "Please enter a valid email address." };
-    if (!input.is_self_referral && referrer_email_raw === friend_email_raw)
-      return { ok: false, error: "Referrer and friend emails must be different." };
 
-    if (input.promo_type === "free_week" && Date.now() > new Date(FREE_WEEK_CLAIM_DEADLINE).getTime()) {
+    if (isFreeWeek) {
+      // Free-week claims are phone-only: email may be absent entirely.
+      if (last10(friend_phone_raw).length !== 10) {
+        return { ok: false, error: "Please enter a valid phone number." };
+      }
+    } else {
+      if (!referrer_email_raw || !emailRe.test(referrer_email_raw))
+        return { ok: false, error: "Please enter a valid email address." };
+      if (!friend_email_raw || !emailRe.test(friend_email_raw))
+        return { ok: false, error: "Please enter a valid email address." };
+      if (!input.is_self_referral && referrer_email_raw === friend_email_raw)
+        return { ok: false, error: "Referrer and friend emails must be different." };
+    }
+
+    if (isFreeWeek && Date.now() > new Date(FREE_WEEK_CLAIM_DEADLINE).getTime()) {
       return { ok: false, error: "This offer has ended. Thanks for checking it out!" };
     }
 
@@ -167,29 +179,60 @@ export const createReferral = createServerFn({ method: "POST" })
       }
     }
 
-    const normalized_referrer_email = referrer_email_raw;
-    const normalized_friend_email = friend_email_raw;
+    const normalized_referrer_email = referrer_email_raw || null;
+    const normalized_friend_email = friend_email_raw || null;
 
     // Duplicate check, scoped to this promo type — someone can still claim
     // a day-pass referral even if they already used the free-week promo,
-    // and vice versa.
-    const { data: existing, error: dupErr } = await supabaseAdmin
-      .from("referrals")
-      .select("id, friend_email")
-      .eq("promo_type", input.promo_type)
-      .ilike("friend_email", normalized_friend_email);
-    if (dupErr) return { ok: false, error: dupErr.message };
-    if ((existing ?? []).length > 0) {
-      return {
-        ok: false,
-        error:
-          input.promo_type === "free_week"
-            ? "This email has already claimed the free week offer."
-            : "This email has already been referred and cannot receive another referral code.",
-      };
+    // and vice versa. Free-week is phone-based (no email collected).
+    if (isFreeWeek) {
+      const target = last10(friend_phone_raw);
+      const { data: existing, error: dupErr } = await supabaseAdmin
+        .from("referrals")
+        .select("id, friend_contact")
+        .eq("promo_type", "free_week");
+      if (dupErr) return { ok: false, error: dupErr.message };
+      if ((existing ?? []).some((r) => last10(r.friend_contact) === target)) {
+        return {
+          ok: false,
+          error: "This phone number has already claimed the free week offer.",
+        };
+      }
+    } else {
+      const { data: existing, error: dupErr } = await supabaseAdmin
+        .from("referrals")
+        .select("id, friend_email")
+        .eq("promo_type", input.promo_type)
+        .ilike("friend_email", friend_email_raw);
+      if (dupErr) return { ok: false, error: dupErr.message };
+      if ((existing ?? []).length > 0) {
+        return {
+          ok: false,
+          error: "This email has already been referred and cannot receive another referral code.",
+        };
+      }
     }
 
-    const normalizedPhone = input.friend_phone?.trim() ? input.friend_phone.trim() : null;
+    const normalizedPhone = friend_phone_raw ? friend_phone_raw : null;
+
+    // Non-blocking membership tracking for free-week claims: purely
+    // informational (member vs general public). Never blocks or delays.
+    let referrer_is_member: boolean | null = null;
+    if (isFreeWeek) {
+      try {
+        const { checkMemberMatch } = await import("./antaris/client");
+        const match = await Promise.race([
+          checkMemberMatch(referrer_name, referrer_email_raw, referrer_phone_raw),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+        ]);
+        if (match) referrer_is_member = match.isMember && match.confidence >= 80;
+      } catch (e) {
+        console.error(
+          "[createReferral] non-blocking antaris check failed",
+          e instanceof Error ? e.message : e,
+        );
+      }
+    }
 
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = generateCode();
@@ -203,14 +246,17 @@ export const createReferral = createServerFn({ method: "POST" })
           friend_name,
           friend_email: normalized_friend_email,
           friend_contact: normalizedPhone,
+          referrer_contact: referrer_phone_raw || null,
           status: "sent",
           email_sent: false,
           email_sent_at: null,
           email_status: "pending",
           promo_type: input.promo_type,
+          referrer_is_member,
         })
         .select("id")
         .single();
+
       if (!error && inserted) {
         // The referral email template hardcodes "free day pass" language,
         // which would be misleading for a free-week claim. Skip it for
