@@ -197,34 +197,23 @@ function ClaimFreeWeekPage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-xs uppercase tracking-widest mb-2">
-                    Email
+                  <label htmlFor="phone" className="block text-xs uppercase tracking-widest mb-2">
+                    Phone
                   </label>
                   <input
-                    id="email"
-                    name="email"
-                    type="email"
+                    id="phone"
+                    name="phone"
+                    type="tel"
                     required
                     className="w-full h-12 rounded-md bg-secondary border border-border px-4 text-base focus:outline-none focus:border-primary"
                   />
-                </div>
-                {mode === "self" && (
-                  <div>
-                    <label htmlFor="phone" className="block text-xs uppercase tracking-widest mb-2">
-                      Phone
-                    </label>
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      required
-                      className="w-full h-12 rounded-md bg-secondary border border-border px-4 text-base focus:outline-none focus:border-primary"
-                    />
+                  {mode === "self" && (
                     <p className="mt-1.5 text-xs text-muted-foreground">
                       We'll text your code right away.
                     </p>
-                  </div>
-                )}
+                  )}
+                </div>
+
               </div>
             </div>
 
