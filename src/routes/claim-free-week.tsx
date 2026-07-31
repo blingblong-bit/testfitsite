@@ -52,14 +52,12 @@ function ClaimFreeWeekPage() {
     }
 
     const name = String(d.get("name") ?? "").trim();
-    const email = String(d.get("email") ?? "").trim();
     const phone = String(d.get("phone") ?? "").trim();
 
     let payload: {
       referrer_name: string;
-      referrer_email: string;
+      referrer_phone: string;
       friend_name: string;
-      friend_email: string;
       friend_phone: string;
       promo_type: "free_week";
       is_self_referral: boolean;
@@ -68,27 +66,25 @@ function ClaimFreeWeekPage() {
     if (mode === "self") {
       payload = {
         referrer_name: name,
-        referrer_email: email,
+        referrer_phone: phone,
         friend_name: name,
-        friend_email: email,
         friend_phone: phone,
         promo_type: "free_week",
         is_self_referral: true,
       };
     } else {
       const friendName = String(d.get("friend_name") ?? "").trim();
-      const friendEmail = String(d.get("friend_email") ?? "").trim();
       const friendPhone = String(d.get("friend_phone") ?? "").trim();
       payload = {
         referrer_name: name,
-        referrer_email: email,
+        referrer_phone: phone,
         friend_name: friendName,
-        friend_email: friendEmail,
         friend_phone: friendPhone,
         promo_type: "free_week",
         is_self_referral: false,
       };
     }
+
 
     setSubmitting(true);
     const res = await createReferral({ data: payload });
