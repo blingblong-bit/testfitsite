@@ -96,6 +96,30 @@ export const createReferral = createServerFn({ method: "POST" })
       return { ok: false, error: "This offer has ended. Thanks for checking it out!" };
     }
 
+    // Day-pass referrals require the referrer to be a real, verified
+    // member — this is the traditional "existing customer vouches for a
+    // friend" referral. Free-week is intentionally left open (it's an
+    // acquisition promo, not a loyalty perk — see design discussion).
+    //
+    // Explicit bypass for the gym's own system-generated day-pass codes
+    // (walk-ins, appointment approvals via generateDayPassCode) — those
+    // use a business account, not a real person, and would never pass
+    // Antaris verification.
+    const isSystemGeneratedBusinessAccount =
+      referrer_email_raw === "info@fitbeyondplus.com" && referrer_name === "Fit Beyond Plus";
+
+    if (input.promo_type === "day_pass" && !isSystemGeneratedBusinessAccount) {
+      const { checkMemberMatch } = await import("./antaris/client");
+      const match = await checkMemberMatch(referrer_name, referrer_email_raw, "");
+      if (!match.isMember || match.confidence < 80) {
+        return {
+          ok: false,
+          error:
+            "We couldn't verify your membership. Please make sure your name and email match what's on file, or ask the front desk for help.",
+        };
+      }
+    }
+
     const normalized_referrer_email = referrer_email_raw;
     const normalized_friend_email = friend_email_raw;
 
