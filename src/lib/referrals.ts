@@ -93,15 +93,21 @@ function titleCase(v: string) {
     .join(" ");
 }
 
+function last10(v: string | null | undefined) {
+  return (v ?? "").replace(/\D/g, "").slice(-10);
+}
+
 const CreateReferralSchema = z.object({
   referrer_name: z.string(),
-  referrer_email: z.string(),
+  referrer_email: z.string().optional(),
+  referrer_phone: z.string().optional(),
   friend_name: z.string(),
-  friend_email: z.string(),
+  friend_email: z.string().optional(),
   friend_phone: z.string().optional(),
   promo_type: z.enum(["day_pass", "free_week"]).default("day_pass"),
   is_self_referral: z.boolean().default(false),
 });
+
 
 /**
  * Creates a referral code. Runs server-side with supabaseAdmin (service
