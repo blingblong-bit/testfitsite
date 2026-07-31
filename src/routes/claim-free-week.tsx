@@ -233,18 +233,6 @@ function ClaimFreeWeekPage() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="friend_email" className="block text-xs uppercase tracking-widest mb-2">
-                      Friend's email
-                    </label>
-                    <input
-                      id="friend_email"
-                      name="friend_email"
-                      type="email"
-                      required
-                      className="w-full h-12 rounded-md bg-secondary border border-border px-4 text-base focus:outline-none focus:border-primary"
-                    />
-                  </div>
-                  <div>
                     <label htmlFor="friend_phone" className="block text-xs uppercase tracking-widest mb-2">
                       Friend's phone
                     </label>
