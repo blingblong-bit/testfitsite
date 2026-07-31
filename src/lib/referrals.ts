@@ -2,6 +2,46 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { sendReferralEmail } from "@/lib/send-referral-email.functions";
 
+function normalizePhoneE164(raw: string): string {
+  const trimmed = raw.trim();
+  if (trimmed.startsWith("+")) return "+" + trimmed.slice(1).replace(/\D/g, "");
+  const digits = trimmed.replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return `+${digits}`;
+}
+
+async function sendTwilioSms(
+  to: string,
+  body: string,
+): Promise<{ ok: boolean; sid?: string; error?: string }> {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_FROM_NUMBER;
+  if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
+  const auth = Buffer.from(`${sid}:${token}`).toString("base64");
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      To: to,
+      From: from,
+      Body: body,
+      StatusCallback: "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
+    }),
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    console.error("[referrals] twilio error", res.status, t);
+    return { ok: false, error: `twilio_${res.status}` };
+  }
+  const json = (await res.json()) as { sid?: string };
+  return { ok: true, sid: json.sid };
+}
+
 export type Referral = {
   id: string;
   referral_code: string;
@@ -58,6 +98,7 @@ const CreateReferralSchema = z.object({
   referrer_email: z.string(),
   friend_name: z.string(),
   friend_email: z.string(),
+  friend_phone: z.string().optional(),
   promo_type: z.enum(["day_pass", "free_week"]).default("day_pass"),
   is_self_referral: z.boolean().default(false),
 });
@@ -142,6 +183,8 @@ export const createReferral = createServerFn({ method: "POST" })
       };
     }
 
+    const normalizedPhone = input.friend_phone?.trim() ? input.friend_phone.trim() : null;
+
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = generateCode();
       const { data: inserted, error } = await supabaseAdmin
@@ -153,6 +196,7 @@ export const createReferral = createServerFn({ method: "POST" })
           normalized_referrer_email,
           friend_name,
           friend_email: normalized_friend_email,
+          friend_contact: normalizedPhone,
           status: "sent",
           email_sent: false,
           email_sent_at: null,
@@ -164,13 +208,26 @@ export const createReferral = createServerFn({ method: "POST" })
       if (!error && inserted) {
         // The referral email template hardcodes "free day pass" language,
         // which would be misleading for a free-week claim. Skip it for
-        // free_week — the on-screen QR confirmation is the primary
-        // interface for that flow instead.
+        // free_week — an instant SMS with the code/QR link is the primary
+        // confirmation for that flow instead (email is skipped entirely).
         if (input.promo_type !== "day_pass") {
           await supabaseAdmin
             .from("referrals")
             .update({ email_status: "pending" })
             .eq("id", inserted.id);
+
+          if (normalizedPhone) {
+            const to = normalizePhoneE164(normalizedPhone);
+            const redeemUrl = `https://fitbeyondplus.com/redeem-referral?code=${code}`;
+            const msg = input.is_self_referral
+              ? `FIT Beyond Plus: You're in! Your free week code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`
+              : `FIT Beyond Plus: ${referrer_name} sent you a free week! Your code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`;
+            const send = await sendTwilioSms(to, msg);
+            if (!send.ok) {
+              console.error("[createReferral] free_week instant sms failed", send.error);
+            }
+          }
+
           return { ok: true, code };
         }
         try {

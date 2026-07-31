@@ -53,12 +53,14 @@ function ClaimFreeWeekPage() {
 
     const name = String(d.get("name") ?? "").trim();
     const email = String(d.get("email") ?? "").trim();
+    const phone = String(d.get("phone") ?? "").trim();
 
     let payload: {
       referrer_name: string;
       referrer_email: string;
       friend_name: string;
       friend_email: string;
+      friend_phone: string;
       promo_type: "free_week";
       is_self_referral: boolean;
     };
@@ -69,17 +71,20 @@ function ClaimFreeWeekPage() {
         referrer_email: email,
         friend_name: name,
         friend_email: email,
+        friend_phone: phone,
         promo_type: "free_week",
         is_self_referral: true,
       };
     } else {
       const friendName = String(d.get("friend_name") ?? "").trim();
       const friendEmail = String(d.get("friend_email") ?? "").trim();
+      const friendPhone = String(d.get("friend_phone") ?? "").trim();
       payload = {
         referrer_name: name,
         referrer_email: email,
         friend_name: friendName,
         friend_email: friendEmail,
+        friend_phone: friendPhone,
         promo_type: "free_week",
         is_self_referral: false,
       };
@@ -207,6 +212,23 @@ function ClaimFreeWeekPage() {
                     className="w-full h-12 rounded-md bg-secondary border border-border px-4 text-base focus:outline-none focus:border-primary"
                   />
                 </div>
+                {mode === "self" && (
+                  <div>
+                    <label htmlFor="phone" className="block text-xs uppercase tracking-widest mb-2">
+                      Phone
+                    </label>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      required
+                      className="w-full h-12 rounded-md bg-secondary border border-border px-4 text-base focus:outline-none focus:border-primary"
+                    />
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      We'll text your code right away.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -236,6 +258,21 @@ function ClaimFreeWeekPage() {
                       required
                       className="w-full h-12 rounded-md bg-secondary border border-border px-4 text-base focus:outline-none focus:border-primary"
                     />
+                  </div>
+                  <div>
+                    <label htmlFor="friend_phone" className="block text-xs uppercase tracking-widest mb-2">
+                      Friend's phone
+                    </label>
+                    <input
+                      id="friend_phone"
+                      name="friend_phone"
+                      type="tel"
+                      required
+                      className="w-full h-12 rounded-md bg-secondary border border-border px-4 text-base focus:outline-none focus:border-primary"
+                    />
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      We'll text them their code right away.
+                    </p>
                   </div>
                 </div>
               </div>
