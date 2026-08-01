@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { sendReferralEmail } from "@/lib/send-referral-email.functions";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 function normalizePhoneE164(raw: string): string {
   const trimmed = raw.trim();
@@ -498,4 +499,146 @@ export const redeemReferral = createServerFn({ method: "POST" })
     }
 
     return { ok: true, referral: updated as Referral };
+  });
+
+const ArrivalSchema = z.object({ referral_id: z.string().uuid() });
+
+/**
+ * Staff-only: confirms a free-week claimant physically arrived. This is
+ * the point where the promo actually becomes redeemed — access window
+ * opens and the lead record is created/updated.
+ */
+export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => ArrivalSchema.parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: true } | { ok: false; error: string }> => {
+    const { data: isAdmin, error: roleErr } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (roleErr || !isAdmin) return { ok: false, error: "forbidden" };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: row, error: fetchErr } = await supabaseAdmin
+      .from("referrals")
+      .select("*")
+      .eq("id", data.referral_id)
+      .maybeSingle();
+    if (fetchErr) return { ok: false, error: fetchErr.message };
+    if (!row) return { ok: false, error: "Referral not found." };
+    if (row.promo_type !== "free_week") return { ok: false, error: "Not a free-week referral." };
+    if (row.status !== "arrival_pending")
+      return { ok: false, error: `Referral is not awaiting arrival (status: ${row.status}).` };
+
+    const nowIso = new Date().toISOString();
+    const endsIso = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { error: upErr } = await supabaseAdmin
+      .from("referrals")
+      .update({
+        status: "redeemed",
+        redeemed_at: nowIso,
+        access_starts_at: nowIso,
+        access_ends_at: endsIso,
+      })
+      .eq("id", row.id);
+    if (upErr) return { ok: false, error: upErr.message };
+
+    const full_name = (row.redeemed_by ?? row.friend_name ?? "").trim();
+    const email = (row.friend_email ?? "").trim().toLowerCase();
+    const phone = (row.friend_contact ?? "").trim();
+
+    const noteEntry = `[${nowIso}] Arrival confirmed by staff — End of Summer free week activated, access through ${endsIso}`;
+    const leadFields = {
+      crm_status: "Tour Completed",
+      sequence_status: "paused",
+      lead_score: 100,
+    };
+
+    let existingLead: { id: string; notes: string | null } | undefined;
+    if (email) {
+      const { data: existingLeads, error: findLeadErr } = await supabaseAdmin
+        .from("leads")
+        .select("id, notes")
+        .ilike("email", email)
+        .limit(1);
+      if (findLeadErr) return { ok: false, error: findLeadErr.message };
+      existingLead = existingLeads?.[0];
+    }
+
+    if (existingLead) {
+      const notes = existingLead.notes ? `${existingLead.notes}\n${noteEntry}` : noteEntry;
+      await supabaseAdmin
+        .from("leads")
+        .update({
+          tour_completed: true,
+          tour_date: nowIso,
+          notes,
+          ...leadFields,
+        })
+        .eq("id", existingLead.id);
+    } else {
+      await supabaseAdmin.from("leads").insert({
+        source: "referral_free_week",
+        status: "redeemed",
+        name: full_name,
+        email,
+        phone,
+        referral_code: row.referral_code,
+        referred_by: row.referrer_name,
+        notes: noteEntry,
+        lead_type: "customer_lead",
+        should_notify: true,
+        spam_reason: null,
+        tour_completed: true,
+        tour_date: nowIso,
+        ...leadFields,
+      });
+    }
+
+    if (phone) {
+      const send = await sendTwilioSms(
+        normalizePhoneE164(phone),
+        `You're active, ${full_name || "friend"}! Your free week at FIT Beyond Plus is officially started and runs through ${new Date(endsIso).toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "long", day: "numeric" })}. See you soon!`,
+      );
+      if (!send.ok) console.error("[confirmFreeWeekArrival] sms failed", send.error);
+    }
+
+    return { ok: true };
+  });
+
+/**
+ * Staff-only: undo an arrival check-in (wrong info, not actually here).
+ * Puts the code back to 'sent' so it can be used again. No lead effects.
+ */
+export const rejectFreeWeekArrival = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => ArrivalSchema.parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: true } | { ok: false; error: string }> => {
+    const { data: isAdmin, error: roleErr } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (roleErr || !isAdmin) return { ok: false, error: "forbidden" };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: row, error: fetchErr } = await supabaseAdmin
+      .from("referrals")
+      .select("id, status, promo_type")
+      .eq("id", data.referral_id)
+      .maybeSingle();
+    if (fetchErr) return { ok: false, error: fetchErr.message };
+    if (!row) return { ok: false, error: "Referral not found." };
+    if (row.status !== "arrival_pending")
+      return { ok: false, error: `Referral is not awaiting arrival (status: ${row.status}).` };
+
+    const { error: upErr } = await supabaseAdmin
+      .from("referrals")
+      .update({ status: "sent" })
+      .eq("id", row.id);
+    if (upErr) return { ok: false, error: upErr.message };
+
+    return { ok: true };
   });
