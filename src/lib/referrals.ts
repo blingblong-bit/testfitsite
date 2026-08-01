@@ -375,9 +375,42 @@ export const redeemReferral = createServerFn({ method: "POST" })
     if (!data) return { ok: false, error: "Invalid referral code." };
     if (data.status === "redeemed")
       return { ok: false, error: "This referral code has already been redeemed." };
+    if (data.status === "arrival_pending")
+      return {
+        ok: false,
+        error:
+          "This code is already checked in — stop by the front desk and we'll activate your free week.",
+      };
 
     const nowIso = new Date().toISOString();
     const isFreeWeek = data.promo_type === "free_week";
+
+    // Free week is only truly redeemed once staff confirms the person
+    // physically showed up. Park the submitted details on the referral
+    // row and wait for confirmFreeWeekArrival — no lead, no access window.
+    if (isFreeWeek) {
+      const { data: pending, error: pendErr } = await supabaseAdmin
+        .from("referrals")
+        .update({
+          status: "arrival_pending",
+          redeemed_by: full_name,
+          friend_contact: phone,
+          friend_email: email,
+        })
+        .eq("id", data.id)
+        .select("*")
+        .single();
+      if (pendErr) return { ok: false, error: pendErr.message };
+
+      const send = await sendTwilioSms(
+        normalizePhoneE164(phone),
+        `You're all set, ${full_name}! Come by the front desk at FIT Beyond Plus and we'll get your free week activated. We're at 449 W Lincoln St, Tullahoma!`,
+      );
+      if (!send.ok) console.error("[redeemReferral] free_week arrival sms failed", send.error);
+
+      return { ok: true, referral: pending as Referral };
+    }
+
 
     const referralUpdate: {
       status: string;
