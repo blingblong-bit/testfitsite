@@ -46,6 +46,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
+import { Route as AuthenticatedAdminFreeWeekArrivalsRouteImport } from './routes/_authenticated/admin.free-week-arrivals'
 import { Route as AuthenticatedAdminDayPassApprovalsRouteImport } from './routes/_authenticated/admin.day-pass-approvals'
 import { Route as AuthenticatedAdminClassCheckinsRouteImport } from './routes/_authenticated/admin.class-checkins'
 import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
@@ -245,6 +246,12 @@ const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
   path: '/admin/leads',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminFreeWeekArrivalsRoute =
+  AuthenticatedAdminFreeWeekArrivalsRouteImport.update({
+    id: '/admin/free-week-arrivals',
+    path: '/admin/free-week-arrivals',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminDayPassApprovalsRoute =
   AuthenticatedAdminDayPassApprovalsRouteImport.update({
     id: '/admin/day-pass-approvals',
@@ -357,6 +364,7 @@ export interface FileRoutesByFullPath {
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
+  '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
@@ -404,6 +412,7 @@ export interface FileRoutesByTo {
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
+  '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
@@ -456,6 +465,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/_authenticated/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/_authenticated/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
+  '/_authenticated/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
@@ -508,6 +518,7 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/class-checkins'
     | '/admin/day-pass-approvals'
+    | '/admin/free-week-arrivals'
     | '/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/process-appointment-reminders'
@@ -555,6 +566,7 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/class-checkins'
     | '/admin/day-pass-approvals'
+    | '/admin/free-week-arrivals'
     | '/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/process-appointment-reminders'
@@ -606,6 +618,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/blog'
     | '/_authenticated/admin/class-checkins'
     | '/_authenticated/admin/day-pass-approvals'
+    | '/_authenticated/admin/free-week-arrivals'
     | '/_authenticated/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/process-appointment-reminders'
@@ -916,6 +929,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/free-week-arrivals': {
+      id: '/_authenticated/admin/free-week-arrivals'
+      path: '/admin/free-week-arrivals'
+      fullPath: '/admin/free-week-arrivals'
+      preLoaderRoute: typeof AuthenticatedAdminFreeWeekArrivalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/day-pass-approvals': {
       id: '/_authenticated/admin/day-pass-approvals'
       path: '/admin/day-pass-approvals'
@@ -1010,6 +1030,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminBlogRoute: typeof AuthenticatedAdminBlogRoute
   AuthenticatedAdminClassCheckinsRoute: typeof AuthenticatedAdminClassCheckinsRoute
   AuthenticatedAdminDayPassApprovalsRoute: typeof AuthenticatedAdminDayPassApprovalsRoute
+  AuthenticatedAdminFreeWeekArrivalsRoute: typeof AuthenticatedAdminFreeWeekArrivalsRoute
   AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
 }
 
@@ -1022,6 +1043,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminClassCheckinsRoute: AuthenticatedAdminClassCheckinsRoute,
   AuthenticatedAdminDayPassApprovalsRoute:
     AuthenticatedAdminDayPassApprovalsRoute,
+  AuthenticatedAdminFreeWeekArrivalsRoute:
+    AuthenticatedAdminFreeWeekArrivalsRoute,
   AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
 }
 
