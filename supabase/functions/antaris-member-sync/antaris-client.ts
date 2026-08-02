@@ -76,6 +76,9 @@ type AntarisClient = {
   last_name?: string | null;
   cell_phone?: string | null;
   home_phone?: string | null;
+  date_joined?: string | null;
+  updated_at?: string | null;
+
 };
 
 function digitsOnly(v: string | null | undefined): string {
