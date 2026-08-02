@@ -36,12 +36,16 @@ type Props = {
 
 export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
   const [rebuilding, setRebuilding] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(() => monthStart(new Date()));
+
+  const realCurrentMonth = useMemo(() => monthStart(new Date()), []);
+  const isCurrentMonth = selectedMonth.getTime() === realCurrentMonth.getTime();
 
   const data = useMemo(() => {
     if (!leads || !referrals) return null;
     const now = new Date();
-    const thisStart = monthStart(now);
-    const thisEnd = monthEnd(now);
+    const thisStart = monthStart(selectedMonth);
+    const thisEnd = monthEnd(selectedMonth);
     const lastStart = new Date(thisStart.getFullYear(), thisStart.getMonth() - 1, 1);
     const lastEnd = thisStart;
 
@@ -56,11 +60,13 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
           now.getTime(),
         ))
       : now;
-    const months = listMonths(earliest, now).slice(-12);
+    const availableMonths = listMonths(earliest, now);
+    const months = availableMonths.slice(-12);
     const history = months.map((m) => {
       const me = new Date(m.getFullYear(), m.getMonth() + 1, 1);
       return { month: m, metrics: computeMonth(leads, referrals, m, me) };
     });
+
 
     // First-contact / tour / membership timing across all customer leads
     const customer = leads.filter((l) => l.lead_type === "customer_lead");
