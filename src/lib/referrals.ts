@@ -287,6 +287,7 @@ export const createReferral = createServerFn({ method: "POST" })
           email_status: "pending",
           promo_type: input.promo_type,
           referrer_is_member,
+          is_self_referral: input.is_self_referral,
         })
         .select("id")
         .single();
