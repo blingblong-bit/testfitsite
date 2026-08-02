@@ -341,7 +341,9 @@ export const createReferral = createServerFn({ method: "POST" })
                   .insert({
                     source: "referral_free_week",
                     name: friend_name,
-                    email: null as unknown as string,
+                    // leads.email is NOT NULL; free-week claims are phone-only.
+                    email: "",
+
                     phone: normalizedPhone,
                     referral_code: code,
                     referred_by: referrer_name,
