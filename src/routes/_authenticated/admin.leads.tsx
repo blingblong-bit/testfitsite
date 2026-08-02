@@ -148,7 +148,58 @@ type Referral = {
   redeemed_at: string | null;
   redeemed_by: string | null;
   created_at: string;
+  promo_type?: string | null;
+  lead_id?: string | null;
+  access_starts_at?: string | null;
+  access_ends_at?: string | null;
+  referrer_reward_status?: string | null;
 };
+
+// Read-only free-week visibility derived from the referrals table.
+export type FreeWeekInfo = {
+  startsAt: string | null;
+  endsAt: string | null;
+  active: boolean;
+  daysLeft: number;
+  extended: boolean;
+};
+
+function chicagoDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    timeZone: "America/Chicago",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function buildFreeWeekMap(referrals: Referral[] | null): Record<string, FreeWeekInfo> {
+  const map: Record<string, FreeWeekInfo> = {};
+  if (!referrals) return map;
+  const extendedLeads = new Set(
+    referrals
+      .filter((r) => r.referrer_reward_status === "extended" && r.lead_id)
+      .map((r) => r.lead_id as string),
+  );
+  const now = Date.now();
+  for (const r of referrals) {
+    if (r.promo_type !== "free_week" || r.status !== "redeemed" || !r.lead_id) continue;
+    const endMs = r.access_ends_at ? new Date(r.access_ends_at).getTime() : NaN;
+    const active = Number.isFinite(endMs) && endMs > now;
+    const daysLeft = active ? Math.max(1, Math.ceil((endMs - now) / 86_400_000)) : 0;
+    const prev = map[r.lead_id];
+    const info: FreeWeekInfo = {
+      startsAt: r.access_starts_at ?? null,
+      endsAt: r.access_ends_at ?? null,
+      active,
+      daysLeft,
+      extended: extendedLeads.has(r.lead_id),
+    };
+    // Keep the record with the latest end date.
+    if (!prev || (info.endsAt && (!prev.endsAt || info.endsAt > prev.endsAt))) map[r.lead_id] = info;
+  }
+  return map;
+}
 
 type TypeFilter = "customer_lead" | "existing_member" | "vendor_solicitation" | "spam" | "all";
 type Tab = "leads" | "referrals" | "analytics" | "settings";
