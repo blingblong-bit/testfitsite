@@ -484,6 +484,7 @@ export type Database = {
           friend_email: string | null
           friend_name: string
           id: string
+          is_self_referral: boolean
           lead_id: string | null
           normalized_referrer_email: string | null
           promo_type: string
@@ -494,6 +495,7 @@ export type Database = {
           referrer_email: string | null
           referrer_is_member: boolean | null
           referrer_name: string
+          referrer_reward_status: string | null
           status: string
         }
         Insert: {
@@ -507,6 +509,7 @@ export type Database = {
           friend_email?: string | null
           friend_name: string
           id?: string
+          is_self_referral?: boolean
           lead_id?: string | null
           normalized_referrer_email?: string | null
           promo_type?: string
@@ -517,6 +520,7 @@ export type Database = {
           referrer_email?: string | null
           referrer_is_member?: boolean | null
           referrer_name: string
+          referrer_reward_status?: string | null
           status?: string
         }
         Update: {
@@ -530,6 +534,7 @@ export type Database = {
           friend_email?: string | null
           friend_name?: string
           id?: string
+          is_self_referral?: boolean
           lead_id?: string | null
           normalized_referrer_email?: string | null
           promo_type?: string
@@ -540,6 +545,7 @@ export type Database = {
           referrer_email?: string | null
           referrer_is_member?: boolean | null
           referrer_name?: string
+          referrer_reward_status?: string | null
           status?: string
         }
         Relationships: [
