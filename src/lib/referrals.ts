@@ -763,23 +763,34 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
         })
         .eq("id", existingLead.id);
     } else {
-      await supabaseAdmin.from("leads").insert({
-        source: "referral_free_week",
-        status: "redeemed",
-        name: full_name,
-        email,
-        phone,
-        referral_code: row.referral_code,
-        referred_by: row.referrer_name,
-        notes: noteEntry,
-        lead_type: "customer_lead",
-        should_notify: true,
-        spam_reason: null,
-        tour_completed: true,
-        tour_date: nowIso,
-        ...leadFields,
-      });
+      const { data: created } = await supabaseAdmin
+        .from("leads")
+        .insert({
+          source: "referral_free_week",
+          status: "redeemed",
+          name: full_name,
+          email,
+          phone,
+          referral_code: row.referral_code,
+          referred_by: row.referrer_name,
+          notes: noteEntry,
+          lead_type: "customer_lead",
+          should_notify: true,
+          spam_reason: null,
+          tour_completed: true,
+          tour_date: nowIso,
+          ...leadFields,
+        })
+        .select("id")
+        .single();
+      if (created?.id) {
+        await supabaseAdmin.from("referrals").update({ lead_id: created.id }).eq("id", row.id);
+      }
     }
+    if (existingLead) {
+      await supabaseAdmin.from("referrals").update({ lead_id: existingLead.id }).eq("id", row.id);
+    }
+
 
     if (phone) {
       const send = await sendTwilioSms(
