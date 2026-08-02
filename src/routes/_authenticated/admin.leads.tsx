@@ -148,7 +148,58 @@ type Referral = {
   redeemed_at: string | null;
   redeemed_by: string | null;
   created_at: string;
+  promo_type?: string | null;
+  lead_id?: string | null;
+  access_starts_at?: string | null;
+  access_ends_at?: string | null;
+  referrer_reward_status?: string | null;
 };
+
+// Read-only free-week visibility derived from the referrals table.
+export type FreeWeekInfo = {
+  startsAt: string | null;
+  endsAt: string | null;
+  active: boolean;
+  daysLeft: number;
+  extended: boolean;
+};
+
+function chicagoDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    timeZone: "America/Chicago",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function buildFreeWeekMap(referrals: Referral[] | null): Record<string, FreeWeekInfo> {
+  const map: Record<string, FreeWeekInfo> = {};
+  if (!referrals) return map;
+  const extendedLeads = new Set(
+    referrals
+      .filter((r) => r.referrer_reward_status === "extended" && r.lead_id)
+      .map((r) => r.lead_id as string),
+  );
+  const now = Date.now();
+  for (const r of referrals) {
+    if (r.promo_type !== "free_week" || r.status !== "redeemed" || !r.lead_id) continue;
+    const endMs = r.access_ends_at ? new Date(r.access_ends_at).getTime() : NaN;
+    const active = Number.isFinite(endMs) && endMs > now;
+    const daysLeft = active ? Math.max(1, Math.ceil((endMs - now) / 86_400_000)) : 0;
+    const prev = map[r.lead_id];
+    const info: FreeWeekInfo = {
+      startsAt: r.access_starts_at ?? null,
+      endsAt: r.access_ends_at ?? null,
+      active,
+      daysLeft,
+      extended: extendedLeads.has(r.lead_id),
+    };
+    // Keep the record with the latest end date.
+    if (!prev || (info.endsAt && (!prev.endsAt || info.endsAt > prev.endsAt))) map[r.lead_id] = info;
+  }
+  return map;
+}
 
 type TypeFilter = "customer_lead" | "existing_member" | "vendor_solicitation" | "spam" | "all";
 type Tab = "leads" | "referrals" | "analytics" | "settings";
@@ -454,6 +505,7 @@ function AdminLeads() {
       {tab === "leads" && (
         <LeadsView
           leads={leads}
+          referrals={referrals}
           typeFilter={typeFilter}
           setTypeFilter={setTypeFilter}
           statusFilter={statusFilter}
@@ -699,10 +751,11 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
 }
 
 function LeadsView({
-  leads, typeFilter, setTypeFilter, statusFilter, setStatusFilter,
+  leads, referrals, typeFilter, setTypeFilter, statusFilter, setStatusFilter,
   sourceFilter, setSourceFilter, sortBy, setSortBy, query, setQuery, updateLead,
 }: {
   leads: Lead[] | null;
+  referrals: Referral[] | null;
   typeFilter: TypeFilter; setTypeFilter: (t: TypeFilter) => void;
   statusFilter: CrmStatus | "all"; setStatusFilter: (s: CrmStatus | "all") => void;
   sourceFilter: string; setSourceFilter: (s: string) => void;
@@ -714,6 +767,7 @@ function LeadsView({
     const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1);
   }, []);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("none");
+  const freeWeekMap = useMemo(() => buildFreeWeekMap(referrals), [referrals]);
 
   const byType = useMemo(
     () => leads?.filter((l) => typeFilter === "all" || (l.lead_type ?? "customer_lead") === typeFilter) ?? [],
@@ -879,7 +933,7 @@ function LeadsView({
 
       <div className="mt-6 space-y-3">
         {sorted.map((lead) => (
-          <LeadCard key={lead.id} lead={lead} updateLead={updateLead} />
+          <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} />
         ))}
       </div>
     </>
@@ -1004,7 +1058,7 @@ type SmsMessage = {
   metadata: { sent_by?: string; kind?: string; test_mode?: boolean } | null;
 };
 
-function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void> }) {
+function LeadCard({ lead, updateLead, freeWeek }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void>; freeWeek?: FreeWeekInfo | null }) {
   const [expanded, setExpanded] = useState(false);
   const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
@@ -1206,6 +1260,11 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
               </>
             )}
             {lead.sequence_status && <SequenceStatusBadge status={lead.sequence_status} />}
+            {freeWeek?.active && (
+              <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/40">
+                Free Week — {freeWeek.daysLeft} {freeWeek.daysLeft === 1 ? "day" : "days"} left
+              </span>
+            )}
             {lead.sms_opted_out && (
               <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-destructive/15 text-destructive border-destructive/40">
                 SMS Opted Out
@@ -1397,6 +1456,24 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
               )}
             </div>
           </div>
+
+          {/* Free week status (read-only) */}
+          {freeWeek && (
+            <div className="rounded-md border border-purple-500/40 bg-purple-500/5 p-4">
+              <p className="text-xs uppercase tracking-widest text-purple-700 dark:text-purple-400">Free Week Promo</p>
+              <p className="mt-1 text-sm">
+                {freeWeek.active
+                  ? `Free Week Active — runs through ${freeWeek.endsAt ? chicagoDate(freeWeek.endsAt) : "unknown"}`
+                  : `Free Week Ended ${freeWeek.endsAt ? chicagoDate(freeWeek.endsAt) : "unknown"}`}
+                {freeWeek.extended && (
+                  <span className="text-muted-foreground"> (extended via referral rewards)</span>
+                )}
+              </p>
+              {freeWeek.startsAt && (
+                <p className="mt-1 text-xs text-muted-foreground">Started {chicagoDate(freeWeek.startsAt)}</p>
+              )}
+            </div>
+          )}
 
           {/* Original submission */}
           {(lead.interest || lead.message) && (
