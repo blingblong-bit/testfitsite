@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, Pencil } from "lucide-react";
 import { SmsConsentCheckbox } from "@/components/SmsConsent";
 import {
   upcomingDates,
@@ -13,9 +13,14 @@ import {
 import {
   getAvailableSlotsFn,
   submitAppointmentRequest,
+  getLeadContactByToken,
 } from "@/lib/appointments.functions";
 
 export const Route = createFileRoute("/schedule-visit")({
+  validateSearch: (search: Record<string, unknown>): { lead?: string } => {
+    const lead = typeof search.lead === "string" && search.lead.trim() ? search.lead.trim() : undefined;
+    return lead ? { lead } : {};
+  },
   head: () => ({
     meta: [
       { title: "Schedule a Visit — FIT Beyond Plus" },
@@ -38,6 +43,7 @@ export const Route = createFileRoute("/schedule-visit")({
 });
 
 function ScheduleVisit() {
+  const { lead: leadToken } = Route.useSearch();
   const days = useMemo(() => upcomingDates(), []);
   const [selectedDate, setSelectedDate] = useState<string>(days[0] ?? "");
   const [slots, setSlots] = useState<string[]>([]);
@@ -52,6 +58,36 @@ function ScheduleVisit() {
   const [website, setWebsite] = useState(""); // honeypot
   const [submitting, setSubmitting] = useState(false);
   const [confirmed, setConfirmed] = useState<string | null>(null);
+
+  // If a ?lead= token resolves successfully, we already know who this is —
+  // skip asking them to retype info they already gave us. "editingContact"
+  // lets them override it if the link somehow reached the wrong person.
+  const [resolvingLead, setResolvingLead] = useState(Boolean(leadToken));
+  const [leadResolved, setLeadResolved] = useState(false);
+  const [editingContact, setEditingContact] = useState(false);
+
+  const getLeadContact = useServerFn(getLeadContactByToken);
+
+  useEffect(() => {
+    if (!leadToken) return;
+    let cancelled = false;
+    getLeadContact({ data: { lead_id: leadToken } })
+      .then((res) => {
+        if (cancelled) return;
+        if (res.ok) {
+          setName(res.name);
+          setEmail(res.email);
+          setPhone(res.phone);
+          setLeadResolved(true);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setResolvingLead(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [leadToken, getLeadContact]);
 
   // 3-second bot-protection timer.
   const [mountedAt] = useState(() => Date.now());
@@ -117,6 +153,16 @@ function ScheduleVisit() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (resolvingLead) {
+    return (
+      <section className="container-page py-16 min-h-[70vh]">
+        <div className="mx-auto max-w-xl text-center py-16 text-muted-foreground">
+          Loading your info...
+        </div>
+      </section>
+    );
   }
 
   if (confirmed) {
@@ -247,40 +293,57 @@ function ScheduleVisit() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm mb-1" htmlFor="name">Name</label>
-              <input
-                id="name"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
+          {leadResolved && !editingContact ? (
+            <div className="rounded-md border border-border bg-card px-4 py-3 flex items-center justify-between gap-3">
+              <div className="text-sm">
+                <span className="text-muted-foreground">Booking as </span>
+                <span className="font-medium">{name}</span>
+                <span className="text-muted-foreground"> · {phone} · {email}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingContact(true)}
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline shrink-0"
+              >
+                <Pencil className="h-3 w-3" /> Not you?
+              </button>
             </div>
-            <div>
-              <label className="block text-sm mb-1" htmlFor="phone">Phone</label>
-              <input
-                id="phone"
-                type="tel"
-                required
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm mb-1" htmlFor="name">Name</label>
+                <input
+                  id="name"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1" htmlFor="phone">Phone</label>
+                <input
+                  id="phone"
+                  type="tel"
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm mb-1" htmlFor="email">Email</label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+              </div>
             </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm mb-1" htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
+          )}
 
           {/* honeypot */}
           <input

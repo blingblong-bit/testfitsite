@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
     const last4 = fromDigits.slice(-4);
     const { data: leadRows, error: leadErr } = await supabase
       .from("leads")
-      .select("id, name, phone, interest, sms_opted_out, notes, lead_type, created_at")
+      .select("id, name, email, phone, interest, sms_opted_out, notes, lead_type, created_at")
       .ilike("phone", `%${last4}%`)
       .order("created_at", { ascending: false })
       .limit(50);
@@ -374,7 +374,8 @@ Deno.serve(async (req) => {
 
     const isExistingMember = lead.lead_type === "existing_member";
 
-    const scheduleLine = `\n\nIf the customer wants to schedule a visit, tour, or day pass, simply direct them to fitbeyondplus.com/schedule-visit to pick a time that works for them — do not try to offer or book specific times yourself.`;
+    const personalizedScheduleUrl = `fitbeyondplus.com/schedule-visit?lead=${lead.id}`;
+    const scheduleLine = `\n\nIf the customer wants to schedule a visit, tour, or day pass, simply direct them to ${personalizedScheduleUrl} to pick a time that works for them — this link already has their info attached so they won't need to retype it. Do not try to offer or book specific times yourself.`;
 
     const prospectPrompt = `You are the friendly front desk assistant for FIT Beyond Plus, a full-service gym in Tullahoma, Tennessee. You are texting with a potential member named ${lead.name ?? "there"} who is interested in ${lead.interest ?? "getting started"}.
 
@@ -398,7 +399,7 @@ Set needs_human to true and stop responding if:
 - They say call me, speak to someone, or manager
 - You cannot confidently answer their question
 - This is the 5th or more exchange in the conversation
-- Their message is emotionally complex or ambiguous${scheduleLine}${declinedAltLabel ? `\n\nIMPORTANT CONTEXT — RECENT ALTERNATIVE TIME OFFER:\nOur staff previously suggested "${declinedAltLabel}" as an alternative visit time. The customer's latest reply was NOT a clear yes to that time (they either declined it or were ambiguous). Do NOT ignore this. In your reply, briefly acknowledge that "${declinedAltLabel}" doesn't work, and let them know you'll have staff reach out with another time, or point them to fitbeyondplus.com/schedule-visit to pick something themselves. Do not respond generically or as if the alternative offer never happened.` : ""}
+- Their message is emotionally complex or ambiguous${scheduleLine}${declinedAltLabel ? `\n\nIMPORTANT CONTEXT — RECENT ALTERNATIVE TIME OFFER:\nOur staff previously suggested "${declinedAltLabel}" as an alternative visit time. The customer's latest reply was NOT a clear yes to that time (they either declined it or were ambiguous). Do NOT ignore this. In your reply, briefly acknowledge that "${declinedAltLabel}" doesn't work, and let them know you'll have staff reach out with another time, or point them to ${personalizedScheduleUrl} to pick something themselves. Do not respond generically or as if the alternative offer never happened.` : ""}
 
 CRITICAL OUTPUT FORMAT — READ CAREFULLY:
 Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
@@ -431,28 +432,75 @@ or
       return twiml();
     }
 
-    const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": anthropicKey,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 350,
-        system: systemPrompt,
-        messages,
-      }),
-    });
+    // Call Claude with one retry + short backoff on non-2xx / network failure.
+    // Every failed attempt is logged durably to sms_conversation_log so this is
+    // diagnosable from the database even after Edge Function logs roll over.
+    const callClaude = () =>
+      fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 350,
+          system: systemPrompt,
+          messages,
+        }),
+      });
+
+    const logClaudeApiError = async (
+      attempt: number,
+      status: number | null,
+      responseBody: string,
+    ) => {
+      const preview = responseBody.slice(0, 500).replace(/\s+/g, " ");
+      console.error("[twilio-inbound-sms] claude api error", attempt, status, preview);
+      const { error: logErr } = await supabase.from("sms_conversation_log").insert({
+        lead_id: lead.id,
+        phone: from,
+        direction: "system",
+        body: `[claude_api_error] attempt ${attempt} status ${status ?? "network"}`,
+        from_ai: false,
+        provider_message_id: null,
+        status: "claude_api_error",
+        metadata: {
+          kind: "claude_api_error",
+          attempt,
+          http_status: status,
+          response_preview: preview,
+          inbound_body: body,
+        },
+      });
+      if (logErr) {
+        console.error("[twilio-inbound-sms] failed to log claude_api_error:", logErr.message);
+      }
+    };
+
+    let claudeRes: Response | null = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const res = await callClaude();
+        if (res.ok) {
+          claudeRes = res;
+          break;
+        }
+        const t = await res.text();
+        await logClaudeApiError(attempt, res.status, t);
+      } catch (e) {
+        await logClaudeApiError(attempt, null, (e as Error).message);
+      }
+      if (attempt === 1) await new Promise((r) => setTimeout(r, 1500));
+    }
 
     let aiReply: string | null = null;
     let needsHuman = true;
     let reason = "ai_error";
 
-    if (!claudeRes.ok) {
-      const t = await claudeRes.text();
-      console.error("[twilio-inbound-sms] claude error", claudeRes.status, t);
+    if (!claudeRes) {
+      // both attempts failed; falls through to needs_human staff alert
     } else {
       const payload = (await claudeRes.json()) as {
         content?: Array<{ type: string; text?: string }>;

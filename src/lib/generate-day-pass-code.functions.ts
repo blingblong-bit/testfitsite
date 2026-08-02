@@ -27,10 +27,14 @@ export const generateDayPassCode = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     try {
       const refResult = await createReferral({
-        referrer_name: "FIT Beyond Plus",
-        referrer_email: "info@fitbeyondplus.com",
-        friend_name: data.name,
-        friend_email: data.email,
+        data: {
+          referrer_name: "FIT Beyond Plus",
+          referrer_email: "info@fitbeyondplus.com",
+          friend_name: data.name,
+          friend_email: data.email,
+          promo_type: "day_pass",
+          is_self_referral: false,
+        },
       });
       if (!refResult.ok) {
         return { ok: false as const, error: refResult.error };

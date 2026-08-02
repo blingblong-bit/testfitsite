@@ -364,7 +364,13 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
   );
 }
 
-export function RedeemScreen({ onDone }: { onDone: () => void }) {
+export function RedeemScreen({
+  onDone,
+  initialCode,
+}: {
+  onDone: () => void;
+  initialCode?: string;
+}) {
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -373,6 +379,30 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
   const [referrerName, setReferrerName] = useState<string | null>(null);
   const [waiverAccepted, setWaiverAccepted] = useState(false);
   const [smsConsent, setSmsConsent] = useState(false);
+  const [autoLookupTried, setAutoLookupTried] = useState(false);
+  const [promoType, setPromoType] = useState<"day_pass" | "free_week">("day_pass");
+
+  // If a code is provided (e.g. from a QR code linking here with
+  // ?code=XXX), skip the manual entry step and look it up automatically.
+  useEffect(() => {
+    if (!initialCode || autoLookupTried) return;
+    setAutoLookupTried(true);
+    const clean = initialCode.trim().toUpperCase();
+    if (!clean) return;
+    setSubmitting(true);
+    setError(null);
+    lookupReferral({ data: { code: clean } }).then((result) => {
+      setSubmitting(false);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setCode(clean);
+      setReferrerName(result.referral.referrer_name ?? null);
+      setPromoType(result.referral.promo_type ?? "day_pass");
+      setStep("checkin");
+    });
+  }, [initialCode, autoLookupTried]);
 
   async function handleCodeSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -380,7 +410,7 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
     setError(null);
     const d = new FormData(e.currentTarget);
     const entered = String(d.get("code") ?? "").trim().toUpperCase();
-    const result = await lookupReferral(entered);
+    const result = await lookupReferral({ data: { code: entered } });
     setSubmitting(false);
     if (!result.ok) {
       setError(result.error);
@@ -388,12 +418,16 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
     }
     setCode(entered);
     setReferrerName(result.referral.referrer_name ?? null);
+    setPromoType(result.referral.promo_type ?? "day_pass");
     setStep("checkin");
   }
 
   async function handleCheckinSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!waiverAccepted) {
+    // Free-week claimants get walked through a real waiver in person when
+    // they come in — the online checkbox is only required for the
+    // same-day day-pass walk-in flow, which has no separate in-person step.
+    if (promoType !== "free_week" && !waiverAccepted) {
       setError("Please accept the liability waiver to continue.");
       return;
     }
@@ -404,10 +438,13 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
     setSubmitting(true);
     setError(null);
     const d = new FormData(e.currentTarget);
-    const result = await redeemReferral(code, {
-      full_name: String(d.get("name") ?? ""),
-      email: String(d.get("email") ?? ""),
-      phone: String(d.get("phone") ?? ""),
+    const result = await redeemReferral({
+      data: {
+        code,
+        full_name: String(d.get("name") ?? ""),
+        email: String(d.get("email") ?? ""),
+        phone: String(d.get("phone") ?? ""),
+      },
     });
     setSubmitting(false);
     if (!result.ok) {
@@ -421,10 +458,22 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
     return (
       <ConfirmationCard
         title="Referral redeemed successfully"
-        message="Free day pass approved. Welcome to FIT Beyond Plus!"
+        message={
+          promoType === "free_week"
+            ? "Your free week is active! Welcome to FIT Beyond Plus — see you soon."
+            : "Free day pass approved. Welcome to FIT Beyond Plus!"
+        }
         onDone={onDone}
       />
     );
+
+  if (initialCode && submitting && step === "code") {
+    return (
+      <div className="max-w-xl mx-auto text-center py-16 text-muted-foreground">
+        Looking up your code...
+      </div>
+    );
+  }
 
   if (step === "code") {
     return (
@@ -468,7 +517,9 @@ export function RedeemScreen({ onDone }: { onDone: () => void }) {
         <KioskField label="Full name" name="name" required />
         <KioskField label="Phone" name="phone" type="tel" required />
         <KioskField label="Email" name="email" type="email" required />
-        <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
+        {promoType !== "free_week" && (
+          <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
+        )}
         <SmsConsentCheckbox checked={smsConsent} onChange={setSmsConsent} />
         {error && <p className="text-sm text-destructive">{error}</p>}
         <SubmitButton submitting={submitting} label="Complete Check-In" />
@@ -498,10 +549,14 @@ export function ReferScreen({ onDone }: { onDone: () => void }) {
     setError(null);
     const d = new FormData(e.currentTarget);
     const result = await createReferral({
-      referrer_name: String(d.get("referrer_name") ?? ""),
-      referrer_email: String(d.get("referrer_email") ?? ""),
-      friend_name: String(d.get("friend_name") ?? ""),
-      friend_email: String(d.get("friend_email") ?? ""),
+      data: {
+        referrer_name: String(d.get("referrer_name") ?? ""),
+        referrer_email: String(d.get("referrer_email") ?? ""),
+        friend_name: String(d.get("friend_name") ?? ""),
+        friend_email: String(d.get("friend_email") ?? ""),
+        promo_type: "day_pass",
+        is_self_referral: false,
+      },
     });
     setSubmitting(false);
     if (!result.ok) {

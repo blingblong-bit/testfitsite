@@ -25,6 +25,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CombatSportsRouteImport } from './routes/combat-sports'
 import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as ClassCheckinRouteImport } from './routes/class-checkin'
+import { Route as ClaimFreeWeekRouteImport } from './routes/claim-free-week'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
@@ -45,6 +46,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
+import { Route as AuthenticatedAdminFreeWeekArrivalsRouteImport } from './routes/_authenticated/admin.free-week-arrivals'
 import { Route as AuthenticatedAdminDayPassApprovalsRouteImport } from './routes/_authenticated/admin.day-pass-approvals'
 import { Route as AuthenticatedAdminClassCheckinsRouteImport } from './routes/_authenticated/admin.class-checkins'
 import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
@@ -136,6 +138,11 @@ const ClassesRoute = ClassesRouteImport.update({
 const ClassCheckinRoute = ClassCheckinRouteImport.update({
   id: '/class-checkin',
   path: '/class-checkin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClaimFreeWeekRoute = ClaimFreeWeekRouteImport.update({
+  id: '/claim-free-week',
+  path: '/claim-free-week',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogRoute = BlogRouteImport.update({
@@ -239,6 +246,12 @@ const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
   path: '/admin/leads',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminFreeWeekArrivalsRoute =
+  AuthenticatedAdminFreeWeekArrivalsRouteImport.update({
+    id: '/admin/free-week-arrivals',
+    path: '/admin/free-week-arrivals',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminDayPassApprovalsRoute =
   AuthenticatedAdminDayPassApprovalsRouteImport.update({
     id: '/admin/day-pass-approvals',
@@ -316,6 +329,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
+  '/claim-free-week': typeof ClaimFreeWeekRoute
   '/class-checkin': typeof ClassCheckinRoute
   '/classes': typeof ClassesRouteWithChildren
   '/combat-sports': typeof CombatSportsRouteWithChildren
@@ -350,6 +364,7 @@ export interface FileRoutesByFullPath {
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
+  '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
@@ -364,6 +379,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/claim-free-week': typeof ClaimFreeWeekRoute
   '/class-checkin': typeof ClassCheckinRoute
   '/contact': typeof ContactRoute
   '/day-pass': typeof DayPassRoute
@@ -396,6 +412,7 @@ export interface FileRoutesByTo {
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
+  '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
@@ -413,6 +430,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
+  '/claim-free-week': typeof ClaimFreeWeekRoute
   '/class-checkin': typeof ClassCheckinRoute
   '/classes': typeof ClassesRouteWithChildren
   '/combat-sports': typeof CombatSportsRouteWithChildren
@@ -447,6 +465,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/_authenticated/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/_authenticated/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
+  '/_authenticated/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
@@ -464,6 +483,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/blog'
+    | '/claim-free-week'
     | '/class-checkin'
     | '/classes'
     | '/combat-sports'
@@ -498,6 +518,7 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/class-checkins'
     | '/admin/day-pass-approvals'
+    | '/admin/free-week-arrivals'
     | '/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/process-appointment-reminders'
@@ -512,6 +533,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/claim-free-week'
     | '/class-checkin'
     | '/contact'
     | '/day-pass'
@@ -544,6 +566,7 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/class-checkins'
     | '/admin/day-pass-approvals'
+    | '/admin/free-week-arrivals'
     | '/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/process-appointment-reminders'
@@ -560,6 +583,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/blog'
+    | '/claim-free-week'
     | '/class-checkin'
     | '/classes'
     | '/combat-sports'
@@ -594,6 +618,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/blog'
     | '/_authenticated/admin/class-checkins'
     | '/_authenticated/admin/day-pass-approvals'
+    | '/_authenticated/admin/free-week-arrivals'
     | '/_authenticated/admin/leads'
     | '/lovable/email/suppression'
     | '/api/public/hooks/process-appointment-reminders'
@@ -611,6 +636,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   BlogRoute: typeof BlogRouteWithChildren
+  ClaimFreeWeekRoute: typeof ClaimFreeWeekRoute
   ClassCheckinRoute: typeof ClassCheckinRoute
   ClassesRoute: typeof ClassesRouteWithChildren
   CombatSportsRoute: typeof CombatSportsRouteWithChildren
@@ -756,6 +782,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClassCheckinRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/claim-free-week': {
+      id: '/claim-free-week'
+      path: '/claim-free-week'
+      fullPath: '/claim-free-week'
+      preLoaderRoute: typeof ClaimFreeWeekRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog': {
       id: '/blog'
       path: '/blog'
@@ -896,6 +929,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/free-week-arrivals': {
+      id: '/_authenticated/admin/free-week-arrivals'
+      path: '/admin/free-week-arrivals'
+      fullPath: '/admin/free-week-arrivals'
+      preLoaderRoute: typeof AuthenticatedAdminFreeWeekArrivalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/day-pass-approvals': {
       id: '/_authenticated/admin/day-pass-approvals'
       path: '/admin/day-pass-approvals'
@@ -990,6 +1030,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminBlogRoute: typeof AuthenticatedAdminBlogRoute
   AuthenticatedAdminClassCheckinsRoute: typeof AuthenticatedAdminClassCheckinsRoute
   AuthenticatedAdminDayPassApprovalsRoute: typeof AuthenticatedAdminDayPassApprovalsRoute
+  AuthenticatedAdminFreeWeekArrivalsRoute: typeof AuthenticatedAdminFreeWeekArrivalsRoute
   AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
 }
 
@@ -1002,6 +1043,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminClassCheckinsRoute: AuthenticatedAdminClassCheckinsRoute,
   AuthenticatedAdminDayPassApprovalsRoute:
     AuthenticatedAdminDayPassApprovalsRoute,
+  AuthenticatedAdminFreeWeekArrivalsRoute:
+    AuthenticatedAdminFreeWeekArrivalsRoute,
   AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
 }
 
@@ -1055,6 +1098,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   BlogRoute: BlogRouteWithChildren,
+  ClaimFreeWeekRoute: ClaimFreeWeekRoute,
   ClassCheckinRoute: ClassCheckinRoute,
   ClassesRoute: ClassesRouteWithChildren,
   CombatSportsRoute: CombatSportsRouteWithChildren,

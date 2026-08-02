@@ -212,6 +212,24 @@ export const submitAppointmentRequest = createServerFn({ method: "POST" })
     const send = await sendTwilioSms(to, msg);
     await logOutbound(leadId, to, msg, send.sid ?? null, "appointment_requested");
 
+    // Alert staff so a new booking never sits unnoticed — the whole point
+    // of this system is that a human doesn't need to babysit it, but a
+    // new pending request is exactly the kind of thing staff needs to
+    // know about even if they're not actively checking the tracker.
+    const staffPhone = process.env.STAFF_ALERT_PHONE;
+    if (staffPhone) {
+      const typeLabel = data.visit_type === "day_pass" ? "day pass" : "tour";
+      const alertMsg = `⚡ New ${typeLabel} request from ${data.name.trim()} for ${formatChicagoDateTime(
+        data.requested_time,
+      )}. Approve or suggest a new time in the Lead Tracker.`;
+      const alertSend = await sendTwilioSms(normalizePhoneE164(staffPhone), alertMsg);
+      if (!alertSend.ok) {
+        console.error("[appointments] staff alert failed", alertSend.error);
+      }
+    } else {
+      console.error("[appointments] STAFF_ALERT_PHONE not configured — no staff alert sent");
+    }
+
     return { ok: true as const, appointment_id: appt.id as string };
   });
 
@@ -385,4 +403,41 @@ export const declineAppointment = createServerFn({ method: "POST" })
         .eq("id", row.lead_id);
     }
     return { ok: true as const };
+  });
+
+const LeadContactSchema = z.object({ lead_id: z.string().uuid() });
+
+/**
+ * Resolves minimal contact info for a personalized schedule-visit link
+ * (fitbeyondplus.com/schedule-visit?lead=<uuid>), so someone who already
+ * gave us their info (e.g. via a text conversation) doesn't have to
+ * retype name/email/phone just to book a time.
+ *
+ * Deliberately returns ONLY name/email/phone — nothing else about the
+ * lead record (no notes, no conversation history, no internal status) —
+ * since the lead's own UUID doubles as the access token for this lookup
+ * and shouldn't expose more than what's needed to pre-fill a form.
+ */
+export const getLeadContactByToken = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => LeadContactSchema.parse(d))
+  .handler(async ({
+    data,
+  }): Promise<
+    | { ok: true; name: string; email: string; phone: string }
+    | { ok: false; error: string }
+  > => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin
+      .from("leads")
+      .select("name, email, phone")
+      .eq("id", data.lead_id)
+      .maybeSingle();
+    if (error) return { ok: false, error: error.message };
+    if (!row) return { ok: false, error: "not_found" };
+    return {
+      ok: true,
+      name: row.name ?? "",
+      email: row.email ?? "",
+      phone: row.phone ?? "",
+    };
   });

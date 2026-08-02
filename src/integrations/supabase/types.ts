@@ -474,6 +474,8 @@ export type Database = {
       }
       referrals: {
         Row: {
+          access_ends_at: string | null
+          access_starts_at: string | null
           created_at: string
           email_sent: boolean
           email_sent_at: string | null
@@ -483,15 +485,19 @@ export type Database = {
           friend_name: string
           id: string
           normalized_referrer_email: string | null
+          promo_type: string
           redeemed_at: string | null
           redeemed_by: string | null
           referral_code: string
           referrer_contact: string | null
           referrer_email: string | null
+          referrer_is_member: boolean | null
           referrer_name: string
           status: string
         }
         Insert: {
+          access_ends_at?: string | null
+          access_starts_at?: string | null
           created_at?: string
           email_sent?: boolean
           email_sent_at?: string | null
@@ -501,15 +507,19 @@ export type Database = {
           friend_name: string
           id?: string
           normalized_referrer_email?: string | null
+          promo_type?: string
           redeemed_at?: string | null
           redeemed_by?: string | null
           referral_code: string
           referrer_contact?: string | null
           referrer_email?: string | null
+          referrer_is_member?: boolean | null
           referrer_name: string
           status?: string
         }
         Update: {
+          access_ends_at?: string | null
+          access_starts_at?: string | null
           created_at?: string
           email_sent?: boolean
           email_sent_at?: string | null
@@ -519,11 +529,13 @@ export type Database = {
           friend_name?: string
           id?: string
           normalized_referrer_email?: string | null
+          promo_type?: string
           redeemed_at?: string | null
           redeemed_by?: string | null
           referral_code?: string
           referrer_contact?: string | null
           referrer_email?: string | null
+          referrer_is_member?: boolean | null
           referrer_name?: string
           status?: string
         }
