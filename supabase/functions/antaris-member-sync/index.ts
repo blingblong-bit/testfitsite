@@ -363,8 +363,15 @@ Deno.serve(async (_req) => {
     }
   }
 
+  const nudge = await runPostTrialNudges(supabase);
+
   return new Response(
-    JSON.stringify({ checked, converted, errors }),
+    JSON.stringify({
+      checked,
+      converted,
+      errors: errors + nudge.errors,
+      post_trial_nudged: nudge.nudged,
+    }),
     { headers: { "Content-Type": "application/json" } },
   );
 });
