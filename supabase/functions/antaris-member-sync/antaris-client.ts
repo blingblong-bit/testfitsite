@@ -142,6 +142,45 @@ async function getMembershipStatus(
   }
 }
 
+export type MembershipAgreement = {
+  id?: string | number | null;
+  initial_payment_amount?: number | string | null;
+  recurring_payment_amount?: number | string | null;
+  buyer_note?: string | null;
+  status?: string | null;
+};
+
+// READ-ONLY: GET /v1/clients/{id}/memberships. Never writes.
+export async function getMembershipAgreements(
+  clientId: string | number,
+): Promise<MembershipAgreement[]> {
+  try {
+    const token = await login();
+    if (!token) return [];
+    const res = await fetch(
+      `${BASE_URL}/v1/clients/${encodeURIComponent(String(clientId))}/memberships`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (!res.ok) {
+      console.error("[antaris] memberships failed", res.status);
+      return [];
+    }
+    const json = await res.json();
+    const arr = Array.isArray(json)
+      ? json
+      : Array.isArray(json?.data)
+        ? json.data
+        : Array.isArray(json?.results)
+          ? json.results
+          : [];
+    return arr as MembershipAgreement[];
+  } catch (e) {
+    console.error("[antaris] memberships exception", e);
+    return [];
+  }
+}
+
+
 export type MemberMatch = {
   isMember: boolean;
   confidence: number;

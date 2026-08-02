@@ -1,7 +1,7 @@
 // Antaris member sync — polls recent leads and marks conversions when a
 // matching Active member is found in Antaris. READ-ONLY toward Antaris.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { checkMemberMatch } from "./antaris-client.ts";
+import { checkMemberMatch, getMembershipAgreements } from "./antaris-client.ts";
 
 const TEST_EMAIL = "smstest@fitbeyondplus.com";
 
@@ -131,6 +131,46 @@ Deno.serve(async (_req) => {
       if (!match.isMember) continue;
 
       const ts = new Date().toISOString();
+
+      // Free-week trial records in Antaris look like memberships but have a
+      // $0(.01) price or a "free week" buyer note — never a real conversion.
+      let freeWeek: { amount: string; note: string } | null = null;
+      if (match.clientId) {
+        try {
+          const agreements = await getMembershipAgreements(match.clientId);
+          for (const a of agreements) {
+            const init = Number(a.initial_payment_amount ?? NaN);
+            const rec = Number(a.recurring_payment_amount ?? NaN);
+            const note = String(a.buyer_note ?? "");
+            const cheap =
+              (Number.isFinite(init) && init <= 0.01) ||
+              (Number.isFinite(rec) && rec <= 0.01);
+            const noted = note.toLowerCase().includes("free week");
+            if (cheap || noted) {
+              const amt = Number.isFinite(init) ? init : rec;
+              freeWeek = {
+                amount: Number.isFinite(amt) ? amt.toFixed(2) : "unknown",
+                note,
+              };
+              break;
+            }
+          }
+        } catch (e) {
+          console.error("[antaris-sync] memberships lookup failed", lead.id, e);
+        }
+      }
+
+      if (freeWeek) {
+        const line = `[${ts}] Antaris record detected as free-week trial (not a paying conversion) — payment: $${freeWeek.amount}, note: '${freeWeek.note}'`;
+        const notes = lead.notes ? `${lead.notes}\n${line}` : line;
+        const { error: fwErr } = await supabase
+          .from("leads")
+          .update({ notes })
+          .eq("id", lead.id);
+        if (fwErr) throw fwErr;
+        continue;
+      }
+
       // Antaris date_joined is day-granular (YYYY-MM-DD), so compare days —
       // joining the same day the lead came in is still a genuine conversion.
       const joinDay = match.joinDate ? String(match.joinDate).slice(0, 10) : "";
@@ -174,6 +214,7 @@ Deno.serve(async (_req) => {
 
       converted += 1;
       await sendWelcomeIfNeeded(supabase, lead);
+
     } catch (e) {
       errors += 1;
       console.error("[antaris-sync] lead error", lead.id, e);
