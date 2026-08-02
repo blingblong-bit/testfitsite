@@ -228,6 +228,25 @@ function isFollowUpDueToday(lead: Lead): boolean {
   return due <= today.getTime();
 }
 
+// Effective join date for a converted lead: prefer the real membership start
+// date from Antaris, otherwise fall back to when we detected the conversion.
+function joinDateOf(lead: Lead): Date | null {
+  const raw = lead.membership_start_date
+    ? lead.membership_start_date + "T00:00:00"
+    : lead.converted_at;
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function joinedInMonth(lead: Lead, monthStart: Date): boolean {
+  if (!lead.became_member) return false;
+  const d = joinDateOf(lead);
+  return !!d && d >= monthStart;
+}
+
+
+
 function computePriority(lead: Lead): Priority {
   if (lead.crm_status === "Joined" || lead.crm_status === "Lost Lead") return "low";
   const since = daysSince(lead.last_contacted_at);
@@ -714,7 +733,7 @@ function LeadsView({
       if (quickFilter === "due_today" && !isFollowUpDueToday(l)) return false;
       if (quickFilter === "tours_scheduled" && !(l.tour_scheduled && !l.tour_completed)) return false;
       if (quickFilter === "tours_completed" && !l.tour_completed) return false;
-      if (quickFilter === "joined_this_month" && !(l.became_member && l.membership_start_date && new Date(l.membership_start_date) >= monthStart)) return false;
+      if (quickFilter === "joined_this_month" && !joinedInMonth(l, monthStart)) return false;
       if (q) {
         const hay = `${l.name} ${l.email} ${l.phone ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
@@ -766,10 +785,11 @@ function LeadsView({
     const followUpsDueToday = customerLeads.filter((l) => isFollowUpDueToday(l)).length;
     const toursScheduled = customerLeads.filter((l) => l.tour_scheduled && !l.tour_completed).length;
     const toursCompleted = customerLeads.filter((l) => l.tour_completed).length;
-    const joinedThisMonth = customerLeads.filter((l) => l.became_member && l.membership_start_date && new Date(l.membership_start_date) >= monthStart).length;
+    const joinedThisMonth = customerLeads.filter((l) => joinedInMonth(l, monthStart)).length;
     const totalForConversion = customerLeads.length;
-    const totalJoined = customerLeads.filter((l) => l.became_member).length;
+    const totalJoined = customerLeads.filter((l) => l.became_member || l.crm_status === "Joined").length;
     const conversionRate = totalForConversion === 0 ? 0 : Math.round((totalJoined / totalForConversion) * 100);
+
     return { newLeads, highPriority, followUpsDueToday, toursScheduled, toursCompleted, joinedThisMonth, conversionRate };
   }, [customerLeads, monthStart]);
 

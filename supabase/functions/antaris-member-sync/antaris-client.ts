@@ -76,6 +76,9 @@ type AntarisClient = {
   last_name?: string | null;
   cell_phone?: string | null;
   home_phone?: string | null;
+  date_joined?: string | null;
+  updated_at?: string | null;
+
 };
 
 function digitsOnly(v: string | null | undefined): string {
@@ -202,7 +205,17 @@ export async function checkMemberMatch(
     const clientId = String(best.c.id ?? best.c.client_id ?? "");
     if (!clientId) return fallback;
 
-    const { status, joinDate } = await getMembershipStatus(token, clientId);
+    const { status, joinDate: statusJoinDate } = await getMembershipStatus(
+      token,
+      clientId,
+    );
+
+    // /membershipStatus never returns a join date; the /v1/clients/search
+    // payload does (date_joined). Prefer that, fall back to status payload.
+    const joinDate =
+      (best.c.date_joined ?? null) ||
+      statusJoinDate ||
+      (best.c.updated_at ?? null);
 
     return {
       isMember: status === "Active" && best.score >= 80,
@@ -211,6 +224,7 @@ export async function checkMemberMatch(
       status,
       joinDate,
     };
+
   } catch (e) {
     console.error("[antaris] checkMemberMatch exception", e);
     return fallback;

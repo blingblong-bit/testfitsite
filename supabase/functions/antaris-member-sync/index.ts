@@ -131,14 +131,21 @@ Deno.serve(async (_req) => {
       if (!match.isMember) continue;
 
       const ts = new Date().toISOString();
-      const leadCreated = lead.created_at ? new Date(lead.created_at).getTime() : 0;
-      const antarisDate = match.joinDate ? new Date(match.joinDate).getTime() : NaN;
+      // Antaris date_joined is day-granular (YYYY-MM-DD), so compare days —
+      // joining the same day the lead came in is still a genuine conversion.
+      const joinDay = match.joinDate ? String(match.joinDate).slice(0, 10) : "";
+      const leadDay = lead.created_at
+        ? new Date(lead.created_at).toLocaleDateString("en-CA", {
+            timeZone: "America/Chicago",
+          })
+        : "";
       const isGenuineConversion =
-        !Number.isNaN(antarisDate) && antarisDate > leadCreated;
+        /^\d{4}-\d{2}-\d{2}$/.test(joinDay) && !!leadDay && joinDay >= leadDay;
 
       const noteLine = isGenuineConversion
-        ? `[${ts}] Converted — Antaris join date (${match.joinDate}) confirms signup after lead creation`
-        : `[${ts}] Existing member match — Antaris join date predates or is unavailable relative to lead creation`;
+        ? `[${ts}] Converted — Antaris join date (${joinDay}) confirms signup on/after lead creation (${leadDay})`
+        : `[${ts}] Existing member match — Antaris join date (${joinDay || "unavailable"}) predates lead creation (${leadDay})`;
+
       const nextNotes = lead.notes ? `${lead.notes}\n${noteLine}` : noteLine;
 
       const updatePayload: Record<string, unknown> = {
@@ -149,9 +156,15 @@ Deno.serve(async (_req) => {
         should_notify: false,
         notes: nextNotes,
       };
+      // Real Antaris join date (YYYY-MM-DD) — set for any confirmed member.
+      if (match.joinDate) {
+        const d = String(match.joinDate).slice(0, 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) updatePayload.membership_start_date = d;
+      }
       if (!isGenuineConversion) {
         updatePayload.lead_type = "existing_member";
       }
+
 
       const { error: updErr } = await supabase
         .from("leads")
