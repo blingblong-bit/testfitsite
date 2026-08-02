@@ -149,9 +149,15 @@ Deno.serve(async (_req) => {
         should_notify: false,
         notes: nextNotes,
       };
+      // Real Antaris join date (YYYY-MM-DD) — set for any confirmed member.
+      if (match.joinDate) {
+        const d = String(match.joinDate).slice(0, 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) updatePayload.membership_start_date = d;
+      }
       if (!isGenuineConversion) {
         updatePayload.lead_type = "existing_member";
       }
+
 
       const { error: updErr } = await supabase
         .from("leads")
