@@ -1,7 +1,38 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendReferralEmail } from "@/lib/send-referral-email.functions";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
+
+type AdminDb = SupabaseClient<Database>;
+
+/**
+ * Finds an existing lead by the last 10 digits of their phone number —
+ * the same dedup pattern used in submitAppointmentRequest and
+ * processDayPassCheckin (phone formats vary wildly across entry points).
+ */
+async function findLeadByPhone(
+  db: AdminDb,
+  phone: string,
+): Promise<{ id: string; notes: string | null; name: string | null; phone: string | null } | null> {
+  const target = (phone ?? "").replace(/\D/g, "").slice(-10);
+  if (target.length !== 10) return null;
+  const { data, error } = await db
+    .from("leads")
+    .select("id, notes, name, phone")
+    .ilike("phone", `%${target.slice(-4)}%`)
+    .limit(50);
+  if (error) {
+    console.error("[referrals] lead phone lookup failed", error.message);
+    return null;
+  }
+  const match = (data ?? []).find(
+    (r) => (r.phone ?? "").replace(/\D/g, "").slice(-10) === target,
+  );
+  return match ?? null;
+}
+
 
 function normalizePhoneE164(raw: string): string {
   const trimmed = raw.trim();
