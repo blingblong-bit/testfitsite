@@ -497,6 +497,72 @@ export const redeemReferral = createServerFn({ method: "POST" })
         .single();
       if (pendErr) return { ok: false, error: pendErr.message };
 
+      // Move the SAME lead created at claim time forward — never create a
+      // duplicate. Fallback creates one only if claim-time creation failed.
+      try {
+        const note = `[${nowIso}] Arrived at front desk, awaiting staff confirmation`;
+        const leadId = (pending as { lead_id?: string | null }).lead_id ?? null;
+
+        if (leadId) {
+          const { data: lead } = await supabaseAdmin
+            .from("leads")
+            .select("id, notes, name, phone")
+            .eq("id", leadId)
+            .maybeSingle();
+          const notes = lead?.notes ? `${lead.notes}\n${note}` : note;
+          const patch: Record<string, unknown> = {
+            crm_status: "Waiting on Response",
+            notes,
+          };
+          if (lead && (lead.phone ?? "").replace(/\D/g, "").slice(-10) !== last10(phone)) {
+            patch.phone = phone;
+          }
+          if (lead && (lead.name ?? "").trim() !== full_name) patch.name = full_name;
+          if (email) patch.email = email;
+          await supabaseAdmin.from("leads").update(patch).eq("id", leadId);
+        } else {
+          const existing = await findLeadByPhone(supabaseAdmin, phone);
+          let newId: string | null = existing?.id ?? null;
+          if (existing) {
+            const notes = existing.notes ? `${existing.notes}\n${note}` : note;
+            await supabaseAdmin
+              .from("leads")
+              .update({ crm_status: "Waiting on Response", notes, name: full_name, email })
+              .eq("id", existing.id);
+          } else {
+            const { data: created, error: insErr } = await supabaseAdmin
+              .from("leads")
+              .insert({
+                source: "referral_free_week",
+                name: full_name,
+                email,
+                phone,
+                referral_code: data.referral_code,
+                referred_by: data.referrer_name,
+                notes: note,
+                lead_type: "customer_lead",
+                should_notify: true,
+                spam_reason: null,
+                crm_status: "Waiting on Response",
+                sequence_status: "active",
+              })
+              .select("id")
+              .single();
+            if (insErr) throw new Error(insErr.message);
+            newId = created?.id ?? null;
+          }
+          if (newId) {
+            await supabaseAdmin.from("referrals").update({ lead_id: newId }).eq("id", data.id);
+          }
+        }
+      } catch (e) {
+        console.error(
+          "[redeemReferral] free_week lead update failed",
+          e instanceof Error ? e.message : e,
+        );
+      }
+
+
       const send = await sendTwilioSms(
         normalizePhoneE164(phone),
         `You're all set, ${full_name}! Come by the front desk at FIT Beyond Plus and we'll get your free week activated. We're at 449 W Lincoln St, Tullahoma!`,
