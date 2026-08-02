@@ -803,7 +803,67 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
       if (!send.ok) console.error("[confirmFreeWeekArrival] sms failed", send.error);
     }
 
+    // Referrer reward: extend the referrer's OWN free week by 7 days.
+    // Never allowed to fail the friend's arrival confirmation above.
+    if (!(row as { is_self_referral?: boolean }).is_self_referral) {
+      try {
+        const referrerTarget = (row.referrer_contact ?? "").replace(/\D/g, "").slice(-10);
+        if (referrerTarget.length === 10) {
+          const { data: candidates } = await supabaseAdmin
+            .from("referrals")
+            .select("id, friend_contact, access_ends_at")
+            .eq("promo_type", "free_week")
+            .eq("status", "redeemed")
+            .order("access_ends_at", { ascending: false, nullsFirst: false })
+            .limit(200);
+
+          const own = (candidates ?? []).find(
+            (r) => (r.friend_contact ?? "").replace(/\D/g, "").slice(-10) === referrerTarget,
+          );
+
+          if (own) {
+            const base = Math.max(
+              own.access_ends_at ? new Date(own.access_ends_at).getTime() : 0,
+              Date.now(),
+            );
+            const newEnd = new Date(base + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+            await supabaseAdmin
+              .from("referrals")
+              .update({ access_ends_at: newEnd })
+              .eq("id", own.id);
+            await supabaseAdmin
+              .from("referrals")
+              .update({ referrer_reward_status: "extended" })
+              .eq("id", row.id);
+
+            const send = await sendTwilioSms(
+              normalizePhoneE164(row.referrer_contact ?? ""),
+              `Hey! ${full_name || row.friend_name || "Your friend"} came in and redeemed their free week — as a thank you, we just added another 7 days to YOUR free week! Now runs through ${new Date(newEnd).toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "long", day: "numeric" })}.`,
+            );
+            if (!send.ok) console.error("[confirmFreeWeekArrival] referrer reward sms failed", send.error);
+          } else {
+            await supabaseAdmin
+              .from("referrals")
+              .update({ referrer_reward_status: "no_active_window" })
+              .eq("id", row.id);
+          }
+        } else {
+          await supabaseAdmin
+            .from("referrals")
+            .update({ referrer_reward_status: "no_active_window" })
+            .eq("id", row.id);
+        }
+      } catch (e) {
+        console.error(
+          "[confirmFreeWeekArrival] referrer reward failed",
+          e instanceof Error ? e.message : e,
+        );
+      }
+    }
+
     return { ok: true };
+
   });
 
 /**
