@@ -117,7 +117,7 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
     const overallConversion = allLeadsCount === 0 ? 0 : Math.round((allMembers / allLeadsCount) * 100);
 
     return {
-      current, previous, funnel, history,
+      current, previous, funnel, history, availableMonths,
       avgFirstContactHrs, avgResponseHrs, avgDaysToTour, avgDaysToMember,
       health: {
         activeLeads, highPriority, followUpsDue, toursToday,
@@ -126,7 +126,8 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
       },
       topRefs: topReferrers(referrals).slice(0, 5),
     };
-  }, [leads, referrals]);
+  }, [leads, referrals, selectedMonth]);
+
 
   async function rebuildSnapshots() {
     if (!leads || !referrals) return;
