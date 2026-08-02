@@ -94,6 +94,8 @@ export type Referral = {
   promo_type: "day_pass" | "free_week";
   access_starts_at: string | null;
   access_ends_at: string | null;
+  lead_id: string | null;
+
 };
 
 // End-of-summer free week claim deadline: Sept 7, 2026 11:59:59 PM
