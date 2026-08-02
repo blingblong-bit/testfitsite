@@ -510,7 +510,14 @@ export const redeemReferral = createServerFn({ method: "POST" })
             .eq("id", leadId)
             .maybeSingle();
           const notes = lead?.notes ? `${lead.notes}\n${note}` : note;
-          const patch: Record<string, unknown> = {
+          const patch: {
+            crm_status: string;
+            notes: string;
+            phone?: string;
+            name?: string;
+            email?: string;
+          } = {
+
             crm_status: "Waiting on Response",
             notes,
           };
