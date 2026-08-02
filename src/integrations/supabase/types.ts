@@ -487,6 +487,7 @@ export type Database = {
           is_self_referral: boolean
           lead_id: string | null
           normalized_referrer_email: string | null
+          post_trial_nudge_sent: boolean
           promo_type: string
           redeemed_at: string | null
           redeemed_by: string | null
@@ -512,6 +513,7 @@ export type Database = {
           is_self_referral?: boolean
           lead_id?: string | null
           normalized_referrer_email?: string | null
+          post_trial_nudge_sent?: boolean
           promo_type?: string
           redeemed_at?: string | null
           redeemed_by?: string | null
@@ -537,6 +539,7 @@ export type Database = {
           is_self_referral?: boolean
           lead_id?: string | null
           normalized_referrer_email?: string | null
+          post_trial_nudge_sent?: boolean
           promo_type?: string
           redeemed_at?: string | null
           redeemed_by?: string | null

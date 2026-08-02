@@ -1,0 +1,1 @@
+ALTER TABLE public.referrals ADD COLUMN IF NOT EXISTS post_trial_nudge_sent boolean NOT NULL DEFAULT false;
