@@ -505,6 +505,7 @@ function AdminLeads() {
       {tab === "leads" && (
         <LeadsView
           leads={leads}
+          referrals={referrals}
           typeFilter={typeFilter}
           setTypeFilter={setTypeFilter}
           statusFilter={statusFilter}
@@ -750,10 +751,11 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
 }
 
 function LeadsView({
-  leads, typeFilter, setTypeFilter, statusFilter, setStatusFilter,
+  leads, referrals, typeFilter, setTypeFilter, statusFilter, setStatusFilter,
   sourceFilter, setSourceFilter, sortBy, setSortBy, query, setQuery, updateLead,
 }: {
   leads: Lead[] | null;
+  referrals: Referral[] | null;
   typeFilter: TypeFilter; setTypeFilter: (t: TypeFilter) => void;
   statusFilter: CrmStatus | "all"; setStatusFilter: (s: CrmStatus | "all") => void;
   sourceFilter: string; setSourceFilter: (s: string) => void;
@@ -765,6 +767,7 @@ function LeadsView({
     const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1);
   }, []);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("none");
+  const freeWeekMap = useMemo(() => buildFreeWeekMap(referrals), [referrals]);
 
   const byType = useMemo(
     () => leads?.filter((l) => typeFilter === "all" || (l.lead_type ?? "customer_lead") === typeFilter) ?? [],
@@ -930,7 +933,7 @@ function LeadsView({
 
       <div className="mt-6 space-y-3">
         {sorted.map((lead) => (
-          <LeadCard key={lead.id} lead={lead} updateLead={updateLead} />
+          <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} />
         ))}
       </div>
     </>
@@ -1055,7 +1058,7 @@ type SmsMessage = {
   metadata: { sent_by?: string; kind?: string; test_mode?: boolean } | null;
 };
 
-function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void> }) {
+function LeadCard({ lead, updateLead, freeWeek }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void>; freeWeek?: FreeWeekInfo | null }) {
   const [expanded, setExpanded] = useState(false);
   const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
@@ -1257,6 +1260,11 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
               </>
             )}
             {lead.sequence_status && <SequenceStatusBadge status={lead.sequence_status} />}
+            {freeWeek?.active && (
+              <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/40">
+                Free Week — {freeWeek.daysLeft} {freeWeek.daysLeft === 1 ? "day" : "days"} left
+              </span>
+            )}
             {lead.sms_opted_out && (
               <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-destructive/15 text-destructive border-destructive/40">
                 SMS Opted Out
@@ -1448,6 +1456,24 @@ function LeadCard({ lead, updateLead }: { lead: Lead; updateLead: (id: string, p
               )}
             </div>
           </div>
+
+          {/* Free week status (read-only) */}
+          {freeWeek && (
+            <div className="rounded-md border border-purple-500/40 bg-purple-500/5 p-4">
+              <p className="text-xs uppercase tracking-widest text-purple-700 dark:text-purple-400">Free Week Promo</p>
+              <p className="mt-1 text-sm">
+                {freeWeek.active
+                  ? `Free Week Active — runs through ${freeWeek.endsAt ? chicagoDate(freeWeek.endsAt) : "unknown"}`
+                  : `Free Week Ended ${freeWeek.endsAt ? chicagoDate(freeWeek.endsAt) : "unknown"}`}
+                {freeWeek.extended && (
+                  <span className="text-muted-foreground"> (extended via referral rewards)</span>
+                )}
+              </p>
+              {freeWeek.startsAt && (
+                <p className="mt-1 text-xs text-muted-foreground">Started {chicagoDate(freeWeek.startsAt)}</p>
+              )}
+            </div>
+          )}
 
           {/* Original submission */}
           {(lead.interest || lead.message) && (
