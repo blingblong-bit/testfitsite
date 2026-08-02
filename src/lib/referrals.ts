@@ -300,6 +300,7 @@ export const createReferral = createServerFn({ method: "POST" })
             .update({ email_status: "pending" })
             .eq("id", inserted.id);
 
+          let smsOk = false;
           if (normalizedPhone) {
             const to = normalizePhoneE164(normalizedPhone);
             const redeemUrl = `https://fitbeyondplus.com/redeem-referral?code=${code}`;
@@ -307,12 +308,72 @@ export const createReferral = createServerFn({ method: "POST" })
               ? `FIT Beyond Plus: You're in! Your free week code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`
               : `FIT Beyond Plus: ${referrer_name} sent you a free week! Your code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`;
             const send = await sendTwilioSms(to, msg);
+            smsOk = send.ok;
             if (!send.ok) {
               console.error("[createReferral] free_week instant sms failed", send.error);
             }
           }
 
+          // Create the lead immediately at claim time so it shows up in the
+          // Lead Tracker right away — redemption and staff confirmation then
+          // update this SAME lead via referrals.lead_id. Never blocks the
+          // referral response.
+          if (isFreeWeek && smsOk && normalizedPhone) {
+            try {
+              const nowIso = new Date().toISOString();
+              const note = `[${nowIso}] Claimed End of Summer free week — code ${code}`;
+              const existing = await findLeadByPhone(supabaseAdmin, normalizedPhone);
+              let leadId: string | null = existing?.id ?? null;
+
+              if (existing) {
+                const notes = existing.notes ? `${existing.notes}\n${note}` : note;
+                await supabaseAdmin
+                  .from("leads")
+                  .update({
+                    notes,
+                    referral_code: code,
+                    referred_by: referrer_name,
+                  })
+                  .eq("id", existing.id);
+              } else {
+                const { data: newLead, error: leadErr } = await supabaseAdmin
+                  .from("leads")
+                  .insert({
+                    source: "referral_free_week",
+                    name: friend_name,
+                    email: null as unknown as string,
+                    phone: normalizedPhone,
+                    referral_code: code,
+                    referred_by: referrer_name,
+                    notes: note,
+                    lead_type: "customer_lead",
+                    should_notify: true,
+                    spam_reason: null,
+                    crm_status: "Contacted",
+                    sequence_status: "active",
+                  })
+                  .select("id")
+                  .single();
+                if (leadErr) throw new Error(leadErr.message);
+                leadId = newLead?.id ?? null;
+              }
+
+              if (leadId) {
+                await supabaseAdmin
+                  .from("referrals")
+                  .update({ lead_id: leadId })
+                  .eq("id", inserted.id);
+              }
+            } catch (e) {
+              console.error(
+                "[createReferral] free_week lead creation failed",
+                e instanceof Error ? e.message : e,
+              );
+            }
+          }
+
           return { ok: true, code };
+
         }
         try {
           const result = await sendReferralEmail({
