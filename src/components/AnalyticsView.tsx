@@ -165,7 +165,14 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
     return <div className="mt-8 text-sm text-muted-foreground">Loading analytics…</div>;
   }
 
-  const { current, previous, funnel, history, health, topRefs } = data;
+  const { current, previous, funnel, history, health, topRefs, availableMonths } = data;
+
+  const canGoNext = !isCurrentMonth;
+  function stepMonth(delta: number) {
+    const next = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + delta, 1);
+    if (next.getTime() > realCurrentMonth.getTime()) return;
+    setSelectedMonth(next);
+  }
 
   return (
     <div className="mt-8 space-y-10">
@@ -174,7 +181,7 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
           <h2 className="text-2xl font-semibold tracking-tight">Business Analytics</h2>
           <p className="text-sm text-muted-foreground">
             Lead generation, conversion, and follow-up performance — for{" "}
-            <span className="text-foreground font-medium">{monthLabel(new Date())}</span>.
+            <span className="text-foreground font-medium">{monthLabel(selectedMonth)}</span>.
           </p>
         </div>
         {isAdmin && (
@@ -188,6 +195,61 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
           </button>
         )}
       </header>
+
+      {/* Month selector */}
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-3">
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Previous month"
+            onClick={() => stepMonth(-1)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:bg-secondary"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next month"
+            disabled={!canGoNext}
+            onClick={() => stepMonth(1)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border hover:bg-secondary disabled:opacity-40 disabled:hover:bg-transparent"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        <label className="sr-only" htmlFor="analytics-month">Select month</label>
+        <select
+          id="analytics-month"
+          value={monthKey(selectedMonth)}
+          onChange={(e) => {
+            const [y, m] = e.target.value.split("-").map(Number);
+            setSelectedMonth(new Date(y, m - 1, 1));
+          }}
+          className="h-9 rounded-md border border-border bg-background px-3 text-sm"
+        >
+          {availableMonths.slice().reverse().map((m) => (
+            <option key={monthKey(m)} value={monthKey(m)}>
+              {monthLabel(m)}
+            </option>
+          ))}
+        </select>
+
+        <span className="text-sm text-muted-foreground">
+          Viewing: <span className="font-medium text-foreground">{monthLabel(selectedMonth)}</span>
+        </span>
+
+        {!isCurrentMonth && (
+          <button
+            type="button"
+            onClick={() => setSelectedMonth(realCurrentMonth)}
+            className="text-sm text-primary underline underline-offset-4 hover:no-underline"
+          >
+            Back to current month
+          </button>
+        )}
+      </div>
+
 
       {/* Monthly Scoreboard */}
       <Section title="Monthly Scoreboard" subtitle="This month's totals at a glance">
