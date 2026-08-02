@@ -228,6 +228,25 @@ function isFollowUpDueToday(lead: Lead): boolean {
   return due <= today.getTime();
 }
 
+// Effective join date for a converted lead: prefer the real membership start
+// date from Antaris, otherwise fall back to when we detected the conversion.
+function joinDateOf(lead: Lead): Date | null {
+  const raw = lead.membership_start_date
+    ? lead.membership_start_date + "T00:00:00"
+    : lead.converted_at;
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function joinedInMonth(lead: Lead, monthStart: Date): boolean {
+  if (!lead.became_member) return false;
+  const d = joinDateOf(lead);
+  return !!d && d >= monthStart;
+}
+
+
+
 function computePriority(lead: Lead): Priority {
   if (lead.crm_status === "Joined" || lead.crm_status === "Lost Lead") return "low";
   const since = daysSince(lead.last_contacted_at);
