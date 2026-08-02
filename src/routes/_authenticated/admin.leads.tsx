@@ -785,10 +785,11 @@ function LeadsView({
     const followUpsDueToday = customerLeads.filter((l) => isFollowUpDueToday(l)).length;
     const toursScheduled = customerLeads.filter((l) => l.tour_scheduled && !l.tour_completed).length;
     const toursCompleted = customerLeads.filter((l) => l.tour_completed).length;
-    const joinedThisMonth = customerLeads.filter((l) => l.became_member && l.membership_start_date && new Date(l.membership_start_date) >= monthStart).length;
+    const joinedThisMonth = customerLeads.filter((l) => joinedInMonth(l, monthStart)).length;
     const totalForConversion = customerLeads.length;
-    const totalJoined = customerLeads.filter((l) => l.became_member).length;
+    const totalJoined = customerLeads.filter((l) => l.became_member || l.crm_status === "Joined").length;
     const conversionRate = totalForConversion === 0 ? 0 : Math.round((totalJoined / totalForConversion) * 100);
+
     return { newLeads, highPriority, followUpsDueToday, toursScheduled, toursCompleted, joinedThisMonth, conversionRate };
   }, [customerLeads, monthStart]);
 
