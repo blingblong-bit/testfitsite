@@ -723,8 +723,20 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
       lead_score: 100,
     };
 
+    // Prefer the lead linked at claim time — that's the same record the
+    // Lead Tracker has been showing since the claim. Email/phone matching
+    // is only a fallback for referrals created before lead_id existed.
     let existingLead: { id: string; notes: string | null } | undefined;
-    if (email) {
+    const linkedLeadId = (row as { lead_id?: string | null }).lead_id ?? null;
+    if (linkedLeadId) {
+      const { data: linked } = await supabaseAdmin
+        .from("leads")
+        .select("id, notes")
+        .eq("id", linkedLeadId)
+        .maybeSingle();
+      if (linked) existingLead = linked;
+    }
+    if (!existingLead && email) {
       const { data: existingLeads, error: findLeadErr } = await supabaseAdmin
         .from("leads")
         .select("id, notes")
@@ -733,6 +745,11 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
       if (findLeadErr) return { ok: false, error: findLeadErr.message };
       existingLead = existingLeads?.[0];
     }
+    if (!existingLead && phone) {
+      const byPhone = await findLeadByPhone(supabaseAdmin, phone);
+      if (byPhone) existingLead = { id: byPhone.id, notes: byPhone.notes };
+    }
+
 
     if (existingLead) {
       const notes = existingLead.notes ? `${existingLead.notes}\n${noteEntry}` : noteEntry;
