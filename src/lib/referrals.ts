@@ -287,6 +287,7 @@ export const createReferral = createServerFn({ method: "POST" })
           email_status: "pending",
           promo_type: input.promo_type,
           referrer_is_member,
+          is_self_referral: input.is_self_referral,
         })
         .select("id")
         .single();
@@ -802,7 +803,21 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
       if (!send.ok) console.error("[confirmFreeWeekArrival] sms failed", send.error);
     }
 
+    // Referrer reward: extend the referrer's OWN free week by 7 days.
+    // Never allowed to fail the friend's arrival confirmation above.
+    try {
+      const { applyReferrerReward } = await import("./referrer-reward.server");
+      await applyReferrerReward(supabaseAdmin, row, full_name, sendTwilioSms);
+    } catch (e) {
+      console.error(
+        "[confirmFreeWeekArrival] referrer reward failed",
+        e instanceof Error ? e.message : e,
+      );
+    }
+
+
     return { ok: true };
+
   });
 
 /**
