@@ -93,6 +93,148 @@ async function sendWelcomeIfNeeded(
   });
 }
 
+async function sendSms(
+  supabase: ReturnType<typeof createClient>,
+  lead: { id: string; email: string | null },
+  phone: string,
+  body: string,
+  kind: string,
+): Promise<boolean> {
+  const to = normalizePhone(phone);
+  const isTest = (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL;
+
+  if (isTest) {
+    await supabase.from("sms_conversation_log").insert({
+      lead_id: lead.id,
+      phone: to,
+      direction: "outbound",
+      body: `TEST MODE - SMS not sent | ${body}`,
+      from_ai: false,
+      provider_message_id: null,
+      status: "test_mode",
+      metadata: { kind, test_mode: true, sent_by: "antaris_sync" },
+    });
+    return true;
+  }
+
+  const sid = Deno.env.get("TWILIO_ACCOUNT_SID");
+  const token = Deno.env.get("TWILIO_AUTH_TOKEN");
+  const from = Deno.env.get("TWILIO_FROM_NUMBER");
+  if (!sid || !token || !from) {
+    console.error("[antaris-sync] missing Twilio env");
+    return false;
+  }
+  const auth = btoa(`${sid}:${token}`);
+  const res = await fetch(
+    `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ To: to, From: from, Body: body }),
+    },
+  );
+  if (!res.ok) {
+    console.error("[antaris-sync] twilio error", res.status, await res.text());
+    return false;
+  }
+  const j = (await res.json()) as { sid?: string };
+  await supabase.from("sms_conversation_log").insert({
+    lead_id: lead.id,
+    phone: to,
+    direction: "outbound",
+    body,
+    from_ai: false,
+    provider_message_id: j.sid ?? null,
+    status: "sent",
+    metadata: { kind, sent_by: "antaris_sync" },
+  });
+  return true;
+}
+
+// Post-free-week re-engagement: trial ended, never became a paying member.
+async function runPostTrialNudges(
+  supabase: ReturnType<typeof createClient>,
+): Promise<{ nudged: number; errors: number }> {
+  let nudged = 0;
+  let errors = 0;
+  const nowIso = new Date().toISOString();
+
+  const { data: refs, error } = await supabase
+    .from("referrals")
+    .select(
+      "id, friend_name, lead_id, access_ends_at, leads!referrals_lead_id_fkey(id, name, email, phone, became_member, sms_opted_out)",
+    )
+    .eq("promo_type", "free_week")
+    .eq("status", "redeemed")
+    .eq("post_trial_nudge_sent", false)
+    .not("lead_id", "is", null)
+    .lt("access_ends_at", nowIso);
+
+  if (error) {
+    console.error("[antaris-sync] post-trial query failed", error.message);
+    return { nudged, errors: 1 };
+  }
+
+  for (const r of (refs ?? []) as unknown as Array<{
+    id: string;
+    friend_name: string | null;
+    lead_id: string;
+    leads: {
+      id: string;
+      name: string | null;
+      email: string | null;
+      phone: string | null;
+      became_member: boolean | null;
+      sms_opted_out: boolean | null;
+    } | null;
+  }>) {
+    try {
+      const lead = r.leads;
+      if (!lead) continue;
+      if (lead.became_member === true) continue;
+      if (lead.sms_opted_out) continue;
+      if (!lead.phone) continue;
+
+      const name = firstName(lead.name ?? r.friend_name);
+      const body = `Hey ${name}! Your free week at FIT Beyond Plus just wrapped up — hope you loved it! Ready to make it official? Reply here and we'll get you set up, or stop by anytime.`;
+
+      const ok = await sendSms(supabase, lead, lead.phone, body, "post_trial_nudge");
+      if (!ok) {
+        errors += 1;
+        continue;
+      }
+
+      const ts = new Date().toISOString();
+      const { error: refErr } = await supabase
+        .from("referrals")
+        .update({ post_trial_nudge_sent: true })
+        .eq("id", r.id);
+      if (refErr) throw refErr;
+
+      const { error: leadErr } = await supabase
+        .from("leads")
+        .update({
+          sequence_status: "active",
+          crm_status: "Contacted",
+          last_sms_at: ts,
+          last_contact_method: "sms",
+        })
+        .eq("id", lead.id);
+      if (leadErr) throw leadErr;
+
+      nudged += 1;
+    } catch (e) {
+      errors += 1;
+      console.error("[antaris-sync] post-trial nudge error", r.id, e);
+    }
+  }
+
+  return { nudged, errors };
+}
+
 Deno.serve(async (_req) => {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
