@@ -125,7 +125,12 @@ Deno.serve(async (req) => {
       lead.crm_status === "Joined" ||
       lead.crm_status === "Lost Lead" ||
       lead.last_sms_at !== null ||
-      !lead.phone
+      !lead.phone ||
+      // Free-week arrivals already get an accurate "you're active" text
+      // sent explicitly by confirmFreeWeekArrival at the moment staff
+      // confirms them — a second generic text here would be redundant
+      // and (before this fix) said the wrong thing entirely.
+      lead.source === "referral_free_week"
     ) {
       return new Response(JSON.stringify({ ok: true, skipped: true }), {
         headers: { "Content-Type": "application/json" },
