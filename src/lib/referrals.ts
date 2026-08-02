@@ -1,7 +1,38 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendReferralEmail } from "@/lib/send-referral-email.functions";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
+
+type AdminDb = SupabaseClient<Database>;
+
+/**
+ * Finds an existing lead by the last 10 digits of their phone number —
+ * the same dedup pattern used in submitAppointmentRequest and
+ * processDayPassCheckin (phone formats vary wildly across entry points).
+ */
+async function findLeadByPhone(
+  db: AdminDb,
+  phone: string,
+): Promise<{ id: string; notes: string | null; name: string | null; phone: string | null } | null> {
+  const target = (phone ?? "").replace(/\D/g, "").slice(-10);
+  if (target.length !== 10) return null;
+  const { data, error } = await db
+    .from("leads")
+    .select("id, notes, name, phone")
+    .ilike("phone", `%${target.slice(-4)}%`)
+    .limit(50);
+  if (error) {
+    console.error("[referrals] lead phone lookup failed", error.message);
+    return null;
+  }
+  const match = (data ?? []).find(
+    (r) => (r.phone ?? "").replace(/\D/g, "").slice(-10) === target,
+  );
+  return match ?? null;
+}
+
 
 function normalizePhoneE164(raw: string): string {
   const trimmed = raw.trim();
@@ -63,6 +94,8 @@ export type Referral = {
   promo_type: "day_pass" | "free_week";
   access_starts_at: string | null;
   access_ends_at: string | null;
+  lead_id: string | null;
+
 };
 
 // End-of-summer free week claim deadline: Sept 7, 2026 11:59:59 PM
@@ -269,6 +302,7 @@ export const createReferral = createServerFn({ method: "POST" })
             .update({ email_status: "pending" })
             .eq("id", inserted.id);
 
+          let smsOk = false;
           if (normalizedPhone) {
             const to = normalizePhoneE164(normalizedPhone);
             const redeemUrl = `https://fitbeyondplus.com/redeem-referral?code=${code}`;
@@ -276,12 +310,74 @@ export const createReferral = createServerFn({ method: "POST" })
               ? `FIT Beyond Plus: You're in! Your free week code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`
               : `FIT Beyond Plus: ${referrer_name} sent you a free week! Your code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`;
             const send = await sendTwilioSms(to, msg);
+            smsOk = send.ok;
             if (!send.ok) {
               console.error("[createReferral] free_week instant sms failed", send.error);
             }
           }
 
+          // Create the lead immediately at claim time so it shows up in the
+          // Lead Tracker right away — redemption and staff confirmation then
+          // update this SAME lead via referrals.lead_id. Never blocks the
+          // referral response.
+          if (isFreeWeek && smsOk && normalizedPhone) {
+            try {
+              const nowIso = new Date().toISOString();
+              const note = `[${nowIso}] Claimed End of Summer free week — code ${code}`;
+              const existing = await findLeadByPhone(supabaseAdmin, normalizedPhone);
+              let leadId: string | null = existing?.id ?? null;
+
+              if (existing) {
+                const notes = existing.notes ? `${existing.notes}\n${note}` : note;
+                await supabaseAdmin
+                  .from("leads")
+                  .update({
+                    notes,
+                    referral_code: code,
+                    referred_by: referrer_name,
+                  })
+                  .eq("id", existing.id);
+              } else {
+                const { data: newLead, error: leadErr } = await supabaseAdmin
+                  .from("leads")
+                  .insert({
+                    source: "referral_free_week",
+                    name: friend_name,
+                    // leads.email is NOT NULL; free-week claims are phone-only.
+                    email: "",
+
+                    phone: normalizedPhone,
+                    referral_code: code,
+                    referred_by: referrer_name,
+                    notes: note,
+                    lead_type: "customer_lead",
+                    should_notify: true,
+                    spam_reason: null,
+                    crm_status: "Contacted",
+                    sequence_status: "active",
+                  })
+                  .select("id")
+                  .single();
+                if (leadErr) throw new Error(leadErr.message);
+                leadId = newLead?.id ?? null;
+              }
+
+              if (leadId) {
+                await supabaseAdmin
+                  .from("referrals")
+                  .update({ lead_id: leadId })
+                  .eq("id", inserted.id);
+              }
+            } catch (e) {
+              console.error(
+                "[createReferral] free_week lead creation failed",
+                e instanceof Error ? e.message : e,
+              );
+            }
+          }
+
           return { ok: true, code };
+
         }
         try {
           const result = await sendReferralEmail({
@@ -402,6 +498,79 @@ export const redeemReferral = createServerFn({ method: "POST" })
         .select("*")
         .single();
       if (pendErr) return { ok: false, error: pendErr.message };
+
+      // Move the SAME lead created at claim time forward — never create a
+      // duplicate. Fallback creates one only if claim-time creation failed.
+      try {
+        const note = `[${nowIso}] Arrived at front desk, awaiting staff confirmation`;
+        const leadId = (pending as { lead_id?: string | null }).lead_id ?? null;
+
+        if (leadId) {
+          const { data: lead } = await supabaseAdmin
+            .from("leads")
+            .select("id, notes, name, phone")
+            .eq("id", leadId)
+            .maybeSingle();
+          const notes = lead?.notes ? `${lead.notes}\n${note}` : note;
+          const patch: {
+            crm_status: string;
+            notes: string;
+            phone?: string;
+            name?: string;
+            email?: string;
+          } = {
+
+            crm_status: "Waiting on Response",
+            notes,
+          };
+          if (lead && (lead.phone ?? "").replace(/\D/g, "").slice(-10) !== last10(phone)) {
+            patch.phone = phone;
+          }
+          if (lead && (lead.name ?? "").trim() !== full_name) patch.name = full_name;
+          if (email) patch.email = email;
+          await supabaseAdmin.from("leads").update(patch).eq("id", leadId);
+        } else {
+          const existing = await findLeadByPhone(supabaseAdmin, phone);
+          let newId: string | null = existing?.id ?? null;
+          if (existing) {
+            const notes = existing.notes ? `${existing.notes}\n${note}` : note;
+            await supabaseAdmin
+              .from("leads")
+              .update({ crm_status: "Waiting on Response", notes, name: full_name, email })
+              .eq("id", existing.id);
+          } else {
+            const { data: created, error: insErr } = await supabaseAdmin
+              .from("leads")
+              .insert({
+                source: "referral_free_week",
+                name: full_name,
+                email,
+                phone,
+                referral_code: data.referral_code,
+                referred_by: data.referrer_name,
+                notes: note,
+                lead_type: "customer_lead",
+                should_notify: true,
+                spam_reason: null,
+                crm_status: "Waiting on Response",
+                sequence_status: "active",
+              })
+              .select("id")
+              .single();
+            if (insErr) throw new Error(insErr.message);
+            newId = created?.id ?? null;
+          }
+          if (newId) {
+            await supabaseAdmin.from("referrals").update({ lead_id: newId }).eq("id", data.id);
+          }
+        }
+      } catch (e) {
+        console.error(
+          "[redeemReferral] free_week lead update failed",
+          e instanceof Error ? e.message : e,
+        );
+      }
+
 
       const send = await sendTwilioSms(
         normalizePhoneE164(phone),
@@ -556,8 +725,20 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
       lead_score: 100,
     };
 
+    // Prefer the lead linked at claim time — that's the same record the
+    // Lead Tracker has been showing since the claim. Email/phone matching
+    // is only a fallback for referrals created before lead_id existed.
     let existingLead: { id: string; notes: string | null } | undefined;
-    if (email) {
+    const linkedLeadId = (row as { lead_id?: string | null }).lead_id ?? null;
+    if (linkedLeadId) {
+      const { data: linked } = await supabaseAdmin
+        .from("leads")
+        .select("id, notes")
+        .eq("id", linkedLeadId)
+        .maybeSingle();
+      if (linked) existingLead = linked;
+    }
+    if (!existingLead && email) {
       const { data: existingLeads, error: findLeadErr } = await supabaseAdmin
         .from("leads")
         .select("id, notes")
@@ -566,6 +747,11 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
       if (findLeadErr) return { ok: false, error: findLeadErr.message };
       existingLead = existingLeads?.[0];
     }
+    if (!existingLead && phone) {
+      const byPhone = await findLeadByPhone(supabaseAdmin, phone);
+      if (byPhone) existingLead = { id: byPhone.id, notes: byPhone.notes };
+    }
+
 
     if (existingLead) {
       const notes = existingLead.notes ? `${existingLead.notes}\n${noteEntry}` : noteEntry;
@@ -579,23 +765,34 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
         })
         .eq("id", existingLead.id);
     } else {
-      await supabaseAdmin.from("leads").insert({
-        source: "referral_free_week",
-        status: "redeemed",
-        name: full_name,
-        email,
-        phone,
-        referral_code: row.referral_code,
-        referred_by: row.referrer_name,
-        notes: noteEntry,
-        lead_type: "customer_lead",
-        should_notify: true,
-        spam_reason: null,
-        tour_completed: true,
-        tour_date: nowIso,
-        ...leadFields,
-      });
+      const { data: created } = await supabaseAdmin
+        .from("leads")
+        .insert({
+          source: "referral_free_week",
+          status: "redeemed",
+          name: full_name,
+          email,
+          phone,
+          referral_code: row.referral_code,
+          referred_by: row.referrer_name,
+          notes: noteEntry,
+          lead_type: "customer_lead",
+          should_notify: true,
+          spam_reason: null,
+          tour_completed: true,
+          tour_date: nowIso,
+          ...leadFields,
+        })
+        .select("id")
+        .single();
+      if (created?.id) {
+        await supabaseAdmin.from("referrals").update({ lead_id: created.id }).eq("id", row.id);
+      }
     }
+    if (existingLead) {
+      await supabaseAdmin.from("referrals").update({ lead_id: existingLead.id }).eq("id", row.id);
+    }
+
 
     if (phone) {
       const send = await sendTwilioSms(

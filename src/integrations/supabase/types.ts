@@ -484,6 +484,7 @@ export type Database = {
           friend_email: string | null
           friend_name: string
           id: string
+          lead_id: string | null
           normalized_referrer_email: string | null
           promo_type: string
           redeemed_at: string | null
@@ -506,6 +507,7 @@ export type Database = {
           friend_email?: string | null
           friend_name: string
           id?: string
+          lead_id?: string | null
           normalized_referrer_email?: string | null
           promo_type?: string
           redeemed_at?: string | null
@@ -528,6 +530,7 @@ export type Database = {
           friend_email?: string | null
           friend_name?: string
           id?: string
+          lead_id?: string | null
           normalized_referrer_email?: string | null
           promo_type?: string
           redeemed_at?: string | null
@@ -539,7 +542,15 @@ export type Database = {
           referrer_name?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "referrals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sms_conversation_log: {
         Row: {
