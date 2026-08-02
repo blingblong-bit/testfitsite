@@ -733,7 +733,7 @@ function LeadsView({
       if (quickFilter === "due_today" && !isFollowUpDueToday(l)) return false;
       if (quickFilter === "tours_scheduled" && !(l.tour_scheduled && !l.tour_completed)) return false;
       if (quickFilter === "tours_completed" && !l.tour_completed) return false;
-      if (quickFilter === "joined_this_month" && !(l.became_member && l.membership_start_date && new Date(l.membership_start_date) >= monthStart)) return false;
+      if (quickFilter === "joined_this_month" && !joinedInMonth(l, monthStart)) return false;
       if (q) {
         const hay = `${l.name} ${l.email} ${l.phone ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
