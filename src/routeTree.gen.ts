@@ -55,6 +55,7 @@ import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicWebhooksTwilioMissedCallRouteImport } from './routes/api/public/webhooks/twilio-missed-call'
 import { Route as ApiPublicWebhooksMakeLeadUpdateRouteImport } from './routes/api/public/webhooks/make-lead-update'
 import { Route as ApiPublicWebhooksCalendlyRouteImport } from './routes/api/public/webhooks/calendly'
 import { Route as ApiPublicHooksSnapshotMonthRouteImport } from './routes/api/public/hooks/snapshot-month'
@@ -299,6 +300,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWebhooksTwilioMissedCallRoute =
+  ApiPublicWebhooksTwilioMissedCallRouteImport.update({
+    id: '/api/public/webhooks/twilio-missed-call',
+    path: '/api/public/webhooks/twilio-missed-call',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWebhooksMakeLeadUpdateRoute =
   ApiPublicWebhooksMakeLeadUpdateRouteImport.update({
     id: '/api/public/webhooks/make-lead-update',
@@ -371,6 +378,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
+  '/api/public/webhooks/twilio-missed-call': typeof ApiPublicWebhooksTwilioMissedCallRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -419,6 +427,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
+  '/api/public/webhooks/twilio-missed-call': typeof ApiPublicWebhooksTwilioMissedCallRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -472,6 +481,7 @@ export interface FileRoutesById {
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
+  '/api/public/webhooks/twilio-missed-call': typeof ApiPublicWebhooksTwilioMissedCallRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -525,6 +535,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/make-lead-update'
+    | '/api/public/webhooks/twilio-missed-call'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -573,6 +584,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/make-lead-update'
+    | '/api/public/webhooks/twilio-missed-call'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -625,6 +637,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/make-lead-update'
+    | '/api/public/webhooks/twilio-missed-call'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -663,6 +676,7 @@ export interface RootRouteChildren {
   ApiPublicHooksSnapshotMonthRoute: typeof ApiPublicHooksSnapshotMonthRoute
   ApiPublicWebhooksCalendlyRoute: typeof ApiPublicWebhooksCalendlyRoute
   ApiPublicWebhooksMakeLeadUpdateRoute: typeof ApiPublicWebhooksMakeLeadUpdateRoute
+  ApiPublicWebhooksTwilioMissedCallRoute: typeof ApiPublicWebhooksTwilioMissedCallRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
@@ -992,6 +1006,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/webhooks/twilio-missed-call': {
+      id: '/api/public/webhooks/twilio-missed-call'
+      path: '/api/public/webhooks/twilio-missed-call'
+      fullPath: '/api/public/webhooks/twilio-missed-call'
+      preLoaderRoute: typeof ApiPublicWebhooksTwilioMissedCallRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/make-lead-update': {
       id: '/api/public/webhooks/make-lead-update'
       path: '/api/public/webhooks/make-lead-update'
@@ -1127,6 +1148,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSnapshotMonthRoute: ApiPublicHooksSnapshotMonthRoute,
   ApiPublicWebhooksCalendlyRoute: ApiPublicWebhooksCalendlyRoute,
   ApiPublicWebhooksMakeLeadUpdateRoute: ApiPublicWebhooksMakeLeadUpdateRoute,
+  ApiPublicWebhooksTwilioMissedCallRoute:
+    ApiPublicWebhooksTwilioMissedCallRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
