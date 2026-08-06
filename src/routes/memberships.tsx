@@ -44,7 +44,7 @@ export const Route = createFileRoute("/memberships")({
               name: "Is there a contract for monthly memberships?",
               acceptedAnswer: {
                 "@type": "Answer",
-                text: "Monthly memberships have no contract. There is a $49 annual fee billed on July 1st. Paid-in-full memberships have no annual fee and offer the best value for committed training.",
+                text: "Monthly memberships have no contract. There is a $49.99 annual fee billed on July 1st. Paid-in-full memberships have no annual fee and offer the best value for committed training.",
               },
             },
             {
@@ -133,10 +133,10 @@ const paidInFullPlans = [
   { name: "Single — 1 Month", price: "55" },
   { name: "Single — 3 Months", price: "123" },
   { name: "Single — 6 Months", price: "234" },
-  { name: "Single — 1 Year", price: "399" },
-  { name: "Duo — 1 Year", price: "610" },
-  { name: "Duo +1 — 1 Year", price: "703" },
-  { name: "Family — 1 Year", price: "864" },
+  { name: "Single — 1 Year", price: "449" },
+  { name: "Duo — 1 Year", price: "660" },
+  { name: "Duo +1 — 1 Year", price: "753" },
+  { name: "Family — 1 Year", price: "914" },
 ];
 
 function Memberships() {
@@ -222,7 +222,7 @@ function Memberships() {
 
       <section className="container-page py-20">
         <p className="text-xs tracking-[0.3em] text-primary">MONTHLY MEMBERSHIPS</p>
-        <p className="mt-2 text-sm text-muted-foreground">$49 annual fee billed July 1st</p>
+        <p className="mt-2 text-sm text-muted-foreground">$49.99 annual fee billed July 1st</p>
 
         <div className="mt-6 rounded-lg border border-primary/40 bg-primary/10 p-5 text-sm">
           <span className="font-semibold text-foreground">Signups are done in person</span>{" "}

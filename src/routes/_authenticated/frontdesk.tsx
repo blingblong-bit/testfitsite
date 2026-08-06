@@ -131,14 +131,14 @@ function PricingScreen() {
     { name: "Single — 1 Month", price: "55" },
     { name: "Single — 3 Months", price: "123" },
     { name: "Single — 6 Months", price: "234" },
-    { name: "Single — 1 Year", price: "399" },
-    { name: "Duo — 1 Year", price: "610" },
-    { name: "Duo +1 — 1 Year", price: "703" },
-    { name: "Family — 1 Year", price: "864" },
+    { name: "Single — 1 Year", price: "449" },
+    { name: "Duo — 1 Year", price: "660" },
+    { name: "Duo +1 — 1 Year", price: "753" },
+    { name: "Family — 1 Year", price: "914" },
   ];
   return (
     <>
-      <ScreenHeader eyebrow="MEMBERSHIPS" title="Membership Pricing" sub="$49 annual fee billed July 1st · All memberships include 24/7 access, classes, sauna, & tanning." />
+      <ScreenHeader eyebrow="MEMBERSHIPS" title="Membership Pricing" sub="$49.99 annual fee billed July 1st · All memberships include 24/7 access, classes, sauna, & tanning." />
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {monthly.map((p) => (
           <div key={p.name} className="rounded-xl border border-border bg-card p-7">
