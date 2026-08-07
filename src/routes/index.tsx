@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Dumbbell, Users, Clock, Trophy, Heart, Shield } from "lucide-react";
+import { ArrowRight, Dumbbell, Users, Clock, Trophy, Heart, Shield, Monitor, Store, CalendarCheck, ArrowDown } from "lucide-react";
 import heroAsset from "@/assets/hero-gym-v2.png.asset.json";
+import promoAsset from "@/assets/free-week-promo.png.asset.json";
 import weightsImg from "@/assets/gym-shoulder-press.jpg";
 import { CTASection } from "@/components/CTASection";
 
 const heroImg = heroAsset.url;
+const promoImg = promoAsset.url;
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -161,6 +164,143 @@ function Home() {
           </div>
         </div>
       </section>
+
+      {/* Free Week promo */}
+      <section
+        id="free-week"
+        className="relative isolate overflow-hidden border-b border-border bg-card"
+      >
+        <div
+          className="absolute inset-0 -z-10"
+          style={{
+            background:
+              "radial-gradient(800px circle at 15% 20%, oklch(0.70 0.18 235 / 0.14), transparent 60%)",
+          }}
+        />
+        <div className="container-page py-16 md:py-24">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
+            <div className="order-2 lg:order-1">
+              <p className="text-xs tracking-[0.3em] text-primary">END OF SUMMER</p>
+              <h2 className="mt-3 text-4xl md:text-5xl lg:text-6xl leading-[0.95]">
+                Get a <span className="text-gradient-blue">Free Week</span>
+              </h2>
+              <p className="mt-3 text-lg md:text-xl font-semibold uppercase tracking-wide text-foreground/90">
+                Bring a Friend. Get Another Week Free.
+              </p>
+              <div className="mt-6 space-y-3 text-muted-foreground leading-relaxed">
+                <p>
+                  Claim your FREE 7-day pass online. We'll text you your code. Bring it to the FIT
+                  Beyond Plus front desk and your free week begins once staff verifies you in
+                  person.
+                </p>
+                <p>
+                  Refer a friend, and when they come in and activate their free week, we'll add
+                  another <span className="font-semibold text-primary">FREE WEEK</span> to yours.
+                </p>
+              </div>
+              <p className="mt-6 inline-flex items-center rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
+                Ends Labor Day • September 7
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link
+                  to="/claim-free-week"
+                  className="inline-flex h-12 items-center gap-2 rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
+                  style={{ boxShadow: "var(--shadow-glow)" }}
+                >
+                  Claim Your Free Week <ArrowRight className="h-4 w-4" />
+                </Link>
+                <a
+                  href="#how-free-week-works"
+                  className="inline-flex h-12 items-center rounded-md border border-border bg-background/40 px-6 text-sm font-bold uppercase tracking-wide hover:bg-secondary transition"
+                >
+                  Learn More
+                </a>
+              </div>
+            </div>
+            <div className="order-1 lg:order-2">
+              <Link to="/claim-free-week" className="block">
+                <img
+                  src={promoImg}
+                  alt="FIT Beyond Plus End of Summer free week promotion — bring a friend, get another week free, ends Labor Day September 7"
+                  loading="lazy"
+                  width={1080}
+                  height={1350}
+                  className="mx-auto w-full max-w-md rounded-xl border border-border"
+                  style={{ boxShadow: "var(--shadow-glow)" }}
+                />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How the free week works */}
+      <section id="how-free-week-works" className="container-page py-16 md:py-20 scroll-mt-24">
+        <div className="max-w-2xl">
+          <p className="text-xs tracking-[0.3em] text-primary">HOW IT WORKS</p>
+          <h2 className="mt-3 text-3xl md:text-4xl">Three steps to your free week.</h2>
+        </div>
+        <div className="mt-10 grid gap-4 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-stretch md:gap-3">
+          {[
+            {
+              icon: Monitor,
+              n: "1",
+              t: "Claim Online",
+              d: "Receive your code by text.",
+            },
+            {
+              icon: Store,
+              n: "2",
+              t: "Come In",
+              d: "Bring your code to the front desk.",
+            },
+            {
+              icon: CalendarCheck,
+              n: "3",
+              t: "Start Training",
+              d: "Your 7 days begin after staff activates your pass.",
+            },
+          ].flatMap(({ icon: Icon, n, t, d }, i) => [
+            <div
+              key={t}
+              className="rounded-xl border border-border bg-card p-6 md:p-7"
+            >
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-primary/50 bg-primary/10">
+                  <Icon className="h-5 w-5 text-primary" />
+                </span>
+                <span className="text-xs font-bold uppercase tracking-widest text-primary">
+                  Step {n}
+                </span>
+              </div>
+              <h3 className="mt-4 text-xl">{t}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{d}</p>
+            </div>,
+            ...(i < 2
+              ? [
+                  <div
+                    key={`arrow-${n}`}
+                    className="flex items-center justify-center text-primary"
+                  >
+                    <ArrowDown className="h-6 w-6 md:hidden" />
+                    <ArrowRight className="hidden h-6 w-6 md:block" />
+                  </div>,
+                ]
+              : []),
+          ])}
+        </div>
+        <div className="mt-10">
+          <Link
+            to="/claim-free-week"
+            className="inline-flex h-12 items-center gap-2 rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
+            style={{ boxShadow: "var(--shadow-glow)" }}
+          >
+            Claim Your Free Week <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+
+
 
       {/* Stats bar */}
       <section className="border-y border-border bg-card">
