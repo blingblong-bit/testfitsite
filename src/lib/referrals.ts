@@ -622,7 +622,7 @@ export const redeemReferral = createServerFn({ method: "POST" })
       const { sendPromoSms } = await import("./sms.server");
       const send = await sendPromoSms(
         phone,
-        `You're all set, ${full_name}! Come by the front desk at FIT Beyond Plus and we'll get your free week activated. We're at 449 W Lincoln St, Tullahoma!`,
+        `Check-in complete, ${full_name}! One step left — your free week is NOT active yet. Come to the FIT Beyond Plus front desk at 449 W Lincoln St, Tullahoma. Your 7 days start once staff verifies you in person.`,
         {
           kind: "free_week_arrival_pending",
           sentBy: "free_week_promo",
