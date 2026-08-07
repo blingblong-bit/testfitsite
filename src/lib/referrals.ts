@@ -148,6 +148,50 @@ function last10(v: string | null | undefined) {
   return (v ?? "").replace(/\D/g, "").slice(-10);
 }
 
+/**
+ * One person = one free week. Finds any OTHER free-week referral row that
+ * belongs to the same human, matched on the last 10 phone digits or (case
+ * insensitively) the email. Used at claim time, at online check-in, and at
+ * staff activation so a second week can't be picked up at a different
+ * phone number or through a friend's referral.
+ */
+async function findPriorFreeWeek(
+  db: AdminDb,
+  args: {
+    phone?: string | null;
+    email?: string | null;
+    excludeReferralId?: string | null;
+    statuses?: string[];
+  },
+): Promise<{ id: string; status: string; referral_code: string } | null> {
+  const phone = last10(args.phone);
+  const email = (args.email ?? "").trim().toLowerCase();
+  if (phone.length !== 10 && !email) return null;
+
+  const { data, error } = await db
+    .from("referrals")
+    .select("id, status, referral_code, friend_contact, friend_email")
+    .eq("promo_type", "free_week")
+    .limit(2000);
+  if (error) {
+    console.error("[referrals] prior free-week lookup failed", error.message);
+    return null;
+  }
+
+  const match = (data ?? []).find((r) => {
+    if (args.excludeReferralId && r.id === args.excludeReferralId) return false;
+    if (args.statuses && !args.statuses.includes(r.status)) return false;
+    const phoneHit = phone.length === 10 && last10(r.friend_contact) === phone;
+    const emailHit = !!email && (r.friend_email ?? "").trim().toLowerCase() === email;
+    return phoneHit || emailHit;
+  });
+  return match
+    ? { id: match.id, status: match.status, referral_code: match.referral_code }
+    : null;
+}
+
+
+
 const CreateReferralSchema = z.object({
   referrer_name: z.string(),
   referrer_email: z.string().optional(),
