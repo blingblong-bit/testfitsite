@@ -305,17 +305,22 @@ export const createReferral = createServerFn({ method: "POST" })
 
           let smsOk = false;
           if (normalizedPhone) {
-            const to = normalizePhoneE164(normalizedPhone);
+            const { sendPromoSms } = await import("./sms.server");
             const redeemUrl = `https://fitbeyondplus.com/redeem-referral?code=${code}`;
             const msg = input.is_self_referral
               ? `FIT Beyond Plus: You're in! Your free week code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`
               : `FIT Beyond Plus: ${referrer_name} sent you a free week! Your code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`;
-            const send = await sendTwilioSms(to, msg);
+            const send = await sendPromoSms(normalizedPhone, msg, {
+              kind: "free_week_code",
+              sentBy: "free_week_promo",
+              db: supabaseAdmin,
+            });
             smsOk = send.ok;
             if (!send.ok) {
               console.error("[createReferral] free_week instant sms failed", send.error);
             }
           }
+
 
           // Create the lead immediately at claim time so it shows up in the
           // Lead Tracker right away — redemption and staff confirmation then
