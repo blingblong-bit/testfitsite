@@ -795,10 +795,14 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
     }
 
 
+    const { sendPromoSms } = await import("./sms.server");
+    const linkedLead = existingLead?.id ?? (row as { lead_id?: string | null }).lead_id ?? null;
+
     if (phone) {
-      const send = await sendTwilioSms(
-        normalizePhoneE164(phone),
+      const send = await sendPromoSms(
+        phone,
         `You're active, ${full_name || "friend"}! Your free week at FIT Beyond Plus is officially started and runs through ${new Date(endsIso).toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "long", day: "numeric" })}. See you soon!`,
+        { kind: "free_week_activated", sentBy: "free_week_promo", db: supabaseAdmin, leadId: linkedLead },
       );
       if (!send.ok) console.error("[confirmFreeWeekArrival] sms failed", send.error);
     }
@@ -806,14 +810,25 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
     // Referrer reward: extend the referrer's OWN free week by 7 days.
     // Never allowed to fail the friend's arrival confirmation above.
     try {
-      const { applyReferrerReward } = await import("./referrer-reward.server");
-      await applyReferrerReward(supabaseAdmin, row, full_name, sendTwilioSms);
+      const { applyReferrerReward, applyPendingRewardsForPhone } = await import(
+        "./referrer-reward.server"
+      );
+      await applyReferrerReward(supabaseAdmin, row, full_name);
+
+      // This person may themselves have earned rewards from friends who
+      // arrived before them — pay those out now that their week is active.
+      await applyPendingRewardsForPhone(supabaseAdmin, {
+        ownReferralId: row.id,
+        phone,
+        leadId: linkedLead,
+      });
     } catch (e) {
       console.error(
         "[confirmFreeWeekArrival] referrer reward failed",
         e instanceof Error ? e.message : e,
       );
     }
+
 
 
     return { ok: true };
