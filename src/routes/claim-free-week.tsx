@@ -98,13 +98,13 @@ function ClaimFreeWeekPage() {
   }
 
   if (result) {
-    const redeemUrl = `https://fitbeyondplus.com/redeem-referral?code=${encodeURIComponent(result.code)}`;
+    const checkinUrl = `https://fitbeyondplus.com/redeem-referral?code=${encodeURIComponent(result.code)}`;
     return (
       <>
         <PageHero
           eyebrow="END OF SUMMER"
-          title="You're In!"
-          description="Show this code (or QR) at the front desk to activate your free week."
+          title="Your Code Is Ready"
+          description="Your week has NOT started yet — bring this code to the FIT Beyond Plus front desk to activate it."
         />
         <section className="container-page py-16 md:py-20">
           <div className="max-w-md mx-auto rounded-2xl border border-primary bg-primary/10 p-8 text-center">
@@ -113,19 +113,26 @@ function ClaimFreeWeekPage() {
 
             <div className="mt-6 mx-auto h-56 w-56 rounded-lg border border-border bg-white flex items-center justify-center overflow-hidden">
               <img
-                src={buildQrUrl(redeemUrl)}
-                alt="QR code to redeem your free week"
+                src={buildQrUrl(checkinUrl)}
+                alt="QR code to complete your free week check-in"
                 className="h-full w-full object-contain"
               />
             </div>
 
-            <p className="mt-6 text-sm text-muted-foreground">
-              Staff can scan this QR code at the front desk to activate your free week
-              instantly — or you can enter the code manually at{" "}
+            <p className="mt-6 text-base font-bold uppercase tracking-wide text-primary">
+              Your week has not started yet
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Bring this code to the FIT Beyond Plus front desk at 449 W Lincoln St, Tullahoma.
+              Once staff verifies you're here, your 7-day free week begins.
+            </p>
+            <p className="mt-4 text-sm text-muted-foreground">
+              You can complete your online check-in ahead of time by scanning the code above or
+              visiting{" "}
               <Link to="/redeem-referral" className="text-primary hover:underline">
                 fitbeyondplus.com/redeem-referral
               </Link>
-              .
+              . That saves time at the desk — it does not start your free week.
             </p>
             <p className="mt-4 text-xs text-muted-foreground">
               Offer valid through {DEADLINE_LABEL}. See you soon!
@@ -145,6 +152,26 @@ function ClaimFreeWeekPage() {
       />
       <section className="container-page py-16 md:py-20">
         <div className="max-w-md mx-auto">
+          <div className="mb-6 rounded-lg border border-primary/40 bg-primary/5 p-4 text-sm">
+            {mode === "self" ? (
+              <>
+                Claim your free week now and we'll text you a code. Bring your code to the FIT
+                Beyond Plus front desk to activate your 7-day pass —{" "}
+                <span className="font-semibold">
+                  your week begins when staff verifies you in person.
+                </span>
+              </>
+            ) : (
+              <>
+                Send a friend a free week. We'll text them their code, and they can bring it to the
+                front desk to activate their 7 days.{" "}
+                <span className="font-semibold">
+                  When they come in and activate it, we'll add another 7 days to yours.
+                </span>
+              </>
+            )}
+          </div>
+
           <div className="flex gap-3 mb-6">
             <button
               type="button"
