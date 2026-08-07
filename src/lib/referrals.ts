@@ -348,7 +348,30 @@ export const createReferral = createServerFn({ method: "POST" })
             }
           }
 
+          // Track the REFERRER as a person too. Someone driving referrals
+          // needs to be visible in the Lead Tracker even if they never
+          // claimed a week for themselves. Never marks them as having
+          // redeemed/visited/activated anything, and never creates a
+          // duplicate — matched on the last 10 phone digits.
+          if (isFreeWeek && !input.is_self_referral) {
+            try {
+              await upsertReferrerLead(supabaseAdmin, {
+                name: referrer_name,
+                phone: referrer_phone_raw,
+                email: normalized_referrer_email,
+                friendName: friend_name,
+                code,
+              });
+            } catch (e) {
+              console.error(
+                "[createReferral] referrer lead upsert failed",
+                e instanceof Error ? e.message : e,
+              );
+            }
+          }
+
           return { ok: true, code };
+
 
         }
         try {
