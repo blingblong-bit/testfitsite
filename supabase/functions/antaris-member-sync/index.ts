@@ -101,7 +101,8 @@ async function sendSms(
   kind: string,
 ): Promise<boolean> {
   const to = normalizePhone(phone);
-  const isTest = (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL;
+  const isTest =
+    (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL || isTestPhone(phone);
 
   if (isTest) {
     await supabase.from("sms_conversation_log").insert({
