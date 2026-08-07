@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Dumbbell, Users, Clock, Trophy, Heart, Shield, Monitor, Store, CalendarCheck, ArrowDown } from "lucide-react";
+import { ArrowRight, Dumbbell, Users, Clock, Trophy, Heart, Shield } from "lucide-react";
 import heroAsset from "@/assets/hero-gym-v2.png.asset.json";
 import promoAsset from "@/assets/free-week-promo.png.asset.json";
 import weightsImg from "@/assets/gym-shoulder-press.jpg";
