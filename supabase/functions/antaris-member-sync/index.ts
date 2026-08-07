@@ -5,6 +5,20 @@ import { checkMemberMatch, getMembershipAgreements } from "./antaris-client.ts";
 
 const TEST_EMAIL = "smstest@fitbeyondplus.com";
 
+// Reserved development/testing phone numbers — keep in sync with
+// src/lib/sms.server.ts (separate runtime, cannot share the module).
+const TEST_PHONE_NUMBERS = [
+  "9315550001",
+  "9315550002",
+  "9315550003",
+  "9315550004",
+  "9315550005",
+];
+
+function isTestPhone(raw: string | null | undefined): boolean {
+  return TEST_PHONE_NUMBERS.includes((raw ?? "").replace(/\D/g, "").slice(-10));
+}
+
 type LeadRow = {
   id: string;
   name: string | null;
@@ -39,7 +53,8 @@ async function sendWelcomeIfNeeded(
   const to = normalizePhone(lead.phone);
   const body = `Welcome to the FIT Beyond Plus family, ${firstName(lead.name)}! 💪 We're pumped to have you. If you ever have questions, need to update your schedule, or just want to know what's going on at the gym — just text here. See you soon!`;
   const now = new Date().toISOString();
-  const isTest = (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL;
+  const isTest =
+    (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL || isTestPhone(lead.phone);
 
   if (isTest) {
     await supabase.from("leads").update({ last_sms_at: now }).eq("id", lead.id);
@@ -101,7 +116,8 @@ async function sendSms(
   kind: string,
 ): Promise<boolean> {
   const to = normalizePhone(phone);
-  const isTest = (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL;
+  const isTest =
+    (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL || isTestPhone(phone);
 
   if (isTest) {
     await supabase.from("sms_conversation_log").insert({

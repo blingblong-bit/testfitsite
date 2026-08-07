@@ -34,45 +34,10 @@ async function findLeadByPhone(
 }
 
 
-function normalizePhoneE164(raw: string): string {
-  const trimmed = raw.trim();
-  if (trimmed.startsWith("+")) return "+" + trimmed.slice(1).replace(/\D/g, "");
-  const digits = trimmed.replace(/\D/g, "");
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return `+${digits}`;
-}
+// Twilio sending + the reserved free-week test numbers live in
+// src/lib/sms.server.ts (imported dynamically inside handlers so this
+// module stays safe for the client bundle).
 
-async function sendTwilioSms(
-  to: string,
-  body: string,
-): Promise<{ ok: boolean; sid?: string; error?: string }> {
-  const sid = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_FROM_NUMBER;
-  if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
-  const auth = Buffer.from(`${sid}:${token}`).toString("base64");
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${auth}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      To: to,
-      From: from,
-      Body: body,
-      StatusCallback: "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
-    }),
-  });
-  if (!res.ok) {
-    const t = await res.text();
-    console.error("[referrals] twilio error", res.status, t);
-    return { ok: false, error: `twilio_${res.status}` };
-  }
-  const json = (await res.json()) as { sid?: string };
-  return { ok: true, sid: json.sid };
-}
 
 export type Referral = {
   id: string;
@@ -305,17 +270,22 @@ export const createReferral = createServerFn({ method: "POST" })
 
           let smsOk = false;
           if (normalizedPhone) {
-            const to = normalizePhoneE164(normalizedPhone);
+            const { sendPromoSms } = await import("./sms.server");
             const redeemUrl = `https://fitbeyondplus.com/redeem-referral?code=${code}`;
             const msg = input.is_self_referral
               ? `FIT Beyond Plus: You're in! Your free week code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`
               : `FIT Beyond Plus: ${referrer_name} sent you a free week! Your code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`;
-            const send = await sendTwilioSms(to, msg);
+            const send = await sendPromoSms(normalizedPhone, msg, {
+              kind: "free_week_code",
+              sentBy: "free_week_promo",
+              db: supabaseAdmin,
+            });
             smsOk = send.ok;
             if (!send.ok) {
               console.error("[createReferral] free_week instant sms failed", send.error);
             }
           }
+
 
           // Create the lead immediately at claim time so it shows up in the
           // Lead Tracker right away — redemption and staff confirmation then
@@ -573,11 +543,19 @@ export const redeemReferral = createServerFn({ method: "POST" })
       }
 
 
-      const send = await sendTwilioSms(
-        normalizePhoneE164(phone),
+      const { sendPromoSms } = await import("./sms.server");
+      const send = await sendPromoSms(
+        phone,
         `You're all set, ${full_name}! Come by the front desk at FIT Beyond Plus and we'll get your free week activated. We're at 449 W Lincoln St, Tullahoma!`,
+        {
+          kind: "free_week_arrival_pending",
+          sentBy: "free_week_promo",
+          db: supabaseAdmin,
+          leadId: (pending as { lead_id?: string | null }).lead_id ?? null,
+        },
       );
       if (!send.ok) console.error("[redeemReferral] free_week arrival sms failed", send.error);
+
 
       return { ok: true, referral: pending as Referral };
     }
@@ -795,10 +773,14 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
     }
 
 
+    const { sendPromoSms } = await import("./sms.server");
+    const linkedLead = existingLead?.id ?? (row as { lead_id?: string | null }).lead_id ?? null;
+
     if (phone) {
-      const send = await sendTwilioSms(
-        normalizePhoneE164(phone),
+      const send = await sendPromoSms(
+        phone,
         `You're active, ${full_name || "friend"}! Your free week at FIT Beyond Plus is officially started and runs through ${new Date(endsIso).toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "long", day: "numeric" })}. See you soon!`,
+        { kind: "free_week_activated", sentBy: "free_week_promo", db: supabaseAdmin, leadId: linkedLead },
       );
       if (!send.ok) console.error("[confirmFreeWeekArrival] sms failed", send.error);
     }
@@ -806,14 +788,25 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
     // Referrer reward: extend the referrer's OWN free week by 7 days.
     // Never allowed to fail the friend's arrival confirmation above.
     try {
-      const { applyReferrerReward } = await import("./referrer-reward.server");
-      await applyReferrerReward(supabaseAdmin, row, full_name, sendTwilioSms);
+      const { applyReferrerReward, applyPendingRewardsForPhone } = await import(
+        "./referrer-reward.server"
+      );
+      await applyReferrerReward(supabaseAdmin, row, full_name);
+
+      // This person may themselves have earned rewards from friends who
+      // arrived before them — pay those out now that their week is active.
+      await applyPendingRewardsForPhone(supabaseAdmin, {
+        ownReferralId: row.id,
+        phone,
+        leadId: linkedLead,
+      });
     } catch (e) {
       console.error(
         "[confirmFreeWeekArrival] referrer reward failed",
         e instanceof Error ? e.message : e,
       );
     }
+
 
 
     return { ok: true };
