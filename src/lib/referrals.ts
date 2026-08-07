@@ -33,6 +33,58 @@ async function findLeadByPhone(
   return match ?? null;
 }
 
+/**
+ * Records the REFERRER of a free-week referral as a lead so we can see who
+ * is actually driving referrals. Reuses an existing lead matched on the
+ * last 10 phone digits (appending referral history to its notes) and never
+ * touches free-week/visit/conversion fields — being a referrer is not the
+ * same thing as having an activated free week.
+ */
+async function upsertReferrerLead(
+  db: AdminDb,
+  args: {
+    name: string;
+    phone: string;
+    email: string | null;
+    friendName: string;
+    code: string;
+  },
+): Promise<string | null> {
+  const digits = (args.phone ?? "").replace(/\D/g, "").slice(-10);
+  if (digits.length !== 10) return null;
+
+  const note = `[${new Date().toISOString()}] Referred ${args.friendName} for End of Summer free-week promotion — referral code ${args.code}`;
+  const existing = await findLeadByPhone(db, args.phone);
+
+  if (existing) {
+    const notes = existing.notes ? `${existing.notes}\n${note}` : note;
+    const patch: { notes: string; name?: string } = { notes };
+    if (!(existing.name ?? "").trim() && args.name) patch.name = args.name;
+    await db.from("leads").update(patch).eq("id", existing.id);
+    return existing.id;
+  }
+
+  const { data: created, error } = await db
+    .from("leads")
+    .insert({
+      source: "free_week_referrer",
+      name: args.name,
+      // leads.email is NOT NULL; free-week referrers are phone-only.
+      email: args.email ?? "",
+      phone: args.phone,
+      notes: note,
+      lead_type: "customer_lead",
+      should_notify: false,
+      spam_reason: null,
+      crm_status: "New",
+      sequence_status: "pending",
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return created?.id ?? null;
+}
+
 
 // Twilio sending + the reserved free-week test numbers live in
 // src/lib/sms.server.ts (imported dynamically inside handlers so this
