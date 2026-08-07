@@ -107,6 +107,8 @@ type Lead = {
   interest: string | null;
   message: string | null;
   notes: string | null;
+  referred_by?: string | null;
+
   created_at: string;
   lead_type: string;
   lead_score: number;
