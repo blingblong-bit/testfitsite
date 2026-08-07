@@ -148,6 +148,50 @@ function last10(v: string | null | undefined) {
   return (v ?? "").replace(/\D/g, "").slice(-10);
 }
 
+/**
+ * One person = one free week. Finds any OTHER free-week referral row that
+ * belongs to the same human, matched on the last 10 phone digits or (case
+ * insensitively) the email. Used at claim time, at online check-in, and at
+ * staff activation so a second week can't be picked up at a different
+ * phone number or through a friend's referral.
+ */
+async function findPriorFreeWeek(
+  db: AdminDb,
+  args: {
+    phone?: string | null;
+    email?: string | null;
+    excludeReferralId?: string | null;
+    statuses?: string[];
+  },
+): Promise<{ id: string; status: string; referral_code: string } | null> {
+  const phone = last10(args.phone);
+  const email = (args.email ?? "").trim().toLowerCase();
+  if (phone.length !== 10 && !email) return null;
+
+  const { data, error } = await db
+    .from("referrals")
+    .select("id, status, referral_code, friend_contact, friend_email")
+    .eq("promo_type", "free_week")
+    .limit(2000);
+  if (error) {
+    console.error("[referrals] prior free-week lookup failed", error.message);
+    return null;
+  }
+
+  const match = (data ?? []).find((r) => {
+    if (args.excludeReferralId && r.id === args.excludeReferralId) return false;
+    if (args.statuses && !args.statuses.includes(r.status)) return false;
+    const phoneHit = phone.length === 10 && last10(r.friend_contact) === phone;
+    const emailHit = !!email && (r.friend_email ?? "").trim().toLowerCase() === email;
+    return phoneHit || emailHit;
+  });
+  return match
+    ? { id: match.id, status: match.status, referral_code: match.referral_code }
+    : null;
+}
+
+
+
 const CreateReferralSchema = z.object({
   referrer_name: z.string(),
   referrer_email: z.string().optional(),
@@ -235,15 +279,14 @@ export const createReferral = createServerFn({ method: "POST" })
 
     // Duplicate check, scoped to this promo type — someone can still claim
     // a day-pass referral even if they already used the free-week promo,
-    // and vice versa. Free-week is phone-based (no email collected).
+    // and vice versa. Free week matches on phone OR email so a person who
+    // already claimed one can't pick up a second week at another number.
     if (isFreeWeek) {
-      const target = last10(friend_phone_raw);
-      const { data: existing, error: dupErr } = await supabaseAdmin
-        .from("referrals")
-        .select("id, friend_contact")
-        .eq("promo_type", "free_week");
-      if (dupErr) return { ok: false, error: dupErr.message };
-      if ((existing ?? []).some((r) => last10(r.friend_contact) === target)) {
+      const prior = await findPriorFreeWeek(supabaseAdmin, {
+        phone: friend_phone_raw,
+        email: friend_email_raw,
+      });
+      if (prior) {
         return {
           ok: false,
           error: "This phone number has already claimed the free week offer.",
@@ -533,6 +576,24 @@ export const redeemReferral = createServerFn({ method: "POST" })
     // physically showed up. Park the submitted details on the referral
     // row and wait for confirmFreeWeekArrival — no lead, no access window.
     if (isFreeWeek) {
+      // One free week per person: the phone/email entered here may differ
+      // from what the code was created for, so re-check identity before
+      // parking the row or texting anyone.
+      const prior = await findPriorFreeWeek(supabaseAdmin, {
+        phone,
+        email,
+        excludeReferralId: data.id,
+        statuses: ["arrival_pending", "redeemed"],
+      });
+      if (prior) {
+        return {
+          ok: false,
+          error:
+            "Our records show a free week has already been claimed for you. Please stop by the FIT Beyond Plus front desk and we'll help you out.",
+        };
+      }
+
+
       const { data: pending, error: pendErr } = await supabaseAdmin
         .from("referrals")
         .update({
@@ -754,6 +815,22 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
     if (row.promo_type !== "free_week") return { ok: false, error: "Not a free-week referral." };
     if (row.status !== "arrival_pending")
       return { ok: false, error: `Referral is not awaiting arrival (status: ${row.status}).` };
+
+    // Final one-week-per-person guard before the access window opens.
+    const prior = await findPriorFreeWeek(supabaseAdmin, {
+      phone: row.friend_contact,
+      email: row.friend_email,
+      excludeReferralId: row.id,
+      statuses: ["redeemed"],
+    });
+    if (prior) {
+      return {
+        ok: false,
+        error: `This person already has an activated free week (code ${prior.referral_code}). Don't activate a second one.`,
+      };
+    }
+
+
 
     const nowIso = new Date().toISOString();
     const endsIso = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
