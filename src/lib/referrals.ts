@@ -576,6 +576,24 @@ export const redeemReferral = createServerFn({ method: "POST" })
     // physically showed up. Park the submitted details on the referral
     // row and wait for confirmFreeWeekArrival — no lead, no access window.
     if (isFreeWeek) {
+      // One free week per person: the phone/email entered here may differ
+      // from what the code was created for, so re-check identity before
+      // parking the row or texting anyone.
+      const prior = await findPriorFreeWeek(supabaseAdmin, {
+        phone,
+        email,
+        excludeReferralId: data.id,
+        statuses: ["arrival_pending", "redeemed"],
+      });
+      if (prior) {
+        return {
+          ok: false,
+          error:
+            "Our records show a free week has already been claimed for you. Please stop by the FIT Beyond Plus front desk and we'll help you out.",
+        };
+      }
+
+
       const { data: pending, error: pendErr } = await supabaseAdmin
         .from("referrals")
         .update({
