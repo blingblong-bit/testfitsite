@@ -39,7 +39,8 @@ async function sendWelcomeIfNeeded(
   const to = normalizePhone(lead.phone);
   const body = `Welcome to the FIT Beyond Plus family, ${firstName(lead.name)}! 💪 We're pumped to have you. If you ever have questions, need to update your schedule, or just want to know what's going on at the gym — just text here. See you soon!`;
   const now = new Date().toISOString();
-  const isTest = (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL;
+  const isTest =
+    (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL || isTestPhone(lead.phone);
 
   if (isTest) {
     await supabase.from("leads").update({ last_sms_at: now }).eq("id", lead.id);
