@@ -104,7 +104,7 @@ function ClaimFreeWeekPage() {
         <PageHero
           eyebrow="END OF SUMMER"
           title="Your Code Is Ready"
-          description="Your week has NOT started yet — bring this code to the FIT Beyond Plus front desk to activate it."
+          description="Your free week has not started yet — staff must verify you in person at FIT Beyond Plus."
         />
         <section className="container-page py-16 md:py-20">
           <div className="max-w-md mx-auto rounded-2xl border border-primary bg-primary/10 p-8 text-center">
@@ -114,29 +114,29 @@ function ClaimFreeWeekPage() {
             <div className="mt-6 mx-auto h-56 w-56 rounded-lg border border-border bg-white flex items-center justify-center overflow-hidden">
               <img
                 src={buildQrUrl(checkinUrl)}
-                alt="QR code to complete your free week check-in"
+                alt="QR code for your FIT Beyond Plus free week check-in"
                 className="h-full w-full object-contain"
               />
             </div>
 
             <p className="mt-6 text-base font-bold uppercase tracking-wide text-primary">
-              Your week has not started yet
+              Your free week has not started yet
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Bring this code to the FIT Beyond Plus front desk at 449 W Lincoln St, Tullahoma.
-              Once staff verifies you're here, your 7-day free week begins.
+              Bring this code or QR to the FIT Beyond Plus front desk at 449 W Lincoln St, Tullahoma.
+              You can complete your online check-in ahead of time, but your 7-day free week only
+              begins after staff verifies you in person.
             </p>
-            <p className="mt-4 text-sm text-muted-foreground">
-              You can complete your online check-in ahead of time by scanning the code above or
-              visiting{" "}
-              <Link to="/redeem-referral" className="text-primary hover:underline">
-                fitbeyondplus.com/redeem-referral
-              </Link>
-              . That saves time at the desk — it does not start your free week.
+            <p className="mt-4 text-sm">
+              <Link to="/redeem-referral" search={{ code: result.code }} className="text-primary hover:underline">
+                Complete Online Check-In
+              </Link>{" "}
+              <span className="text-muted-foreground">(optional — saves time at the desk)</span>
             </p>
             <p className="mt-4 text-xs text-muted-foreground">
               Offer valid through {DEADLINE_LABEL}. See you soon!
             </p>
+
           </div>
         </section>
       </>
