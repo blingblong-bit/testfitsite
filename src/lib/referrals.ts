@@ -482,7 +482,7 @@ export const lookupReferral = createServerFn({ method: "POST" })
     if (error) return { ok: false, error: error.message };
     if (!row) return { ok: false, error: "Invalid referral code." };
     if (row.status === "redeemed")
-      return { ok: false, error: "This referral code has already been redeemed." };
+      return { ok: false, error: "This referral code has already been used." };
     return { ok: true, referral: row as Referral };
   });
 
@@ -518,7 +518,7 @@ export const redeemReferral = createServerFn({ method: "POST" })
     if (error) return { ok: false, error: error.message };
     if (!data) return { ok: false, error: "Invalid referral code." };
     if (data.status === "redeemed")
-      return { ok: false, error: "This referral code has already been redeemed." };
+      return { ok: false, error: "This referral code has already been used." };
     if (data.status === "arrival_pending")
       return {
         ok: false,
