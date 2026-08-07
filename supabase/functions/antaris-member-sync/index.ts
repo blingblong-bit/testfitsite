@@ -5,6 +5,20 @@ import { checkMemberMatch, getMembershipAgreements } from "./antaris-client.ts";
 
 const TEST_EMAIL = "smstest@fitbeyondplus.com";
 
+// Reserved development/testing phone numbers — keep in sync with
+// src/lib/sms.server.ts (separate runtime, cannot share the module).
+const TEST_PHONE_NUMBERS = [
+  "9315550001",
+  "9315550002",
+  "9315550003",
+  "9315550004",
+  "9315550005",
+];
+
+function isTestPhone(raw: string | null | undefined): boolean {
+  return TEST_PHONE_NUMBERS.includes((raw ?? "").replace(/\D/g, "").slice(-10));
+}
+
 type LeadRow = {
   id: string;
   name: string | null;
