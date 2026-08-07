@@ -235,15 +235,14 @@ export const createReferral = createServerFn({ method: "POST" })
 
     // Duplicate check, scoped to this promo type — someone can still claim
     // a day-pass referral even if they already used the free-week promo,
-    // and vice versa. Free-week is phone-based (no email collected).
+    // and vice versa. Free week matches on phone OR email so a person who
+    // already claimed one can't pick up a second week at another number.
     if (isFreeWeek) {
-      const target = last10(friend_phone_raw);
-      const { data: existing, error: dupErr } = await supabaseAdmin
-        .from("referrals")
-        .select("id, friend_contact")
-        .eq("promo_type", "free_week");
-      if (dupErr) return { ok: false, error: dupErr.message };
-      if ((existing ?? []).some((r) => last10(r.friend_contact) === target)) {
+      const prior = await findPriorFreeWeek(supabaseAdmin, {
+        phone: friend_phone_raw,
+        email: friend_email_raw,
+      });
+      if (prior) {
         return {
           ok: false,
           error: "This phone number has already claimed the free week offer.",
