@@ -10,11 +10,11 @@ export const Route = createFileRoute("/redeem-referral")({
   },
   head: () => ({
     meta: [
-      { title: "Redeem Your Referral Code | FIT Beyond Plus" },
+      { title: "Check In With Your Code | FIT Beyond Plus" },
       {
         name: "description",
         content:
-          "Got a referral code from a friend? Redeem it here for your free day pass to FIT Beyond Plus.",
+          "Got a code from a friend? Complete your online check-in here, then bring your code to the FIT Beyond Plus front desk.",
       },
     ],
   }),
@@ -29,9 +29,10 @@ function RedeemReferralPage() {
     <>
       <PageHero
         eyebrow="REFERRAL"
-        title="Redeem Your Free Day Pass"
-        description="Enter the code your friend shared with you to claim your free visit."
+        title="Complete Your Online Check-In"
+        description="Enter your code to check in online. Day passes are good for one visit; free weeks start once staff verifies you at the front desk."
       />
+
       <section className="container-page py-16 md:py-20">
         <RedeemScreen
           key={resetKey}
