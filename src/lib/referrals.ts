@@ -271,10 +271,10 @@ export const createReferral = createServerFn({ method: "POST" })
           let smsOk = false;
           if (normalizedPhone) {
             const { sendPromoSms } = await import("./sms.server");
-            const redeemUrl = `https://fitbeyondplus.com/redeem-referral?code=${code}`;
+            const checkinUrl = `https://fitbeyondplus.com/redeem-referral?code=${code}`;
             const msg = input.is_self_referral
-              ? `FIT Beyond Plus: You're in! Your free week code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`
-              : `FIT Beyond Plus: ${referrer_name} sent you a free week! Your code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`;
+              ? `FIT Beyond Plus: You claimed a FREE WEEK! Your code is ${code}. Complete your check-in here: ${checkinUrl} then bring your code to the FIT Beyond Plus front desk. Your 7 days begin after staff verifies you in person.`
+              : `FIT Beyond Plus: ${referrer_name} sent you a FREE WEEK! Your code is ${code}. Complete your check-in here: ${checkinUrl} then come to the FIT Beyond Plus front desk to activate it. Your 7 days begin after staff verifies you in person.`;
             const send = await sendPromoSms(normalizedPhone, msg, {
               kind: "free_week_code",
               sentBy: "free_week_promo",
@@ -285,6 +285,7 @@ export const createReferral = createServerFn({ method: "POST" })
               console.error("[createReferral] free_week instant sms failed", send.error);
             }
           }
+
 
 
           // Create the lead immediately at claim time so it shows up in the
