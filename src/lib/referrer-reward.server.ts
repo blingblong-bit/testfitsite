@@ -125,7 +125,7 @@ export async function applyReferrerReward(
 
       const send = await sendPromoSms(
         referrerPhone,
-        `Nice work! ${friendLabel} just came in and redeemed their free week at FIT Beyond Plus — you've earned an extra 7 days. Come activate your own free week and we'll add it on right away.`,
+        `Nice work! ${friendLabel} just came in and activated their free week at FIT Beyond Plus — you've earned an extra 7 days. Come activate your own free week and we'll add it on right away.`,
         { kind: "free_week_reward_pending", sentBy: "free_week_promo", db },
       );
       if (!send.ok) console.error("[referrerReward] pending sms failed", send.error);
@@ -144,7 +144,7 @@ export async function applyReferrerReward(
 
     const send = await sendPromoSms(
       referrerPhone,
-      `Hey! ${friendLabel} came in and redeemed their free week — as a thank you, we just added another 7 days to YOUR free week! Now runs through ${prettyDate(newEnd)}.`,
+      `Hey! ${friendLabel} came in and activated their free week — as a thank you, we just added another 7 days to YOUR free week! Now runs through ${prettyDate(newEnd)}.`,
       { kind: "free_week_reward_extended", sentBy: "free_week_promo", db },
     );
     if (!send.ok) console.error("[referrerReward] sms failed", send.error);
