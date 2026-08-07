@@ -81,3 +81,40 @@ order by created_at desc;
 14. **Post-trial nudge** — expire a test-number trial (`access_ends_at` in the
     past, `became_member = false`) and run the sync → nudge appears as
     `test_mode` with `kind = post_trial_nudge`.
+
+## Referrer lead tracking (launch fix)
+
+Submitting the "For a Friend" form now also records the REFERRER as a lead:
+
+- matched on the last 10 phone digits (`findLeadByPhone`) — never duplicated
+- new referrers get `source = 'free_week_referrer'`, `crm_status = 'New'`,
+  `sequence_status = 'pending'`, `should_notify = false`
+- note appended each time:
+  `[ts] Referred <Friend> for End of Summer free-week promotion — referral code XXXXX`
+- no free-week/visit/conversion fields are touched, and `referrals.lead_id`
+  still points at the FRIEND, so the Lead Tracker never shows
+  "Free Week Active" for a referrer who hasn't activated their own week
+
+### Flows to verify
+
+1. **Self claim** — code SMS says "Complete your check-in here … then bring
+   your code to the front desk"; success screen says "Your week has not
+   started yet"; online check-in screen says NOT active; only staff Confirm
+   produces the ACTIVE SMS and the 7-day window.
+2. **Referral** — A refers B: exactly one lead each, B has "Referred by A",
+   A has the referral note. No reward until staff confirms B.
+3. **Referrer never claimed** — A appears as `free_week_referrer`; B's
+   activation leaves A's reward `pending`; when A later claims, the same lead
+   is reused (phone match) and the pending reward applies.
+4. **Existing lead as referrer** — A already in the tracker: no second A, note
+   appended to the existing record.
+5. **Repeated referrals** — A refers B, C, D: one lead for A with three
+   referral notes; three referral rows carry the reward state.
+
+## Customer-facing language rules
+
+- "redeem" is no longer used where it could imply activation; online step is
+  always "check in" / "online check-in".
+- Only the staff-confirmation SMS uses ACTIVE / "your 7 days have started".
+- Internal statuses (`redeemed`, `arrival_pending`, `referrer_reward_status`)
+  are unchanged.

@@ -33,6 +33,58 @@ async function findLeadByPhone(
   return match ?? null;
 }
 
+/**
+ * Records the REFERRER of a free-week referral as a lead so we can see who
+ * is actually driving referrals. Reuses an existing lead matched on the
+ * last 10 phone digits (appending referral history to its notes) and never
+ * touches free-week/visit/conversion fields — being a referrer is not the
+ * same thing as having an activated free week.
+ */
+async function upsertReferrerLead(
+  db: AdminDb,
+  args: {
+    name: string;
+    phone: string;
+    email: string | null;
+    friendName: string;
+    code: string;
+  },
+): Promise<string | null> {
+  const digits = (args.phone ?? "").replace(/\D/g, "").slice(-10);
+  if (digits.length !== 10) return null;
+
+  const note = `[${new Date().toISOString()}] Referred ${args.friendName} for End of Summer free-week promotion — referral code ${args.code}`;
+  const existing = await findLeadByPhone(db, args.phone);
+
+  if (existing) {
+    const notes = existing.notes ? `${existing.notes}\n${note}` : note;
+    const patch: { notes: string; name?: string } = { notes };
+    if (!(existing.name ?? "").trim() && args.name) patch.name = args.name;
+    await db.from("leads").update(patch).eq("id", existing.id);
+    return existing.id;
+  }
+
+  const { data: created, error } = await db
+    .from("leads")
+    .insert({
+      source: "free_week_referrer",
+      name: args.name,
+      // leads.email is NOT NULL; free-week referrers are phone-only.
+      email: args.email ?? "",
+      phone: args.phone,
+      notes: note,
+      lead_type: "customer_lead",
+      should_notify: false,
+      spam_reason: null,
+      crm_status: "New",
+      sequence_status: "pending",
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return created?.id ?? null;
+}
+
 
 // Twilio sending + the reserved free-week test numbers live in
 // src/lib/sms.server.ts (imported dynamically inside handlers so this
@@ -271,10 +323,10 @@ export const createReferral = createServerFn({ method: "POST" })
           let smsOk = false;
           if (normalizedPhone) {
             const { sendPromoSms } = await import("./sms.server");
-            const redeemUrl = `https://fitbeyondplus.com/redeem-referral?code=${code}`;
+            const checkinUrl = `https://fitbeyondplus.com/redeem-referral?code=${code}`;
             const msg = input.is_self_referral
-              ? `FIT Beyond Plus: You're in! Your free week code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`
-              : `FIT Beyond Plus: ${referrer_name} sent you a free week! Your code is ${code}. Redeem it at the front desk or here: ${redeemUrl}`;
+              ? `FIT Beyond Plus: You claimed a FREE WEEK! Your code is ${code}. Complete your check-in here: ${checkinUrl} then bring your code to the FIT Beyond Plus front desk. Your 7 days begin after staff verifies you in person.`
+              : `FIT Beyond Plus: ${referrer_name} sent you a FREE WEEK! Your code is ${code}. Complete your check-in here: ${checkinUrl} then come to the FIT Beyond Plus front desk to activate it. Your 7 days begin after staff verifies you in person.`;
             const send = await sendPromoSms(normalizedPhone, msg, {
               kind: "free_week_code",
               sentBy: "free_week_promo",
@@ -285,6 +337,7 @@ export const createReferral = createServerFn({ method: "POST" })
               console.error("[createReferral] free_week instant sms failed", send.error);
             }
           }
+
 
 
           // Create the lead immediately at claim time so it shows up in the
@@ -347,7 +400,30 @@ export const createReferral = createServerFn({ method: "POST" })
             }
           }
 
+          // Track the REFERRER as a person too. Someone driving referrals
+          // needs to be visible in the Lead Tracker even if they never
+          // claimed a week for themselves. Never marks them as having
+          // redeemed/visited/activated anything, and never creates a
+          // duplicate — matched on the last 10 phone digits.
+          if (isFreeWeek && !input.is_self_referral) {
+            try {
+              await upsertReferrerLead(supabaseAdmin, {
+                name: referrer_name,
+                phone: referrer_phone_raw,
+                email: normalized_referrer_email,
+                friendName: friend_name,
+                code,
+              });
+            } catch (e) {
+              console.error(
+                "[createReferral] referrer lead upsert failed",
+                e instanceof Error ? e.message : e,
+              );
+            }
+          }
+
           return { ok: true, code };
+
 
         }
         try {
@@ -546,7 +622,7 @@ export const redeemReferral = createServerFn({ method: "POST" })
       const { sendPromoSms } = await import("./sms.server");
       const send = await sendPromoSms(
         phone,
-        `You're all set, ${full_name}! Come by the front desk at FIT Beyond Plus and we'll get your free week activated. We're at 449 W Lincoln St, Tullahoma!`,
+        `Check-in complete, ${full_name}! One step left — your free week is NOT active yet. Come to the FIT Beyond Plus front desk at 449 W Lincoln St, Tullahoma. Your 7 days start once staff verifies you in person.`,
         {
           kind: "free_week_arrival_pending",
           sentBy: "free_week_promo",

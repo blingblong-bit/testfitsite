@@ -107,6 +107,8 @@ type Lead = {
   interest: string | null;
   message: string | null;
   notes: string | null;
+  referred_by?: string | null;
+
   created_at: string;
   lead_type: string;
   lead_score: number;
@@ -1474,6 +1476,21 @@ function LeadCard({ lead, updateLead, freeWeek }: { lead: Lead; updateLead: (id:
               )}
             </div>
           )}
+
+          {/* Referral relationship (read-only) */}
+          {(lead.referred_by || lead.source === "free_week_referrer") && (
+            <div className="rounded-md border border-border p-4">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Referral</p>
+              {lead.referred_by && <p className="mt-1 text-sm">Referred by {lead.referred_by}</p>}
+              {lead.source === "free_week_referrer" && (
+                <p className="mt-1 text-sm">
+                  Entered as a referrer — see notes for who they referred.
+                </p>
+              )}
+            </div>
+          )}
+
+
 
           {/* Original submission */}
           {(lead.interest || lead.message) && (

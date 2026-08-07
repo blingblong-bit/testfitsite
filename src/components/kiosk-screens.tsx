@@ -457,10 +457,14 @@ export function RedeemScreen({
   if (done)
     return (
       <ConfirmationCard
-        title="Referral redeemed successfully"
+        title={
+          promoType === "free_week"
+            ? "Check-in complete — one step left"
+            : "Referral check-in complete"
+        }
         message={
           promoType === "free_week"
-            ? "Your free week is active! Welcome to FIT Beyond Plus — see you soon."
+            ? "Your free week is NOT active yet. Come to the FIT Beyond Plus front desk at 449 W Lincoln St, Tullahoma — once staff confirms you're here, your 7-day free week begins."
             : "Free day pass approved. Welcome to FIT Beyond Plus!"
         }
         onDone={onDone}
@@ -479,8 +483,8 @@ export function RedeemScreen({
     return (
       <FormShell
         eyebrow="REFERRAL"
-        title="Redeem a Referral Code"
-        sub="Enter the code your friend gave you."
+        title="Enter Your Code"
+        sub="Enter the code you were given to complete your online check-in."
       >
         <form onSubmit={handleCodeSubmit} className="space-y-5">
           <KioskField label="Referral code" name="code" required placeholder="e.g. ABCD234567" />
@@ -494,9 +498,14 @@ export function RedeemScreen({
   return (
     <FormShell
       eyebrow="CHECK IN"
-      title="Referral Day Pass Check-In"
-      sub="Tell us about yourself to complete your free day pass."
+      title={promoType === "free_week" ? "Free Week Online Check-In" : "Referral Day Pass Check-In"}
+      sub={
+        promoType === "free_week"
+          ? "Tell us about yourself. This is your online check-in — your free week starts when staff verifies you at the front desk."
+          : "Tell us about yourself to complete your free day pass."
+      }
     >
+
       <form onSubmit={handleCheckinSubmit} className="space-y-5">
         <div className="rounded-xl border border-border bg-card p-5 space-y-2">
           <div>
