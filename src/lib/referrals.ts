@@ -816,6 +816,22 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
     if (row.status !== "arrival_pending")
       return { ok: false, error: `Referral is not awaiting arrival (status: ${row.status}).` };
 
+    // Final one-week-per-person guard before the access window opens.
+    const prior = await findPriorFreeWeek(supabaseAdmin, {
+      phone: row.friend_contact,
+      email: row.friend_email,
+      excludeReferralId: row.id,
+      statuses: ["redeemed"],
+    });
+    if (prior) {
+      return {
+        ok: false,
+        error: `This person already has an activated free week (code ${prior.referral_code}). Don't activate a second one.`,
+      };
+    }
+
+
+
     const nowIso = new Date().toISOString();
     const endsIso = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
