@@ -34,45 +34,10 @@ async function findLeadByPhone(
 }
 
 
-function normalizePhoneE164(raw: string): string {
-  const trimmed = raw.trim();
-  if (trimmed.startsWith("+")) return "+" + trimmed.slice(1).replace(/\D/g, "");
-  const digits = trimmed.replace(/\D/g, "");
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return `+${digits}`;
-}
+// Twilio sending + the reserved free-week test numbers live in
+// src/lib/sms.server.ts (imported dynamically inside handlers so this
+// module stays safe for the client bundle).
 
-async function sendTwilioSms(
-  to: string,
-  body: string,
-): Promise<{ ok: boolean; sid?: string; error?: string }> {
-  const sid = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_FROM_NUMBER;
-  if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
-  const auth = Buffer.from(`${sid}:${token}`).toString("base64");
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${auth}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      To: to,
-      From: from,
-      Body: body,
-      StatusCallback: "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
-    }),
-  });
-  if (!res.ok) {
-    const t = await res.text();
-    console.error("[referrals] twilio error", res.status, t);
-    return { ok: false, error: `twilio_${res.status}` };
-  }
-  const json = (await res.json()) as { sid?: string };
-  return { ok: true, sid: json.sid };
-}
 
 export type Referral = {
   id: string;
