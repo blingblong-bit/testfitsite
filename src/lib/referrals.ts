@@ -573,11 +573,19 @@ export const redeemReferral = createServerFn({ method: "POST" })
       }
 
 
-      const send = await sendTwilioSms(
-        normalizePhoneE164(phone),
+      const { sendPromoSms } = await import("./sms.server");
+      const send = await sendPromoSms(
+        phone,
         `You're all set, ${full_name}! Come by the front desk at FIT Beyond Plus and we'll get your free week activated. We're at 449 W Lincoln St, Tullahoma!`,
+        {
+          kind: "free_week_arrival_pending",
+          sentBy: "free_week_promo",
+          db: supabaseAdmin,
+          leadId: (pending as { lead_id?: string | null }).lead_id ?? null,
+        },
       );
       if (!send.ok) console.error("[redeemReferral] free_week arrival sms failed", send.error);
+
 
       return { ok: true, referral: pending as Referral };
     }
