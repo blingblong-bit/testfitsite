@@ -209,12 +209,6 @@ function Home() {
                 >
                   Claim Your Free Week <ArrowRight className="h-4 w-4" />
                 </Link>
-                <a
-                  href="#how-free-week-works"
-                  className="inline-flex h-12 items-center rounded-md border border-border bg-background/40 px-6 text-sm font-bold uppercase tracking-wide hover:bg-secondary transition"
-                >
-                  Learn More
-                </a>
               </div>
             </div>
             <div className="order-1 lg:order-2">
