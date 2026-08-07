@@ -171,11 +171,13 @@ export async function applyPendingRewardsForPhone(
   if (target.length !== 10) return { applied: 0 };
 
   try {
+    // "no_active_window" is the legacy pre-pending state — those rewards
+    // were earned too, so they're eligible for payout as well.
     const { data: candidates } = await db
       .from("referrals")
-      .select("id, referrer_contact, friend_name")
+      .select("id, referrer_contact, friend_name, referrer_reward_status")
       .eq("promo_type", "free_week")
-      .eq("referrer_reward_status", "pending")
+      .in("referrer_reward_status", ["pending", "no_active_window"])
       .limit(500);
 
     const mine = (candidates ?? []).filter(
@@ -189,7 +191,7 @@ export async function applyPendingRewardsForPhone(
         .from("referrals")
         .update({ referrer_reward_status: "extended" })
         .eq("id", r.id)
-        .eq("referrer_reward_status", "pending")
+        .eq("referrer_reward_status", r.referrer_reward_status ?? "pending")
         .select("id");
       if ((claimed ?? []).length > 0) applied += 1;
     }
