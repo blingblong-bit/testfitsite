@@ -52,11 +52,15 @@ function ReengagementPage() {
         <ArrowLeft className="h-4 w-4" /> Staff Portal
       </Link>
 
-      <h1 className="mt-6 text-3xl">Free Week Re-Engagement Campaign</h1>
+      <h1 className="mt-6 text-3xl">Re-Engagement Campaigns</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        One-time text to old leads who have never received any SMS from us. Nothing sends
-        until you press "Send Campaign". Anyone who already got this campaign is
-        permanently excluded.
+        Reconnect with high-priority leads who haven't converted, don't have a tour scheduled,
+        and are still eligible for SMS. Nothing sends until you press "Send Campaign". Anyone who
+        already received this specific campaign is permanently excluded from it.
+      </p>
+      <p className="mt-2 max-w-2xl text-xs text-muted-foreground">
+        Current campaign: <span className="text-foreground">Free Week</span> (free_week_reactivation) ·
+        7-day contact cooldown applies.
       </p>
 
       <div className="mt-8 flex flex-wrap gap-3">
@@ -104,21 +108,26 @@ function ReengagementPage() {
             <span className="text-2xl">{data.count}</span> lead{data.count === 1 ? "" : "s"} qualify.
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Skipped — prior SMS history: {data.skipped.prior_sms} · already in this campaign:{" "}
-            {data.skipped.already_campaigned} · duplicate phone: {data.skipped.duplicate_phone} ·
-            test/staff numbers: {data.skipped.excluded_number} · invalid phone:{" "}
-            {data.skipped.invalid_phone} · joined/lost: {data.skipped.closed_status}
+            Skipped — not high priority: {data.skipped.not_high_priority} · contacted in last 7 days:{" "}
+            {data.skipped.recently_contacted} · tour scheduled: {data.skipped.tour_scheduled} ·
+            already in this campaign: {data.skipped.already_campaigned} · duplicate phone:{" "}
+            {data.skipped.duplicate_phone} · test/staff numbers: {data.skipped.excluded_number} ·
+            invalid phone: {data.skipped.invalid_phone} · joined/lost: {data.skipped.closed_status}
           </p>
 
           {data.recipients.length > 0 && (
-            <div className="mt-6 overflow-hidden rounded-xl border border-border">
+            <div className="mt-6 overflow-x-auto rounded-xl border border-border">
               <table className="w-full text-sm">
                 <thead className="bg-secondary/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
                   <tr>
                     <th className="px-4 py-3">Name</th>
                     <th className="px-4 py-3">Phone</th>
                     <th className="px-4 py-3">Source</th>
-                    <th className="px-4 py-3">Created</th>
+                    <th className="px-4 py-3">Last Contact</th>
+                    <th className="px-4 py-3">Days Since</th>
+                    <th className="px-4 py-3">CRM Status</th>
+                    <th className="px-4 py-3">Priority</th>
+                    <th className="px-4 py-3">Tour</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -128,8 +137,16 @@ function ReengagementPage() {
                       <td className="px-4 py-3">{r.phone}</td>
                       <td className="px-4 py-3 text-muted-foreground">{r.source ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {new Date(r.created_at).toLocaleDateString()}
+                        {r.last_contacted_at
+                          ? new Date(r.last_contacted_at).toLocaleDateString()
+                          : "Never"}
                       </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {r.days_since_contact ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{r.crm_status}</td>
+                      <td className="px-4 py-3 uppercase">{r.priority}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{r.tour_status}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -145,6 +162,9 @@ function ReengagementPage() {
               <p className="mt-3 whitespace-pre-wrap text-sm">{data.recipients[0].message}</p>
             </div>
           )}
+        </div>
+      )}
+
         </div>
       )}
 
