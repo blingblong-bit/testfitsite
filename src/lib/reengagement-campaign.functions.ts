@@ -135,7 +135,6 @@ export const sendReengagementCampaign = createServerFn({ method: "POST" })
       return { ok: false as const, error: "twilio_not_configured" };
     }
     const auth = btoa(`${sid}:${token}`);
-    const nowIso = new Date().toISOString();
 
     const results: { name: string; phone: string; ok: boolean; error?: string }[] = [];
 
