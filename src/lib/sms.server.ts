@@ -110,5 +110,38 @@ export async function sendPromoSms(
     return { ok: true, test_mode: true };
   }
 
-  return sendViaTwilio(e164, body);
+  const result = await sendViaTwilio(e164, body);
+
+  // Log every live send too, so promo texts show up in the Lead Tracker
+  // conversation history with delivery status (via twilio-status-callback).
+  const db = opts.db ?? (await getAdminDb());
+  if (db) {
+    const { error } = await db.from("sms_conversation_log").insert({
+      lead_id: opts.leadId ?? null,
+      phone: e164,
+      direction: "outbound",
+      body,
+      from_ai: false,
+      provider_message_id: result.sid ?? null,
+      status: result.ok ? "sent" : "failed",
+      metadata: {
+        kind: opts.kind,
+        sent_by: opts.sentBy,
+        ...(result.error ? { error: result.error } : {}),
+      },
+    });
+    if (error) console.error("[sms] send log failed", error.message);
+  }
+
+  return result;
+}
+
+async function getAdminDb(): Promise<Db | null> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return supabaseAdmin as unknown as Db;
+  } catch (e) {
+    console.error("[sms] admin client unavailable for logging", e instanceof Error ? e.message : e);
+    return null;
+  }
 }
