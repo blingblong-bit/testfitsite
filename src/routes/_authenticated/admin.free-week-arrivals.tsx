@@ -37,8 +37,13 @@ function AdminFreeWeekArrivals() {
   const [rows, setRows] = useState<ArrivalRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [actingOn, setActingOn] = useState<string | null>(null);
+  const [codeInput, setCodeInput] = useState("");
+  const [looking, setLooking] = useState(false);
+  const [lookup, setLookup] = useState<StaffCodeLookup | null>(null);
+  const [lookupError, setLookupError] = useState<string | null>(null);
   const confirm = useServerFn(confirmFreeWeekArrival);
   const reject = useServerFn(rejectFreeWeekArrival);
+  const lookupCode = useServerFn(lookupFreeWeekCodeForStaff);
 
   const load = useCallback(async () => {
     const { data, error } = await supabase
@@ -57,12 +62,28 @@ function AdminFreeWeekArrivals() {
     return () => clearInterval(interval);
   }, [load]);
 
-  async function handleConfirm(id: string) {
+  async function handleLookup() {
+    const code = codeInput.trim();
+    if (!code) return;
+    setLooking(true);
+    setLookupError(null);
+    setLookup(null);
+    const result = await lookupCode({ data: { code } });
+    setLooking(false);
+    if (!result.ok) return setLookupError(result.error);
+    setLookup(result.result);
+  }
+
+  async function handleConfirm(id: string, fromLookup = false) {
     setActingOn(id);
     const result = await confirm({ data: { referral_id: id } });
     setActingOn(null);
     if (!result.ok) return toast.error(result.error);
     toast.success("Confirmed — free week activated");
+    if (fromLookup) {
+      setLookup(null);
+      setCodeInput("");
+    }
     load();
   }
 
