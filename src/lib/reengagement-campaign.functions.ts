@@ -204,6 +204,7 @@ export const sendReengagementCampaign = createServerFn({ method: "POST" })
 
       if (sendOk) {
         const sentAt = new Date().toISOString();
+        const nextFollowUp = advanceFollowUpIfStale(r.next_follow_up_date);
         await supabaseAdmin
           .from("leads")
           .update({
@@ -212,6 +213,7 @@ export const sendReengagementCampaign = createServerFn({ method: "POST" })
             last_contact_method: "sms",
             crm_status: "Contacted",
             sequence_status: "paused",
+            ...(nextFollowUp ? { next_follow_up_date: nextFollowUp } : {}),
           })
           .eq("id", r.id);
       }
