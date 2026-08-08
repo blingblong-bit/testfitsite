@@ -13,7 +13,7 @@ function firstName(name: string | null | undefined): string {
 }
 
 export function buildCampaignMessage(name: string | null | undefined): string {
-  return `Hey ${firstName(name)}, it's FIT Beyond Plus! It's been a little while, so here's a FREE 7-day pass: https://fitbeyondplus.com/claim-free-week - your 7 days start when you activate it in person at the front desk. Reply STOP to opt out.`;
+  return `Hey ${firstName(name)}, it's FIT Beyond Plus! It's been a little while, so we'd love to have you back. Claim a FREE 7-day pass here: https://fitbeyondplus.com/claim-free-week — your 7 days start when you activate it in person at the front desk. Reply STOP to opt out.`;
 }
 
 type Recipient = {
