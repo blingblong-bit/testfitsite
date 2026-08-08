@@ -165,8 +165,7 @@ function ReengagementPage() {
         </div>
       )}
 
-        </div>
-      )}
+
 
       {sendMut.data && sendMut.data.ok && (
         <div className="mt-10 rounded-xl border border-border bg-card p-5">
