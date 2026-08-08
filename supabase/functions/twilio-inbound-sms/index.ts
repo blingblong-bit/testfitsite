@@ -629,12 +629,9 @@ or
         })
         .eq("id", lead.id);
 
-      const staffPhone = Deno.env.get("STAFF_ALERT_PHONE");
-      if (staffPhone) {
-        const prefix = isExistingMember ? "⚡ [EXISTING MEMBER] " : "⚡ ";
-        const alert = `${prefix}${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${reason || "n/a"}. Check the lead tracker.`;
-        await sendTwilioSms(normalizePhone(staffPhone), alert);
-      }
+      const prefix = isExistingMember ? "⚡ [EXISTING MEMBER] " : "⚡ ";
+      const alert = `${prefix}${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${reason || "n/a"}. Check the lead tracker.`;
+      await sendStaffAlert(alert, "operations");
       return twiml();
     }
 
