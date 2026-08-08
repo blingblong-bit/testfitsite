@@ -216,18 +216,14 @@ export const submitAppointmentRequest = createServerFn({ method: "POST" })
     // of this system is that a human doesn't need to babysit it, but a
     // new pending request is exactly the kind of thing staff needs to
     // know about even if they're not actively checking the tracker.
-    const staffPhone = process.env.STAFF_ALERT_PHONE;
-    if (staffPhone) {
-      const typeLabel = data.visit_type === "day_pass" ? "day pass" : "tour";
-      const alertMsg = `⚡ New ${typeLabel} request from ${data.name.trim()} for ${formatChicagoDateTime(
-        data.requested_time,
-      )}. Approve or suggest a new time in the Lead Tracker.`;
-      const alertSend = await sendTwilioSms(normalizePhoneE164(staffPhone), alertMsg);
-      if (!alertSend.ok) {
-        console.error("[appointments] staff alert failed", alertSend.error);
-      }
-    } else {
-      console.error("[appointments] STAFF_ALERT_PHONE not configured — no staff alert sent");
+    const typeLabel = data.visit_type === "day_pass" ? "day pass" : "tour";
+    const alertMsg = `⚡ New ${typeLabel} request from ${data.name.trim()} for ${formatChicagoDateTime(
+      data.requested_time,
+    )}. Approve or suggest a new time in the Lead Tracker.`;
+    const { sendStaffAlert } = await import("./staff-alerts.server");
+    const alertResult = await sendStaffAlert(alertMsg, "operations");
+    if (alertResult.failures.length > 0) {
+      console.error("[appointments] staff alert partially failed", alertResult.failures);
     }
 
     return { ok: true as const, appointment_id: appt.id as string };
