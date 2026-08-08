@@ -1,10 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Check, X, RefreshCw } from "lucide-react";
+import { ArrowLeft, Check, X, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { confirmFreeWeekArrival, rejectFreeWeekArrival } from "@/lib/referrals";
+import {
+  confirmFreeWeekArrival,
+  rejectFreeWeekArrival,
+  lookupFreeWeekCodeForStaff,
+  type StaffCodeLookup,
+} from "@/lib/referrals";
 
 export const Route = createFileRoute("/_authenticated/admin/free-week-arrivals")({
   head: () => ({
