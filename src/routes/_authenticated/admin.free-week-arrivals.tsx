@@ -1,10 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Check, X, RefreshCw } from "lucide-react";
+import { ArrowLeft, Check, X, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { confirmFreeWeekArrival, rejectFreeWeekArrival } from "@/lib/referrals";
+import {
+  confirmFreeWeekArrival,
+  rejectFreeWeekArrival,
+  lookupFreeWeekCodeForStaff,
+  type StaffCodeLookup,
+} from "@/lib/referrals";
 
 export const Route = createFileRoute("/_authenticated/admin/free-week-arrivals")({
   head: () => ({
@@ -32,8 +37,13 @@ function AdminFreeWeekArrivals() {
   const [rows, setRows] = useState<ArrivalRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [actingOn, setActingOn] = useState<string | null>(null);
+  const [codeInput, setCodeInput] = useState("");
+  const [looking, setLooking] = useState(false);
+  const [lookup, setLookup] = useState<StaffCodeLookup | null>(null);
+  const [lookupError, setLookupError] = useState<string | null>(null);
   const confirm = useServerFn(confirmFreeWeekArrival);
   const reject = useServerFn(rejectFreeWeekArrival);
+  const lookupCode = useServerFn(lookupFreeWeekCodeForStaff);
 
   const load = useCallback(async () => {
     const { data, error } = await supabase
@@ -52,12 +62,28 @@ function AdminFreeWeekArrivals() {
     return () => clearInterval(interval);
   }, [load]);
 
-  async function handleConfirm(id: string) {
+  async function handleLookup() {
+    const code = codeInput.trim();
+    if (!code) return;
+    setLooking(true);
+    setLookupError(null);
+    setLookup(null);
+    const result = await lookupCode({ data: { code } });
+    setLooking(false);
+    if (!result.ok) return setLookupError(result.error);
+    setLookup(result.result);
+  }
+
+  async function handleConfirm(id: string, fromLookup = false) {
     setActingOn(id);
     const result = await confirm({ data: { referral_id: id } });
     setActingOn(null);
     if (!result.ok) return toast.error(result.error);
     toast.success("Confirmed — free week activated");
+    if (fromLookup) {
+      setLookup(null);
+      setCodeInput("");
+    }
     load();
   }
 
@@ -106,6 +132,78 @@ function AdminFreeWeekArrivals() {
           Confirming activates their 7-day access. Don't forget to also create their Antaris
           membership record.
         </div>
+
+        <div className="mb-8 rounded-lg border border-border bg-card p-5">
+          <p className="text-sm font-semibold">Look up a code</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Use this when someone shows up with a code but isn't in the list below — that means
+            they never finished the online check-in.
+          </p>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleLookup();
+            }}
+            className="mt-3 flex flex-wrap gap-2"
+          >
+            <input
+              value={codeInput}
+              onChange={(e) => setCodeInput(e.target.value)}
+              placeholder="Enter code"
+              className="h-11 min-w-[200px] flex-1 rounded-md border border-border bg-background px-4 text-sm uppercase tracking-wider"
+            />
+            <button
+              type="submit"
+              disabled={looking || !codeInput.trim()}
+              className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-5 text-sm hover:bg-secondary disabled:opacity-60"
+            >
+              <Search className="h-4 w-4" /> {looking ? "Looking…" : "Look up"}
+            </button>
+            {(lookup || lookupError) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLookup(null);
+                  setLookupError(null);
+                  setCodeInput("");
+                }}
+                className="inline-flex h-11 items-center rounded-md px-3 text-sm text-muted-foreground hover:text-foreground"
+              >
+                Clear
+              </button>
+            )}
+          </form>
+
+          {lookupError && <p className="mt-3 text-sm text-destructive">{lookupError}</p>}
+
+          {lookup && (
+            <div className="mt-4 rounded-lg border border-border bg-background p-4">
+              <p className="text-lg font-semibold">{lookup.name}</p>
+              <p className="text-sm text-muted-foreground">
+                {lookup.phone ?? "no phone"}
+                {lookup.email ? ` • ${lookup.email}` : ""}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Code {lookup.referral_code} •{" "}
+                {lookup.is_self_referral
+                  ? "claimed for themselves"
+                  : `referred by ${lookup.referrer_name}`}{" "}
+                • claimed {new Date(lookup.created_at).toLocaleString()}
+              </p>
+              <p className="mt-3 text-sm">{lookup.state_label}</p>
+              {lookup.can_confirm && (
+                <button
+                  onClick={() => handleConfirm(lookup.id, true)}
+                  disabled={actingOn === lookup.id}
+                  className="mt-4 inline-flex h-11 items-center gap-2 rounded-md bg-primary px-5 text-sm font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-60"
+                >
+                  <Check className="h-4 w-4" /> Confirm — They're Here
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
 
         {loading ? (
           <p className="text-muted-foreground">Loading...</p>

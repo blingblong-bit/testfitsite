@@ -813,7 +813,9 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
     if (fetchErr) return { ok: false, error: fetchErr.message };
     if (!row) return { ok: false, error: "Referral not found." };
     if (row.promo_type !== "free_week") return { ok: false, error: "Not a free-week referral." };
-    if (row.status !== "arrival_pending")
+    // 'sent' is allowed too: staff can activate a code straight from the front
+    // desk even if the person never completed the online check-in step.
+    if (row.status !== "arrival_pending" && row.status !== "sent")
       return { ok: false, error: `Referral is not awaiting arrival (status: ${row.status}).` };
 
     // Final one-week-per-person guard before the access window opens.
@@ -1000,3 +1002,100 @@ export const rejectFreeWeekArrival = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+const CodeLookupSchema = z.object({ code: z.string().min(1) });
+
+export type StaffCodeLookup = {
+  id: string;
+  referral_code: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  referrer_name: string;
+  is_self_referral: boolean;
+  promo_type: string;
+  status: string;
+  created_at: string;
+  access_starts_at: string | null;
+  access_ends_at: string | null;
+  /** True when staff can activate the 7 days right now. */
+  can_confirm: boolean;
+  /** Plain-English state for the staff card. */
+  state_label: string;
+};
+
+/**
+ * Staff-only: look up a free-week code at the front desk. Covers people who
+ * got their code by text but never completed the online check-in step, so
+ * they never appeared in the arrivals queue.
+ */
+export const lookupFreeWeekCodeForStaff = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => CodeLookupSchema.parse(d))
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{ ok: true; result: StaffCodeLookup } | { ok: false; error: string }> => {
+      const { data: isAdmin, error: roleErr } = await context.supabase.rpc("has_role", {
+        _user_id: context.userId,
+        _role: "admin",
+      });
+      if (roleErr || !isAdmin) return { ok: false, error: "forbidden" };
+
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const clean = data.code.trim().replace(/\s+/g, "").toUpperCase();
+      if (!clean) return { ok: false, error: "Enter a code." };
+
+      const { data: row, error } = await supabaseAdmin
+        .from("referrals")
+        .select("*")
+        .ilike("referral_code", clean)
+        .maybeSingle();
+      if (error) return { ok: false, error: error.message };
+      if (!row) return { ok: false, error: `No record found for code ${clean}.` };
+
+      const r = row as Referral & { is_self_referral?: boolean };
+      const isFreeWeek = r.promo_type === "free_week";
+      const ends = r.access_ends_at ? new Date(r.access_ends_at) : null;
+      const expired = !!ends && ends.getTime() < Date.now();
+
+      let state_label: string;
+      let can_confirm = false;
+      if (!isFreeWeek) {
+        state_label = "This is a day pass code, not a free week.";
+      } else if (r.status === "redeemed") {
+        state_label = expired
+          ? `Free week already used — it ended ${ends!.toLocaleDateString()}.`
+          : `Free week already active — runs through ${ends ? ends.toLocaleDateString() : "unknown"}.`;
+      } else if (r.status === "arrival_pending") {
+        state_label = "Checked in online, waiting on staff confirmation.";
+        can_confirm = true;
+      } else if (r.status === "sent") {
+        state_label = "Code claimed, online check-in not completed. You can activate it now.";
+        can_confirm = true;
+      } else {
+        state_label = `Status: ${r.status}.`;
+      }
+
+      return {
+        ok: true,
+        result: {
+          id: r.id,
+          referral_code: r.referral_code,
+          name: (r.redeemed_by ?? r.friend_name ?? "").trim() || "(no name)",
+          phone: r.friend_contact ?? null,
+          email: r.friend_email ?? null,
+          referrer_name: r.referrer_name,
+          is_self_referral: !!r.is_self_referral,
+          promo_type: r.promo_type,
+          status: r.status,
+          created_at: r.created_at,
+          access_starts_at: r.access_starts_at ?? null,
+          access_ends_at: r.access_ends_at ?? null,
+          can_confirm,
+          state_label,
+        },
+      };
+    },
+  );
