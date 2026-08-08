@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ClipboardList, LayoutDashboard, LogOut, CalendarCheck, Receipt, Newspaper, CalendarClock, Ticket } from "lucide-react";
+import { ClipboardList, LayoutDashboard, LogOut, CalendarCheck, Receipt, Newspaper, CalendarClock, Ticket, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/staff-home")({
@@ -165,6 +165,25 @@ function StaffHome() {
           </div>
           <span className="mt-8 text-xs uppercase tracking-widest text-primary group-hover:translate-x-1 transition-transform">
             Open Free Week Arrivals →
+          </span>
+        </Link>
+
+        <Link
+          to="/admin/reengagement"
+          className="group rounded-2xl border border-border bg-card p-8 flex flex-col justify-between min-h-[240px] hover:border-primary transition-colors"
+        >
+          <div>
+            <div className="h-12 w-12 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
+              <MessageSquare className="h-6 w-6" />
+            </div>
+            <h2 className="mt-5 text-2xl">Re-Engagement Campaign</h2>
+            <p className="mt-3 text-sm text-muted-foreground max-w-sm">
+              One-time free-week invite text to old leads who have never been contacted
+              by SMS. Preview first, then send.
+            </p>
+          </div>
+          <span className="mt-8 text-xs uppercase tracking-widest text-primary group-hover:translate-x-1 transition-transform">
+            Open Campaign →
           </span>
         </Link>
       </div>
