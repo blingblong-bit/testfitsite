@@ -26,6 +26,11 @@ type Recipient = {
   source: string | null;
   message: string;
   next_follow_up_date: string | null;
+  last_contacted_at: string | null;
+  days_since_contact: number | null;
+  crm_status: string | null;
+  priority: string;
+  tour_status: string;
 };
 
 async function assertAdmin(context: { supabase: any; userId: string }) {
@@ -36,37 +41,40 @@ async function assertAdmin(context: { supabase: any; userId: string }) {
   if (error || !isAdmin) throw new Error("forbidden");
 }
 
+const COOLDOWN_DAYS = 7;
+
 async function buildAudience() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { TEST_PHONE_NUMBERS } = await import("./sms.server");
-
-  const cutoff = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+  const { computePriority, daysSince } = await import("./lead-priority");
 
   const { data: leads, error } = await supabaseAdmin
     .from("leads")
-    .select("id, name, phone, source, created_at, lead_type, sms_opted_out, became_member, crm_status, next_follow_up_date")
+    .select(
+      "id, name, phone, source, created_at, lead_type, sms_opted_out, became_member, crm_status, next_follow_up_date, last_contacted_at, last_sms_at, tour_scheduled, tour_completed",
+    )
     .eq("lead_type", "customer_lead")
     .eq("sms_opted_out", false)
     .eq("became_member", false)
     .not("phone", "is", null)
-    .lt("created_at", cutoff)
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
 
+  // Campaign-scoped duplicate guard: only successful sends of THIS campaign kind.
   const { data: smsRows, error: smsErr } = await supabaseAdmin
     .from("sms_conversation_log")
-    .select("lead_id, phone, metadata");
+    .select("lead_id, phone, status, metadata");
   if (smsErr) throw new Error(smsErr.message);
 
-  const smsLeadIds = new Set<string>();
-  const smsDigits = new Set<string>();
   const alreadyCampaigned = new Set<string>();
+  const campaignedLeadIds = new Set<string>();
   for (const row of smsRows ?? []) {
-    if (row.lead_id) smsLeadIds.add(row.lead_id);
-    const d = last10(row.phone);
-    if (d.length === 10) smsDigits.add(d);
     const kind = (row.metadata as { kind?: string } | null)?.kind;
-    if (kind === CAMPAIGN_KIND && d.length === 10) alreadyCampaigned.add(d);
+    if (kind !== CAMPAIGN_KIND) continue;
+    if (row.status === "failed") continue;
+    const d = last10(row.phone);
+    if (d.length === 10) alreadyCampaigned.add(d);
+    if (row.lead_id) campaignedLeadIds.add(row.lead_id);
   }
 
   // Excluded staff / developer / test numbers
@@ -85,14 +93,35 @@ async function buildAudience() {
 
   const seen = new Set<string>();
   const recipients: Recipient[] = [];
-  const skipped = { prior_sms: 0, duplicate_phone: 0, excluded_number: 0, invalid_phone: 0, already_campaigned: 0, closed_status: 0 };
+  const skipped = {
+    not_high_priority: 0,
+    tour_scheduled: 0,
+    recently_contacted: 0,
+    duplicate_phone: 0,
+    excluded_number: 0,
+    invalid_phone: 0,
+    already_campaigned: 0,
+    closed_status: 0,
+  };
 
   for (const l of leads ?? []) {
     const digits = last10(l.phone);
     if (digits.length !== 10) { skipped.invalid_phone++; continue; }
     if (l.crm_status === "Joined" || l.crm_status === "Lost Lead") { skipped.closed_status++; continue; }
-    if (alreadyCampaigned.has(digits)) { skipped.already_campaigned++; continue; }
-    if (smsLeadIds.has(l.id) || smsDigits.has(digits)) { skipped.prior_sms++; continue; }
+    if (alreadyCampaigned.has(digits) || campaignedLeadIds.has(l.id)) { skipped.already_campaigned++; continue; }
+    if (l.tour_scheduled && !l.tour_completed) { skipped.tour_scheduled++; continue; }
+
+    const lastContact = l.last_contacted_at ?? l.last_sms_at ?? null;
+    const since = daysSince(lastContact);
+    if (since !== null && since < COOLDOWN_DAYS) { skipped.recently_contacted++; continue; }
+
+    const priority = computePriority({
+      crm_status: l.crm_status,
+      last_contacted_at: l.last_contacted_at,
+      next_follow_up_date: l.next_follow_up_date,
+    });
+    if (priority !== "high") { skipped.not_high_priority++; continue; }
+
     if (excluded.has(digits)) { skipped.excluded_number++; continue; }
     if (seen.has(digits)) { skipped.duplicate_phone++; continue; }
     seen.add(digits);
@@ -105,11 +134,21 @@ async function buildAudience() {
       source: l.source,
       message: buildCampaignMessage(l.name),
       next_follow_up_date: l.next_follow_up_date ?? null,
+      last_contacted_at: lastContact,
+      days_since_contact: since,
+      crm_status: l.crm_status ?? "New Lead",
+      priority,
+      tour_status: l.tour_completed
+        ? "Tour completed"
+        : l.tour_scheduled
+          ? "Tour scheduled"
+          : "No tour",
     });
   }
 
   return { recipients, skipped };
 }
+
 
 export const previewReengagementCampaign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
