@@ -106,7 +106,13 @@ export const sendManualSms = createServerFn({ method: "POST" })
 
       await supabaseAdmin
         .from("leads")
-        .update({ last_sms_at: now, sequence_status: "paused" })
+        .update({
+          last_sms_at: now,
+          last_contacted_at: now,
+          last_contact_method: "sms",
+          sequence_status: "paused",
+          ...(nextFollowUp ? { next_follow_up_date: nextFollowUp } : {}),
+        })
         .eq("id", data.lead_id);
 
       await supabaseAdmin.from("sms_conversation_log").insert({
