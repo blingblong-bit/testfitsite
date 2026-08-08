@@ -42,11 +42,12 @@ export const sendManualSms = createServerFn({ method: "POST" })
 
       const { data: leadRow } = await supabaseAdmin
         .from("leads")
-        .select("email")
+        .select("email, next_follow_up_date")
         .eq("id", data.lead_id)
         .maybeSingle();
       const isTest =
         (leadRow?.email ?? "").trim().toLowerCase() === TEST_EMAIL;
+      const nextFollowUp = advanceFollowUpIfStale(leadRow?.next_follow_up_date);
 
       const now = new Date().toISOString();
 
