@@ -64,6 +64,63 @@ async function sendTwilioSms(
   return { ok: true, sid: json.sid };
 }
 
+// ---- internal staff alerts (mirrors src/lib/staff-alerts.server.ts) ----
+// Operational alerts go individually to every configured staff number;
+// developer-only alerts go to DEVELOPER_NOTIFICATION_PHONE. No group thread,
+// and one failed recipient never blocks the others.
+
+function parsePhoneList(raw: string | undefined | null): string[] {
+  if (!raw) return [];
+  const list = raw
+    .split(/[,;\s]+/)
+    .map((v) => v.trim())
+    .filter(Boolean)
+    .map(normalizePhone)
+    .filter((v) => v.replace(/\D/g, "").length >= 10);
+  return Array.from(new Set(list));
+}
+
+function staffAlertRecipients(audience: "operations" | "developer"): string[] {
+  const legacy = parsePhoneList(Deno.env.get("STAFF_ALERT_PHONE"));
+  if (audience === "developer") {
+    const dev = parsePhoneList(Deno.env.get("DEVELOPER_NOTIFICATION_PHONE"));
+    return dev.length ? dev : legacy;
+  }
+  const ops = parsePhoneList(Deno.env.get("STAFF_NOTIFICATION_PHONES"));
+  return ops.length ? ops : legacy;
+}
+
+async function sendStaffAlert(
+  message: string,
+  audience: "operations" | "developer" = "operations",
+): Promise<void> {
+  const recipients = staffAlertRecipients(audience);
+  if (recipients.length === 0) {
+    console.error(
+      `[staff-alerts] no recipients configured for audience "${audience}" — alert not sent:`,
+      message,
+    );
+    return;
+  }
+  await Promise.all(
+    recipients.map(async (to) => {
+      try {
+        const r = await sendTwilioSms(to, message);
+        if (!r.ok) {
+          console.error(`[staff-alerts] send failed (${audience}) to ${to}:`, r.error);
+        }
+      } catch (err) {
+        console.error(
+          `[staff-alerts] send threw (${audience}) to ${to}:`,
+          err instanceof Error ? err.message : String(err),
+        );
+      }
+    }),
+  );
+}
+
+
+
 // ---- appointment availability (inline, mirrors src/lib/appointment-availability.ts) ----
 
 const APPOINTMENT_HOURS: Record<number, { start: number; end: number } | null> = {
