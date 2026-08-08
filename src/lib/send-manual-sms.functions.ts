@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { advanceFollowUpIfStale } from "./follow-up";
 
 const Schema = z.object({
   lead_id: z.string().uuid(),
@@ -41,11 +42,12 @@ export const sendManualSms = createServerFn({ method: "POST" })
 
       const { data: leadRow } = await supabaseAdmin
         .from("leads")
-        .select("email")
+        .select("email, next_follow_up_date")
         .eq("id", data.lead_id)
         .maybeSingle();
       const isTest =
         (leadRow?.email ?? "").trim().toLowerCase() === TEST_EMAIL;
+      const nextFollowUp = advanceFollowUpIfStale(leadRow?.next_follow_up_date);
 
       const now = new Date().toISOString();
 
@@ -104,7 +106,13 @@ export const sendManualSms = createServerFn({ method: "POST" })
 
       await supabaseAdmin
         .from("leads")
-        .update({ last_sms_at: now, sequence_status: "paused" })
+        .update({
+          last_sms_at: now,
+          last_contacted_at: now,
+          last_contact_method: "sms",
+          sequence_status: "paused",
+          ...(nextFollowUp ? { next_follow_up_date: nextFollowUp } : {}),
+        })
         .eq("id", data.lead_id);
 
       await supabaseAdmin.from("sms_conversation_log").insert({

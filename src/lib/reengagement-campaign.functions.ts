@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { advanceFollowUpIfStale } from "./follow-up";
 
 export const CAMPAIGN_KIND = "free_week_reactivation";
 
@@ -24,6 +25,7 @@ type Recipient = {
   created_at: string;
   source: string | null;
   message: string;
+  next_follow_up_date: string | null;
 };
 
 async function assertAdmin(context: { supabase: any; userId: string }) {
@@ -42,7 +44,7 @@ async function buildAudience() {
 
   const { data: leads, error } = await supabaseAdmin
     .from("leads")
-    .select("id, name, phone, source, created_at, lead_type, sms_opted_out, became_member, crm_status")
+    .select("id, name, phone, source, created_at, lead_type, sms_opted_out, became_member, crm_status, next_follow_up_date")
     .eq("lead_type", "customer_lead")
     .eq("sms_opted_out", false)
     .eq("became_member", false)
@@ -102,6 +104,7 @@ async function buildAudience() {
       created_at: l.created_at,
       source: l.source,
       message: buildCampaignMessage(l.name),
+      next_follow_up_date: l.next_follow_up_date ?? null,
     });
   }
 
@@ -201,6 +204,7 @@ export const sendReengagementCampaign = createServerFn({ method: "POST" })
 
       if (sendOk) {
         const sentAt = new Date().toISOString();
+        const nextFollowUp = advanceFollowUpIfStale(r.next_follow_up_date);
         await supabaseAdmin
           .from("leads")
           .update({
@@ -209,6 +213,7 @@ export const sendReengagementCampaign = createServerFn({ method: "POST" })
             last_contact_method: "sms",
             crm_status: "Contacted",
             sequence_status: "paused",
+            ...(nextFollowUp ? { next_follow_up_date: nextFollowUp } : {}),
           })
           .eq("id", r.id);
       }
