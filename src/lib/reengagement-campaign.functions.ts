@@ -181,16 +181,22 @@ export const sendReengagementCampaign = createServerFn({ method: "POST" })
     const results: { name: string; phone: string; ok: boolean; error?: string }[] = [];
 
     for (const r of recipients) {
-      // Re-check idempotency right before each send.
+      // Re-check campaign-scoped idempotency right before each send.
       const { data: existing } = await supabaseAdmin
         .from("sms_conversation_log")
-        .select("id, metadata")
+        .select("id, status, metadata")
         .eq("lead_id", r.id)
-        .limit(50);
-      if ((existing ?? []).length > 0) {
-        results.push({ name: r.name, phone: r.phone, ok: false, error: "sms_history_appeared" });
+        .limit(200);
+      const gotCampaign = (existing ?? []).some(
+        (row) =>
+          (row.metadata as { kind?: string } | null)?.kind === CAMPAIGN_KIND &&
+          row.status !== "failed",
+      );
+      if (gotCampaign) {
+        results.push({ name: r.name, phone: r.phone, ok: false, error: "already_received_campaign" });
         continue;
       }
+
 
       let sendOk = false;
       let providerId: string | null = null;
