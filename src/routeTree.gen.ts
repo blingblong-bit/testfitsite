@@ -45,6 +45,7 @@ import { Route as AuthenticatedFrontdeskRouteImport } from './routes/_authentica
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as AuthenticatedAdminReengagementRouteImport } from './routes/_authenticated/admin.reengagement'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 import { Route as AuthenticatedAdminFreeWeekArrivalsRouteImport } from './routes/_authenticated/admin.free-week-arrivals'
 import { Route as AuthenticatedAdminDayPassApprovalsRouteImport } from './routes/_authenticated/admin.day-pass-approvals'
@@ -242,6 +243,12 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminReengagementRoute =
+  AuthenticatedAdminReengagementRouteImport.update({
+    id: '/admin/reengagement',
+    path: '/admin/reengagement',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
   id: '/admin/leads',
   path: '/admin/leads',
@@ -373,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
   '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
+  '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
@@ -422,6 +430,7 @@ export interface FileRoutesByTo {
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
   '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
+  '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
@@ -476,6 +485,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
   '/_authenticated/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
+  '/_authenticated/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
@@ -530,6 +540,7 @@ export interface FileRouteTypes {
     | '/admin/day-pass-approvals'
     | '/admin/free-week-arrivals'
     | '/admin/leads'
+    | '/admin/reengagement'
     | '/lovable/email/suppression'
     | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
@@ -579,6 +590,7 @@ export interface FileRouteTypes {
     | '/admin/day-pass-approvals'
     | '/admin/free-week-arrivals'
     | '/admin/leads'
+    | '/admin/reengagement'
     | '/lovable/email/suppression'
     | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
@@ -632,6 +644,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/day-pass-approvals'
     | '/_authenticated/admin/free-week-arrivals'
     | '/_authenticated/admin/leads'
+    | '/_authenticated/admin/reengagement'
     | '/lovable/email/suppression'
     | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
@@ -936,6 +949,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/reengagement': {
+      id: '/_authenticated/admin/reengagement'
+      path: '/admin/reengagement'
+      fullPath: '/admin/reengagement'
+      preLoaderRoute: typeof AuthenticatedAdminReengagementRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/leads': {
       id: '/_authenticated/admin/leads'
       path: '/admin/leads'
@@ -1053,6 +1073,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminDayPassApprovalsRoute: typeof AuthenticatedAdminDayPassApprovalsRoute
   AuthenticatedAdminFreeWeekArrivalsRoute: typeof AuthenticatedAdminFreeWeekArrivalsRoute
   AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
+  AuthenticatedAdminReengagementRoute: typeof AuthenticatedAdminReengagementRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1067,6 +1088,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminFreeWeekArrivalsRoute:
     AuthenticatedAdminFreeWeekArrivalsRoute,
   AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
+  AuthenticatedAdminReengagementRoute: AuthenticatedAdminReengagementRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
