@@ -33,6 +33,7 @@ function chicagoLocalInputToUtcIso(v: string): string | null {
   return chicagoWallToUTC(Number(y), Number(mo), Number(d), Number(h), Number(mi));
 }
 import { AnalyticsView } from "@/components/AnalyticsView";
+import { computePriority, daysSince, followUpOverdueDays, type Priority } from "@/lib/lead-priority";
 
 type CrmStatus =
   | "New Lead"
@@ -208,7 +209,6 @@ type Tab = "leads" | "referrals" | "analytics" | "settings";
 type SortKey = "priority" | "newest" | "oldest" | "tour_date" | "last_contact" | "source";
 type QuickFilter = "none" | "new" | "high_priority" | "due_today" | "tours_scheduled" | "tours_completed" | "joined_this_month";
 
-type Priority = "high" | "medium" | "low";
 
 function notificationForLead(lead: Lead): { title: string; body: string } {
   const src = (lead.source ?? "").toLowerCase();
@@ -229,15 +229,6 @@ export const Route = createFileRoute("/_authenticated/admin/leads")({
   }),
   component: AdminLeads,
 });
-
-function daysSince(iso: string | null): number | null {
-  if (!iso) return null;
-  const then = new Date(iso);
-  const a = new Date(then.getFullYear(), then.getMonth(), then.getDate()).getTime();
-  const now = new Date();
-  const b = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  return Math.max(0, Math.round((b - a) / 86400000));
-}
 
 function addDaysISODate(n: number): string {
   const d = new Date();
@@ -261,16 +252,6 @@ function suggestNextFollowUp(lead: Lead): string | null | "keep" {
   }
   if ((lead.crm_status ?? "New Lead") === "New Lead") return addDaysISODate(2);
   return "keep";
-}
-
-// Whole days the follow-up is past due (today counts as 0, not overdue).
-function followUpOverdueDays(lead: Lead): number | null {
-  if (!lead.next_follow_up_date) return null;
-  if (lead.crm_status === "Joined" || lead.crm_status === "Lost Lead") return null;
-  const due = new Date(lead.next_follow_up_date + "T00:00:00").getTime();
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const diff = Math.floor((today.getTime() - due) / 86400000);
-  return diff > 0 ? diff : null;
 }
 
 function isFollowUpDueToday(lead: Lead): boolean {
@@ -299,24 +280,6 @@ function joinedInMonth(lead: Lead, monthStart: Date): boolean {
 }
 
 
-
-function computePriority(lead: Lead): Priority {
-  if (lead.crm_status === "Joined" || lead.crm_status === "Lost Lead") return "low";
-  const since = daysSince(lead.last_contacted_at);
-  let base: Priority = "low";
-  if (lead.crm_status === "New Lead" && since === null) base = "high";
-  else if (since !== null && since > 5) base = "high";
-  else if (since !== null && since >= 3) base = "medium";
-  else if (since === null) base = "high";
-
-  // Overdue follow-up bumps priority (works with, not against, the base logic).
-  const overdue = followUpOverdueDays(lead);
-  if (overdue !== null) {
-    if (overdue >= 3) return "high";
-    if (overdue >= 1 && base === "low") return "medium";
-  }
-  return base;
-}
 
 function priorityRank(p: Priority): number {
   return p === "high" ? 0 : p === "medium" ? 1 : 2;
