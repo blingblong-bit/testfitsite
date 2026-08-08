@@ -813,7 +813,9 @@ export const confirmFreeWeekArrival = createServerFn({ method: "POST" })
     if (fetchErr) return { ok: false, error: fetchErr.message };
     if (!row) return { ok: false, error: "Referral not found." };
     if (row.promo_type !== "free_week") return { ok: false, error: "Not a free-week referral." };
-    if (row.status !== "arrival_pending")
+    // 'sent' is allowed too: staff can activate a code straight from the front
+    // desk even if the person never completed the online check-in step.
+    if (row.status !== "arrival_pending" && row.status !== "sent")
       return { ok: false, error: `Referral is not awaiting arrival (status: ${row.status}).` };
 
     // Final one-week-per-person guard before the access window opens.
