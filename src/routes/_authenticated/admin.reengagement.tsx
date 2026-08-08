@@ -29,7 +29,7 @@ function ReengagementPage() {
   const [armed, setArmed] = useState(false);
 
   const previewMut = useMutation({
-    mutationFn: async () => preview({ data: {} }),
+    mutationFn: async () => preview(),
     onError: (e: Error) => toast.error(e.message),
   });
 
