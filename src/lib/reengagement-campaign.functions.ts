@@ -201,9 +201,16 @@ export const sendReengagementCampaign = createServerFn({ method: "POST" })
       });
 
       if (sendOk) {
+        const sentAt = new Date().toISOString();
         await supabaseAdmin
           .from("leads")
-          .update({ last_sms_at: nowIso, crm_status: "Contacted", sequence_status: "paused" })
+          .update({
+            last_sms_at: sentAt,
+            last_contacted_at: sentAt,
+            last_contact_method: "sms",
+            crm_status: "Contacted",
+            sequence_status: "paused",
+          })
           .eq("id", r.id);
       }
 
