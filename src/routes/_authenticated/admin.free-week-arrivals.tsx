@@ -10,6 +10,10 @@ import {
   lookupFreeWeekCodeForStaff,
   type StaffCodeLookup,
 } from "@/lib/referrals";
+import {
+  lookupSmsDeliveryForPhone,
+  type SmsDeliveryRecord,
+} from "@/lib/sms-delivery-lookup.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/free-week-arrivals")({
   head: () => ({
@@ -41,9 +45,14 @@ function AdminFreeWeekArrivals() {
   const [looking, setLooking] = useState(false);
   const [lookup, setLookup] = useState<StaffCodeLookup | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [smsLooking, setSmsLooking] = useState(false);
+  const [smsRows, setSmsRows] = useState<SmsDeliveryRecord[] | null>(null);
+  const [smsError, setSmsError] = useState<string | null>(null);
   const confirm = useServerFn(confirmFreeWeekArrival);
   const reject = useServerFn(rejectFreeWeekArrival);
   const lookupCode = useServerFn(lookupFreeWeekCodeForStaff);
+  const lookupSms = useServerFn(lookupSmsDeliveryForPhone);
 
   const load = useCallback(async () => {
     const { data, error } = await supabase
