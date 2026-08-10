@@ -262,18 +262,32 @@ function isFollowUpDueToday(lead: Lead): boolean {
   return due <= today.getTime();
 }
 
-// A lead nobody has actually engaged with yet. The automated welcome text
-// flips crm_status to "Contacted" the instant a lead is created, so status
-// alone can never identify these — we look for the absence of real staff
-// contact and of any reply from the lead.
+// A lead that is still "new" from a staff point of view: nobody has really
+// worked it yet, or the automated follow-up sequence is still running. The
+// automated welcome text flips crm_status to "Contacted" the instant a lead is
+// created, so status alone can never identify these. A lead stays in this
+// bucket until it converts (Joined / became_member) or is marked Lost Lead.
 function needsFirstTouch(lead: Lead): boolean {
   const status = lead.crm_status ?? "New Lead";
-  if (status === "Joined" || status === "Lost Lead" || status === "Tour Scheduled") return false;
+  if (status === "Joined" || status === "Lost Lead") return false;
   if (lead.became_member) return false;
+  const seq = lead.sequence_status ?? null;
+  if (seq === "active" || seq === "pending") return true;
   if (lead.last_contacted_at) return false;
   if (lead.last_response_at) return false;
   return true;
 }
+
+// Pipeline stage ordering for the default list order:
+// open leads (by priority) → tour scheduled → tour completed → member → lost.
+function stageRank(lead: Lead): number {
+  if (lead.crm_status === "Lost Lead") return 4;
+  if (lead.became_member || lead.crm_status === "Joined") return 3;
+  if (lead.tour_completed || lead.crm_status === "Tour Completed") return 2;
+  if (lead.tour_scheduled || lead.crm_status === "Tour Scheduled") return 1;
+  return 0;
+}
+
 
 
 
