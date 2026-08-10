@@ -856,7 +856,7 @@ function LeadsView({
     <>
       {/* Dashboard stats — click to filter */}
       <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-3">
-        <Stat label="Needs First Touch" value={stats.newLeads} active={quickFilter === "new"} onClick={() => toggleQuick("new")} />
+        <Stat label="New Leads" value={stats.newLeads} active={quickFilter === "new"} onClick={() => toggleQuick("new")} />
         <Stat label="Follow-Ups Due Today" value={stats.followUpsDueToday} accent={stats.followUpsDueToday > 0 ? "destructive" : undefined} active={quickFilter === "due_today"} onClick={() => toggleQuick("due_today")} />
         <Stat label="High Priority" value={stats.highPriority} accent="destructive" active={quickFilter === "high_priority"} onClick={() => toggleQuick("high_priority")} />
         <Stat label="Tours Scheduled" value={stats.toursScheduled} active={quickFilter === "tours_scheduled"} onClick={() => toggleQuick("tours_scheduled")} />
