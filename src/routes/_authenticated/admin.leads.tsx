@@ -262,6 +262,21 @@ function isFollowUpDueToday(lead: Lead): boolean {
   return due <= today.getTime();
 }
 
+// A lead nobody has actually engaged with yet. The automated welcome text
+// flips crm_status to "Contacted" the instant a lead is created, so status
+// alone can never identify these — we look for the absence of real staff
+// contact and of any reply from the lead.
+function needsFirstTouch(lead: Lead): boolean {
+  const status = lead.crm_status ?? "New Lead";
+  if (status === "Joined" || status === "Lost Lead" || status === "Tour Scheduled") return false;
+  if (lead.became_member) return false;
+  if (lead.last_contacted_at) return false;
+  if (lead.last_response_at) return false;
+  return true;
+}
+
+
+
 // Effective join date for a converted lead: prefer the real membership start
 // date from Antaris, otherwise fall back to when we detected the conversion.
 function joinDateOf(lead: Lead): Date | null {
@@ -747,7 +762,7 @@ function LeadsView({
     return byType.filter((l) => {
       if (statusFilter !== "all" && (l.crm_status ?? "New Lead") !== statusFilter) return false;
       if (sourceFilter !== "all" && l.source !== sourceFilter) return false;
-      if (quickFilter === "new" && (l.crm_status ?? "New Lead") !== "New Lead") return false;
+      if (quickFilter === "new" && !needsFirstTouch(l)) return false;
       if (quickFilter === "high_priority" && (computePriority(l) !== "high" || l.crm_status === "Joined" || l.crm_status === "Lost Lead")) return false;
       if (quickFilter === "due_today" && !isFollowUpDueToday(l)) return false;
       if (quickFilter === "tours_scheduled" && !(l.tour_scheduled && !l.tour_completed)) return false;
@@ -799,7 +814,7 @@ function LeadsView({
     [leads],
   );
   const stats = useMemo(() => {
-    const newLeads = customerLeads.filter((l) => (l.crm_status ?? "New Lead") === "New Lead").length;
+    const newLeads = customerLeads.filter((l) => needsFirstTouch(l)).length;
     const highPriority = customerLeads.filter((l) => computePriority(l) === "high" && l.crm_status !== "Joined" && l.crm_status !== "Lost Lead").length;
     const followUpsDueToday = customerLeads.filter((l) => isFollowUpDueToday(l)).length;
     const toursScheduled = customerLeads.filter((l) => l.tour_scheduled && !l.tour_completed).length;
@@ -823,7 +838,7 @@ function LeadsView({
     <>
       {/* Dashboard stats — click to filter */}
       <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-3">
-        <Stat label="New Leads" value={stats.newLeads} active={quickFilter === "new"} onClick={() => toggleQuick("new")} />
+        <Stat label="Needs First Touch" value={stats.newLeads} active={quickFilter === "new"} onClick={() => toggleQuick("new")} />
         <Stat label="Follow-Ups Due Today" value={stats.followUpsDueToday} accent={stats.followUpsDueToday > 0 ? "destructive" : undefined} active={quickFilter === "due_today"} onClick={() => toggleQuick("due_today")} />
         <Stat label="High Priority" value={stats.highPriority} accent="destructive" active={quickFilter === "high_priority"} onClick={() => toggleQuick("high_priority")} />
         <Stat label="Tours Scheduled" value={stats.toursScheduled} active={quickFilter === "tours_scheduled"} onClick={() => toggleQuick("tours_scheduled")} />

@@ -469,7 +469,7 @@ export const createReferral = createServerFn({ method: "POST" })
                     lead_type: "customer_lead",
                     should_notify: true,
                     spam_reason: null,
-                    crm_status: contacted ? "Contacted" : "New",
+                    crm_status: contacted ? "Contacted" : "New Lead",
                     sequence_status: contacted ? "active" : "pending",
                     ...(contacted
                       ? {
