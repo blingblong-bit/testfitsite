@@ -795,11 +795,15 @@ function LeadsView({
     arr.sort((a, b) => {
       switch (sortBy) {
         case "priority": {
+          const sa = stageRank(a);
+          const sb = stageRank(b);
+          if (sa !== sb) return sa - sb;
           const pa = priorityRank(computePriority(a));
           const pb = priorityRank(computePriority(b));
           if (pa !== pb) return pa - pb;
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         }
+
         case "newest": return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case "oldest": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         case "tour_date": {
