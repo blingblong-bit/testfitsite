@@ -814,7 +814,7 @@ function LeadsView({
     [leads],
   );
   const stats = useMemo(() => {
-    const newLeads = customerLeads.filter((l) => (l.crm_status ?? "New Lead") === "New Lead").length;
+    const newLeads = customerLeads.filter((l) => needsFirstTouch(l)).length;
     const highPriority = customerLeads.filter((l) => computePriority(l) === "high" && l.crm_status !== "Joined" && l.crm_status !== "Lost Lead").length;
     const followUpsDueToday = customerLeads.filter((l) => isFollowUpDueToday(l)).length;
     const toursScheduled = customerLeads.filter((l) => l.tour_scheduled && !l.tour_completed).length;
