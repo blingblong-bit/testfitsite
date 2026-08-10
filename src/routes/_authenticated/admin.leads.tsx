@@ -262,18 +262,32 @@ function isFollowUpDueToday(lead: Lead): boolean {
   return due <= today.getTime();
 }
 
-// A lead nobody has actually engaged with yet. The automated welcome text
-// flips crm_status to "Contacted" the instant a lead is created, so status
-// alone can never identify these — we look for the absence of real staff
-// contact and of any reply from the lead.
+// A lead that is still "new" from a staff point of view: nobody has really
+// worked it yet, or the automated follow-up sequence is still running. The
+// automated welcome text flips crm_status to "Contacted" the instant a lead is
+// created, so status alone can never identify these. A lead stays in this
+// bucket until it converts (Joined / became_member) or is marked Lost Lead.
 function needsFirstTouch(lead: Lead): boolean {
   const status = lead.crm_status ?? "New Lead";
-  if (status === "Joined" || status === "Lost Lead" || status === "Tour Scheduled") return false;
+  if (status === "Joined" || status === "Lost Lead") return false;
   if (lead.became_member) return false;
+  const seq = lead.sequence_status ?? null;
+  if (seq === "active" || seq === "pending") return true;
   if (lead.last_contacted_at) return false;
   if (lead.last_response_at) return false;
   return true;
 }
+
+// Pipeline stage ordering for the default list order:
+// open leads (by priority) → tour scheduled → tour completed → member → lost.
+function stageRank(lead: Lead): number {
+  if (lead.crm_status === "Lost Lead") return 4;
+  if (lead.became_member || lead.crm_status === "Joined") return 3;
+  if (lead.tour_completed || lead.crm_status === "Tour Completed") return 2;
+  if (lead.tour_scheduled || lead.crm_status === "Tour Scheduled") return 1;
+  return 0;
+}
+
 
 
 
@@ -781,11 +795,15 @@ function LeadsView({
     arr.sort((a, b) => {
       switch (sortBy) {
         case "priority": {
+          const sa = stageRank(a);
+          const sb = stageRank(b);
+          if (sa !== sb) return sa - sb;
           const pa = priorityRank(computePriority(a));
           const pb = priorityRank(computePriority(b));
           if (pa !== pb) return pa - pb;
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         }
+
         case "newest": return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case "oldest": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         case "tour_date": {
@@ -838,7 +856,7 @@ function LeadsView({
     <>
       {/* Dashboard stats — click to filter */}
       <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-3">
-        <Stat label="Needs First Touch" value={stats.newLeads} active={quickFilter === "new"} onClick={() => toggleQuick("new")} />
+        <Stat label="New Leads" value={stats.newLeads} active={quickFilter === "new"} onClick={() => toggleQuick("new")} />
         <Stat label="Follow-Ups Due Today" value={stats.followUpsDueToday} accent={stats.followUpsDueToday > 0 ? "destructive" : undefined} active={quickFilter === "due_today"} onClick={() => toggleQuick("due_today")} />
         <Stat label="High Priority" value={stats.highPriority} accent="destructive" active={quickFilter === "high_priority"} onClick={() => toggleQuick("high_priority")} />
         <Stat label="Tours Scheduled" value={stats.toursScheduled} active={quickFilter === "tours_scheduled"} onClick={() => toggleQuick("tours_scheduled")} />
