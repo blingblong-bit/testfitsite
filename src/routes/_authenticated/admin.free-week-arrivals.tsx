@@ -10,6 +10,10 @@ import {
   lookupFreeWeekCodeForStaff,
   type StaffCodeLookup,
 } from "@/lib/referrals";
+import {
+  lookupSmsDeliveryForPhone,
+  type SmsDeliveryRecord,
+} from "@/lib/sms-delivery-lookup.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/free-week-arrivals")({
   head: () => ({
@@ -41,9 +45,14 @@ function AdminFreeWeekArrivals() {
   const [looking, setLooking] = useState(false);
   const [lookup, setLookup] = useState<StaffCodeLookup | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [smsLooking, setSmsLooking] = useState(false);
+  const [smsRows, setSmsRows] = useState<SmsDeliveryRecord[] | null>(null);
+  const [smsError, setSmsError] = useState<string | null>(null);
   const confirm = useServerFn(confirmFreeWeekArrival);
   const reject = useServerFn(rejectFreeWeekArrival);
   const lookupCode = useServerFn(lookupFreeWeekCodeForStaff);
+  const lookupSms = useServerFn(lookupSmsDeliveryForPhone);
 
   const load = useCallback(async () => {
     const { data, error } = await supabase
@@ -73,6 +82,19 @@ function AdminFreeWeekArrivals() {
     if (!result.ok) return setLookupError(result.error);
     setLookup(result.result);
   }
+
+  async function handleSmsLookup() {
+    const phone = phoneInput.trim();
+    if (!phone) return;
+    setSmsLooking(true);
+    setSmsError(null);
+    setSmsRows(null);
+    const result = await lookupSms({ data: { phone } });
+    setSmsLooking(false);
+    if (!result.ok) return setSmsError(result.error);
+    setSmsRows(result.messages);
+  }
+
 
   async function handleConfirm(id: string, fromLookup = false) {
     setActingOn(id);
@@ -203,6 +225,63 @@ function AdminFreeWeekArrivals() {
             </div>
           )}
         </div>
+
+        <div className="mb-8 rounded-lg border border-border bg-card p-5">
+          <p className="text-sm font-semibold">Check if a text was delivered</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Enter a phone number to see what we actually sent them and whether their carrier
+            delivered it.
+          </p>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSmsLookup();
+            }}
+            className="mt-3 flex flex-wrap gap-2"
+          >
+            <input
+              value={phoneInput}
+              onChange={(e) => setPhoneInput(e.target.value)}
+              placeholder="Phone number"
+              className="h-11 min-w-[200px] flex-1 rounded-md border border-border bg-background px-4 text-sm"
+            />
+            <button
+              type="submit"
+              disabled={smsLooking || !phoneInput.trim()}
+              className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-5 text-sm hover:bg-secondary disabled:opacity-60"
+            >
+              <Search className="h-4 w-4" /> {smsLooking ? "Checking…" : "Check"}
+            </button>
+          </form>
+
+          {smsError && <p className="mt-3 text-sm text-destructive">{smsError}</p>}
+
+          {smsRows !== null && smsRows.length === 0 && !smsError && (
+            <p className="mt-3 text-sm text-muted-foreground">
+              No texts on record for that number.
+            </p>
+          )}
+
+          {smsRows !== null && smsRows.length > 0 && (
+            <ul className="mt-4 space-y-2">
+              {smsRows.map((m) => (
+                <li key={m.sid} className="rounded-md border border-border bg-background p-3">
+                  <p className="text-sm font-semibold capitalize">
+                    {m.status}
+                    {m.error_code ? ` — error ${m.error_code}` : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {m.date_sent ? new Date(m.date_sent).toLocaleString() : "not sent yet"}
+                    {m.error_message ? ` • ${m.error_message}` : ""}
+                  </p>
+                  <p className="mt-2 text-sm text-muted-foreground">{m.body}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+
 
 
         {loading ? (
