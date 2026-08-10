@@ -762,7 +762,7 @@ function LeadsView({
     return byType.filter((l) => {
       if (statusFilter !== "all" && (l.crm_status ?? "New Lead") !== statusFilter) return false;
       if (sourceFilter !== "all" && l.source !== sourceFilter) return false;
-      if (quickFilter === "new" && (l.crm_status ?? "New Lead") !== "New Lead") return false;
+      if (quickFilter === "new" && !needsFirstTouch(l)) return false;
       if (quickFilter === "high_priority" && (computePriority(l) !== "high" || l.crm_status === "Joined" || l.crm_status === "Lost Lead")) return false;
       if (quickFilter === "due_today" && !isFollowUpDueToday(l)) return false;
       if (quickFilter === "tours_scheduled" && !(l.tour_scheduled && !l.tour_completed)) return false;
