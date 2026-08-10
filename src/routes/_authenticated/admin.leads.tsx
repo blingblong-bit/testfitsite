@@ -262,6 +262,21 @@ function isFollowUpDueToday(lead: Lead): boolean {
   return due <= today.getTime();
 }
 
+// A lead nobody has actually engaged with yet. The automated welcome text
+// flips crm_status to "Contacted" the instant a lead is created, so status
+// alone can never identify these — we look for the absence of real staff
+// contact and of any reply from the lead.
+function needsFirstTouch(lead: Lead): boolean {
+  const status = lead.crm_status ?? "New Lead";
+  if (status === "Joined" || status === "Lost Lead" || status === "Tour Scheduled") return false;
+  if (lead.became_member) return false;
+  if (lead.last_contacted_at) return false;
+  if (lead.last_response_at) return false;
+  return true;
+}
+
+
+
 // Effective join date for a converted lead: prefer the real membership start
 // date from Antaris, otherwise fall back to when we detected the conversion.
 function joinDateOf(lead: Lead): Date | null {
