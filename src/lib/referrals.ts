@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendReferralEmail } from "@/lib/send-referral-email.functions";
+import { advanceFollowUpIfStale } from "@/lib/follow-up";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -364,6 +365,8 @@ export const createReferral = createServerFn({ method: "POST" })
             .eq("id", inserted.id);
 
           let smsOk = false;
+          let smsError: string | null = null;
+          let smsTestMode = false;
           if (normalizedPhone) {
             const { sendPromoSms } = await import("./sms.server");
             const checkinUrl = `https://fitbeyondplus.com/redeem-referral?code=${code}`;
@@ -376,32 +379,78 @@ export const createReferral = createServerFn({ method: "POST" })
               db: supabaseAdmin,
             });
             smsOk = send.ok;
+            smsTestMode = !!send.test_mode;
             if (!send.ok) {
-              console.error("[createReferral] free_week instant sms failed", send.error);
+              smsError = send.error ?? "unknown_error";
+              console.error("[createReferral] free_week instant sms failed", smsError);
+              // Staff must know a code text never went out, otherwise the
+              // person is left waiting on a message that will never arrive.
+              try {
+                const { sendStaffAlert } = await import("./staff-alerts.server");
+                await sendStaffAlert(
+                  `Free week code ${code} for ${friend_name} (${normalizedPhone}) FAILED to text (${smsError}). Give them the code manually.`,
+                  "operations",
+                );
+              } catch (e) {
+                console.error(
+                  "[createReferral] staff alert failed",
+                  e instanceof Error ? e.message : e,
+                );
+              }
+              await supabaseAdmin
+                .from("referrals")
+                .update({ email_status: `sms_failed:${smsError}`.slice(0, 60) })
+                .eq("id", inserted.id);
             }
           }
-
 
 
           // Create the lead immediately at claim time so it shows up in the
           // Lead Tracker right away — redemption and staff confirmation then
           // update this SAME lead via referrals.lead_id. Never blocks the
-          // referral response.
-          if (isFreeWeek && smsOk && normalizedPhone) {
+          // referral response. The lead is created even when the text fails
+          // to send, so nobody silently disappears from the tracker.
+          if (isFreeWeek && normalizedPhone) {
             try {
               const nowIso = new Date().toISOString();
-              const note = `[${nowIso}] Claimed End of Summer free week — code ${code}`;
+              const note = smsOk
+                ? `[${nowIso}] Claimed End of Summer free week — code ${code}${
+                    smsTestMode ? " (test mode, no text sent)" : " (code texted)"
+                  }`
+                : `[${nowIso}] Claimed End of Summer free week — code ${code} — CODE TEXT FAILED TO SEND (${smsError}); give the code to them manually`;
               const existing = await findLeadByPhone(supabaseAdmin, normalizedPhone);
               let leadId: string | null = existing?.id ?? null;
 
+              // Contact-state fields so the Lead Tracker reflects that we
+              // actually reached out (matches the manual-reply and campaign
+              // paths). Only written when a live text really went out.
+              const contacted = smsOk && !smsTestMode;
+
               if (existing) {
                 const notes = existing.notes ? `${existing.notes}\n${note}` : note;
+                const { data: current } = await supabaseAdmin
+                  .from("leads")
+                  .select("next_follow_up_date")
+                  .eq("id", existing.id)
+                  .maybeSingle();
+                const nextFollowUp = contacted
+                  ? advanceFollowUpIfStale(current?.next_follow_up_date ?? null)
+                  : null;
                 await supabaseAdmin
                   .from("leads")
                   .update({
                     notes,
                     referral_code: code,
                     referred_by: referrer_name,
+                    ...(contacted
+                      ? {
+                          last_sms_at: nowIso,
+                          last_contacted_at: nowIso,
+                          last_contact_method: "sms",
+                          crm_status: "Contacted",
+                          ...(nextFollowUp ? { next_follow_up_date: nextFollowUp } : {}),
+                        }
+                      : {}),
                   })
                   .eq("id", existing.id);
               } else {
@@ -420,8 +469,16 @@ export const createReferral = createServerFn({ method: "POST" })
                     lead_type: "customer_lead",
                     should_notify: true,
                     spam_reason: null,
-                    crm_status: "Contacted",
-                    sequence_status: "active",
+                    crm_status: contacted ? "Contacted" : "New",
+                    sequence_status: contacted ? "active" : "pending",
+                    ...(contacted
+                      ? {
+                          last_sms_at: nowIso,
+                          last_contacted_at: nowIso,
+                          last_contact_method: "sms",
+                          next_follow_up_date: advanceFollowUpIfStale(null),
+                        }
+                      : {}),
                   })
                   .select("id")
                   .single();
@@ -442,6 +499,7 @@ export const createReferral = createServerFn({ method: "POST" })
               );
             }
           }
+
 
           // Track the REFERRER as a person too. Someone driving referrals
           // needs to be visible in the Lead Tracker even if they never
