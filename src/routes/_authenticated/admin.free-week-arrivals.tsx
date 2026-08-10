@@ -83,6 +83,19 @@ function AdminFreeWeekArrivals() {
     setLookup(result.result);
   }
 
+  async function handleSmsLookup() {
+    const phone = phoneInput.trim();
+    if (!phone) return;
+    setSmsLooking(true);
+    setSmsError(null);
+    setSmsRows(null);
+    const result = await lookupSms({ data: { phone } });
+    setSmsLooking(false);
+    if (!result.ok) return setSmsError(result.error);
+    setSmsRows(result.messages);
+  }
+
+
   async function handleConfirm(id: string, fromLookup = false) {
     setActingOn(id);
     const result = await confirm({ data: { referral_id: id } });
