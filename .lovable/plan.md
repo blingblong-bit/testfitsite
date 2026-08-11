@@ -20,7 +20,7 @@
 
 A small `src/lib/attribution.ts`:
 - On every page load, read `utm_source/medium/campaign/content/term` from the URL. If any exist **and no first touch is stored yet**, store a record in `localStorage` (key `fbp_first_touch`) with the UTMs, `landing_page` (pathname only), `initial_referrer` (`document.referrer` hostname only), and a timestamp.
-- If no UTMs are present and no first touch is stored, store a minimal direct/organic first touch (landing page + referrer host) so Test D still records a landing page without inventing a campaign.
+- If no UTMs are present and no first touch is stored, record landing page + referrer host **only** — no channel is inferred, nothing is labeled "organic". Channel derivation then falls back entirely to existing source logic. A channel is only asserted when there is positive evidence (UTMs, or a flow whose source already means something specific like referral/walk-in/day pass).
 - Once written, it is **never overwritten** — later tagged visits, referral links, and tour bookings all leave it alone.
 - Only these fields are stored; no PII, no full URLs with query strings, no cookies.
 - A tiny `useFirstTouch()` / `getFirstTouch()` accessor used by forms.
