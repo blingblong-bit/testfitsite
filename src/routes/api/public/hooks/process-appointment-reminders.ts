@@ -118,8 +118,9 @@ export const Route = createFileRoute("/api/public/hooks/process-appointment-remi
             const diffMs = targetMs - nowMs;
             const reminders = (appt.reminders_sent ?? {}) as Record<string, unknown>;
 
-            let kind: "day_before" | "morning_of" | "hour_before" | null = null;
-            let body = "";
+            // Reminders are evaluated independently so a morning appointment can
+            // receive both the morning-of and hour-before texts in the same run.
+            const toSend: Array<{ kind: "day_before" | "morning_of" | "hour_before"; body: string }> = [];
 
             // Day-before: 24-25 hours away.
             if (
@@ -127,30 +128,35 @@ export const Route = createFileRoute("/api/public/hooks/process-appointment-remi
               diffMs > 24 * 60 * 60 * 1000 &&
               diffMs <= 25 * 60 * 60 * 1000
             ) {
-              kind = "day_before";
-              body = `Hey ${fn}, just a reminder — you're coming in tomorrow at ${timeStr} for your visit to FIT Beyond Plus!`;
+              toSend.push({
+                kind: "day_before",
+                body: `Hey ${fn}, just a reminder — you're coming in tomorrow at ${timeStr} for your visit to FIT Beyond Plus!`,
+              });
             }
+
             // Morning-of: same Chicago day, between 8:00-8:15am Chicago.
-            else if (!reminders.morning_of && sameChicagoDay(nowIso, appt.confirmed_time)) {
+            if (!reminders.morning_of && sameChicagoDay(nowIso, appt.confirmed_time)) {
               const { hour, minute } = chicagoHourMinute(now);
               if (hour === 8 && minute < 16) {
-                kind = "morning_of";
-                body = `Hey ${fn}, see you today at ${timeStr}!`;
+                toSend.push({ kind: "morning_of", body: `Hey ${fn}, see you today at ${timeStr}!` });
               }
             }
 
-            // Hour-before: 55-65 minutes away. (Check after morning_of so both can fire on the same run for edge cases where the appt is at ~9am.)
+            // Hour-before: 45-75 minutes away, wide enough that every appointment
+            // time lands on at least one 15-minute cron tick.
             if (
-              !kind &&
               !reminders.hour_before &&
-              diffMs > 55 * 60 * 1000 &&
-              diffMs <= 65 * 60 * 1000
+              diffMs > 45 * 60 * 1000 &&
+              diffMs <= 75 * 60 * 1000
             ) {
-              kind = "hour_before";
-              body = `Hey ${fn}, see you in about an hour at ${timeStr}! We're at 449 W Lincoln St, Tullahoma.`;
+              toSend.push({
+                kind: "hour_before",
+                body: `Hey ${fn}, see you in about an hour at ${timeStr}! We're at 449 W Lincoln St, Tullahoma.`,
+              });
             }
 
-            if (!kind) continue;
+            if (toSend.length === 0) continue;
+
 
             const send = await sendTwilioSms(to, body);
             if (!send.ok) {
