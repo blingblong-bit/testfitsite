@@ -423,9 +423,8 @@ export type AcquisitionRow = {
   measured: boolean; // true when backed by campaign tags
 };
 
-function inRange(l: AnalyticsLead, start: Date, end: Date): boolean {
-  const t = new Date(l.created_at).getTime();
-  return t >= start.getTime() && t < end.getTime();
+function createdInRange(l: AnalyticsLead, start: Date, end: Date): boolean {
+  return inRange(l.created_at, start, end);
 }
 
 function rollup(
@@ -457,7 +456,7 @@ export function computeChannelBreakdown(
   end: Date,
 ): AcquisitionRow[] {
   const scoped = leads.filter(
-    (l) => l.lead_type === "customer_lead" && inRange(l, start, end),
+    (l) => l.lead_type === "customer_lead" && createdInRange(l, start, end),
   );
   const groups = new Map<ChannelKey, AnalyticsLead[]>();
   for (const l of scoped) {
@@ -485,7 +484,7 @@ export function computeCampaignBreakdown(
   const scoped = leads.filter(
     (l) =>
       l.lead_type === "customer_lead" &&
-      inRange(l, start, end) &&
+      createdInRange(l, start, end) &&
       Boolean((l.utm_campaign ?? "").trim()),
   );
   const groups = new Map<string, AnalyticsLead[]>();
