@@ -43,6 +43,8 @@ Existing bucket names and filters keep working; Paid Social / Organic Social are
 
 `LeadInput` gains an optional `attribution` object. `submitLead` reads first touch from the browser and passes it through; the contact form, combat form, schedule-visit, free-week claim, and the day-pass screen all flow through this. Referral/free-week server paths accept the same optional object.
 
+**Referral-created friend leads:** the friend's lead keeps its `referral_free_week` / `referral_day_pass` source, so with no UTMs it classifies as **Referral** — never Website. A friend who arrives from a plain referral SMS/link with no UTMs stores landing page/referrer only and stays Referral. If that friend has a legitimate earlier first touch (they had already visited through a tagged ad, so UTMs are stored), the earlier attribution wins for acquisition reporting and the referral stays tracked separately in `referrals` / `referral_code`.
+
 `insertOrUpdateLead` writes attribution **only on INSERT**. On the update branch (repeat submitter) attribution columns are left untouched — that plus a DB-level `COALESCE`-style guard means first touch can never be overwritten by a later form, a referral event, a day pass, or a tour booking. Referral data stays in its own existing `referrals` table and `referral_code`/`referred_by` columns, fully separate from acquisition.
 
 ### 4. CRM lead card
