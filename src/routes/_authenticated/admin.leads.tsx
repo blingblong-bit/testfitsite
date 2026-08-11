@@ -33,6 +33,7 @@ function chicagoLocalInputToUtcIso(v: string): string | null {
   return chicagoWallToUTC(Number(y), Number(mo), Number(d), Number(h), Number(mi));
 }
 import { AnalyticsView } from "@/components/AnalyticsView";
+import { channelForLead, hasMeasuredAttribution } from "@/lib/analytics";
 import { computePriority, daysSince, followUpOverdueDays, type Priority } from "@/lib/lead-priority";
 
 type CrmStatus =
