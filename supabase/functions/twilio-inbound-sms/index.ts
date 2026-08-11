@@ -622,7 +622,14 @@ or
       }
     }
 
-    if (needsHuman || !aiReply) {
+    // Safety net: the AI sometimes writes "let me check with staff / someone will
+    // follow up" while leaving needs_human false. That's a silent handoff with
+    // nobody notified, so detect the promise in the reply text itself.
+    const HANDOFF_PATTERNS =
+      /(let me (have|check|ask|find out|confirm)|someone (from our team |from the team )?(will|can) (follow up|reach out|get back|check)|(our|the) team (will|can) (follow up|reach out|get back|check)|staff (will|can) (follow up|reach out|get back|check)|(i'?ll|we'?ll) (have (someone|staff)|follow up|get back to you|double.?check|check on)|have someone (from )?(our team |the team )?(follow up|reach out))/i;
+    const promisedHandoff = Boolean(aiReply && HANDOFF_PATTERNS.test(aiReply));
+
+    if (needsHuman || promisedHandoff || !aiReply) {
       await supabase
         .from("leads")
         .update({
@@ -632,10 +639,16 @@ or
         .eq("id", lead.id);
 
       const prefix = isExistingMember ? "⚡ [EXISTING MEMBER] " : "⚡ ";
-      const alert = `${prefix}${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${reason || "n/a"}. Check the lead tracker.`;
+      const alertReason =
+        reason || (promisedHandoff ? "assistant promised staff follow-up" : "n/a");
+      const alert = `${prefix}${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${alertReason}. Check the lead tracker.`;
       await sendStaffAlert(alert, "operations");
-      return twiml();
+
+      // If the AI produced a reply (e.g. "let me check with staff"), still send
+      // it so the lead isn't left hanging — then fall through to the send path.
+      if (!aiReply) return twiml();
     }
+
 
     // Send AI reply to lead
     const sendResult = await sendTwilioSms(from, aiReply);
