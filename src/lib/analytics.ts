@@ -15,6 +15,15 @@ export type AnalyticsLead = {
   became_member: boolean;
   membership_start_date: string | null;
   next_follow_up_date: string | null;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  utm_term?: string | null;
+  landing_page?: string | null;
+  initial_referrer?: string | null;
+  attribution_channel?: string | null;
+  first_touch_at?: string | null;
 };
 
 export type AnalyticsReferral = {
@@ -394,4 +403,115 @@ export function hasMeasuredAttribution(
   lead: AttributionFields & { source?: string | null },
 ): boolean {
   return hasUtms(lead);
+}
+
+
+// ---------------------------------------------------------------------------
+// Acquisition reporting: channel and campaign performance for a date range.
+// Every row answers "did this bring in people who actually joined?"
+// ---------------------------------------------------------------------------
+
+export type AcquisitionRow = {
+  key: string;
+  label: string;
+  sublabel?: string | null;
+  leads: number;
+  tours: number;
+  members: number;
+  dayPasses: number;
+  conversionRate: number; // members / leads, 0-100
+  measured: boolean; // true when backed by campaign tags
+};
+
+function inRange(l: AnalyticsLead, start: Date, end: Date): boolean {
+  const t = new Date(l.created_at).getTime();
+  return t >= start.getTime() && t < end.getTime();
+}
+
+function rollup(
+  key: string,
+  label: string,
+  rows: AnalyticsLead[],
+  measured: boolean,
+  sublabel?: string | null,
+): AcquisitionRow {
+  const leads = rows.length;
+  const members = rows.filter((l) => l.became_member).length;
+  return {
+    key,
+    label,
+    sublabel: sublabel ?? null,
+    leads,
+    tours: rows.filter((l) => l.tour_completed || l.tour_scheduled).length,
+    members,
+    dayPasses: rows.filter((l) => classifySource(l.source) === "Day Pass").length,
+    conversionRate: leads === 0 ? 0 : Math.round((members / leads) * 100),
+    measured,
+  };
+}
+
+/** Leads grouped by acquisition channel, highest volume first. */
+export function computeChannelBreakdown(
+  leads: AnalyticsLead[],
+  start: Date,
+  end: Date,
+): AcquisitionRow[] {
+  const scoped = leads.filter(
+    (l) => l.lead_type === "customer_lead" && inRange(l, start, end),
+  );
+  const groups = new Map<ChannelKey, AnalyticsLead[]>();
+  for (const l of scoped) {
+    const ch = channelForLead(l);
+    const bucket = groups.get(ch);
+    if (bucket) bucket.push(l);
+    else groups.set(ch, [l]);
+  }
+  return Array.from(groups.entries())
+    .map(([ch, rows]) =>
+      rollup(ch, ch, rows, rows.some((r) => hasMeasuredAttribution(r))),
+    )
+    .sort((a, b) => b.leads - a.leads || a.label.localeCompare(b.label));
+}
+
+/**
+ * Leads grouped by campaign (utm_campaign), then platform. Only tagged leads
+ * appear — an untagged lead has no campaign to credit.
+ */
+export function computeCampaignBreakdown(
+  leads: AnalyticsLead[],
+  start: Date,
+  end: Date,
+): AcquisitionRow[] {
+  const scoped = leads.filter(
+    (l) =>
+      l.lead_type === "customer_lead" &&
+      inRange(l, start, end) &&
+      Boolean((l.utm_campaign ?? "").trim()),
+  );
+  const groups = new Map<string, AnalyticsLead[]>();
+  for (const l of scoped) {
+    const campaign = (l.utm_campaign ?? "").trim();
+    const platform = platformLabel(l.utm_source) ?? "Unknown";
+    const key = `${campaign}::${platform}`;
+    const bucket = groups.get(key);
+    if (bucket) bucket.push(l);
+    else groups.set(key, [l]);
+  }
+  return Array.from(groups.entries())
+    .map(([key, rows]) => {
+      const [campaign, platform] = key.split("::");
+      const creatives = Array.from(
+        new Set(rows.map((r) => (r.utm_content ?? "").trim()).filter(Boolean)),
+      );
+      return rollup(
+        key,
+        titleizeToken(campaign) || campaign || "Untitled campaign",
+        rows,
+        true,
+        creatives.length > 0
+          ? `${platform} · ${creatives.map(titleizeToken).join(", ")}`
+          : platform,
+      );
+    })
+    .sort((a, b) => b.leads - a.leads || a.label.localeCompare(b.label));
 }
