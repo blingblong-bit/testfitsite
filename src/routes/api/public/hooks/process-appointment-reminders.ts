@@ -157,39 +157,43 @@ export const Route = createFileRoute("/api/public/hooks/process-appointment-remi
 
             if (toSend.length === 0) continue;
 
+            let sentFlags = { ...reminders } as Record<string, unknown>;
 
-            const send = await sendTwilioSms(to, body);
-            if (!send.ok) {
-              console.error(
-                `[process-appointment-reminders] send failed appt=${appt.id} kind=${kind}`,
-                send.error,
-              );
-              results.push({ id: appt.id, kind, ok: false, error: send.error });
-              continue;
+            for (const { kind, body } of toSend) {
+              const send = await sendTwilioSms(to, body);
+              if (!send.ok) {
+                console.error(
+                  `[process-appointment-reminders] send failed appt=${appt.id} kind=${kind}`,
+                  send.error,
+                );
+                results.push({ id: appt.id, kind, ok: false, error: send.error });
+                continue;
+              }
+
+              sentFlags = { ...sentFlags, [kind]: true };
+              await supabase
+                .from("appointments")
+                .update({ reminders_sent: sentFlags as unknown as Database["public"]["Tables"]["appointments"]["Update"]["reminders_sent"] })
+                .eq("id", appt.id);
+
+              if (appt.lead_id) {
+                await supabase.from("sms_conversation_log").insert({
+                  lead_id: appt.lead_id,
+                  phone: to,
+                  direction: "outbound",
+                  body,
+                  from_ai: false,
+                  provider_message_id: send.sid ?? null,
+                  status: "sent",
+                  metadata: { kind: `appt_reminder_${kind}`, appointment_id: appt.id },
+                });
+              }
+
+              results.push({ id: appt.id, kind, ok: true, sid: send.sid });
             }
-
-            const updated = { ...reminders, [kind]: true } as Record<string, boolean>;
-            await supabase
-              .from("appointments")
-              .update({ reminders_sent: updated as unknown as Database["public"]["Tables"]["appointments"]["Update"]["reminders_sent"] })
-              .eq("id", appt.id);
-
-            if (appt.lead_id) {
-              await supabase.from("sms_conversation_log").insert({
-                lead_id: appt.lead_id,
-                phone: to,
-                direction: "outbound",
-                body,
-                from_ai: false,
-                provider_message_id: send.sid ?? null,
-                status: "sent",
-                metadata: { kind: `appt_reminder_${kind}`, appointment_id: appt.id },
-              });
-            }
-
-            results.push({ id: appt.id, kind, ok: true, sid: send.sid });
             // Discourage unused-import warning while keeping formatChicagoDateTime handy.
             void formatChicagoDateTime;
+
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             console.error(`[process-appointment-reminders] appt ${appt.id} exception`, msg);
