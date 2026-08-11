@@ -110,6 +110,9 @@ export type MonthMetrics = {
   conversionRate: number; // % of leads in month who became members
   totalLeads: number;
   sourceCounts: Record<SourceKey, number>;
+  // Attribution-derived channel counts (each lead counted once)
+  socialLeads: number;
+  googleBusinessLeads: number;
   // Referrals
   referralCodesGenerated: number;
   referralCodesRedeemed: number;
