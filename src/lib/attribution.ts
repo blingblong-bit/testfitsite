@@ -119,3 +119,51 @@ export function attributionForSubmission(
   // plain visit never fabricates a channel.
   return { ...ft, attribution_channel: deriveChannelName(ft, source) };
 }
+
+// ---------------------------------------------------------------------------
+// Server-side plumbing: a shared zod shape for passing attribution into server
+// functions, and the column mapper used on INSERT paths.
+// ---------------------------------------------------------------------------
+
+import { z } from "zod";
+import { hasUtms } from "./analytics";
+
+export const AttributionSchema = z
+  .object({
+    utm_source: z.string().max(120).nullable().optional(),
+    utm_medium: z.string().max(120).nullable().optional(),
+    utm_campaign: z.string().max(200).nullable().optional(),
+    utm_content: z.string().max(200).nullable().optional(),
+    utm_term: z.string().max(200).nullable().optional(),
+    landing_page: z.string().max(300).nullable().optional(),
+    initial_referrer: z.string().max(300).nullable().optional(),
+    attribution_channel: z.string().max(60).nullable().optional(),
+    first_touch_at: z.string().max(40).nullable().optional(),
+  })
+  .nullable()
+  .optional();
+
+export type AttributionInput = z.infer<typeof AttributionSchema>;
+
+/**
+ * Columns to write on a NEW lead. Returns {} unless there is positive UTM
+ * evidence — a plain no-UTM visit contributes nothing beyond what the lead's
+ * own source already says, so we never assert a channel we can't prove.
+ *
+ * Only ever spread into an INSERT. Update paths must leave these alone so
+ * first touch can never be overwritten by a later action.
+ */
+export function attributionColumns(a: AttributionInput) {
+  if (!a || !hasUtms(a)) return {};
+  return {
+    utm_source: a.utm_source ?? null,
+    utm_medium: a.utm_medium ?? null,
+    utm_campaign: a.utm_campaign ?? null,
+    utm_content: a.utm_content ?? null,
+    utm_term: a.utm_term ?? null,
+    landing_page: a.landing_page ?? null,
+    initial_referrer: a.initial_referrer ?? null,
+    attribution_channel: a.attribution_channel ?? null,
+    first_touch_at: a.first_touch_at ?? new Date().toISOString(),
+  };
+}
