@@ -110,6 +110,9 @@ export type MonthMetrics = {
   conversionRate: number; // % of leads in month who became members
   totalLeads: number;
   sourceCounts: Record<SourceKey, number>;
+  // Attribution-derived channel counts (each lead counted once)
+  socialLeads: number;
+  googleBusinessLeads: number;
   // Referrals
   referralCodesGenerated: number;
   referralCodesRedeemed: number;
@@ -152,6 +155,13 @@ export function computeMonth(
   const totalLeads = monthLeads.length;
   const conversionRate = totalLeads === 0 ? 0 : Math.round((membersJoined / totalLeads) * 100);
 
+  // Channel counts from the shared attribution logic; one bucket per lead.
+  const monthChannels = monthLeads.map((l) => channelForLead(l));
+  const socialLeads = monthChannels.filter(
+    (c) => c === "Paid Social" || c === "Organic Social" || c === "Social Media",
+  ).length;
+  const googleBusinessLeads = monthChannels.filter((c) => c === "Google Business").length;
+
   return {
     websiteLeads: sourceCounts.Website,
     walkInLeads: sourceCounts["Walk-In"],
@@ -164,6 +174,8 @@ export function computeMonth(
     conversionRate,
     totalLeads,
     sourceCounts,
+    socialLeads,
+    googleBusinessLeads,
     referralCodesGenerated: refsCreated,
     referralCodesRedeemed: refsRedeemed,
     membersFromReferrals,
