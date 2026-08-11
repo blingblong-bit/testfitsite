@@ -3,6 +3,7 @@ import { confirmLeadToCustomer } from "./confirm-lead.functions";
 import { classifyLead } from "./lead-classifier";
 import { checkExistingMemberSubmission } from "./check-existing-member.functions";
 import { insertOrUpdateLead } from "./insert-or-update-lead.functions";
+import { attributionForSubmission } from "./attribution";
 
 export type LeadInput = {
   source: string;
@@ -34,6 +35,10 @@ export async function submitLead(input: LeadInput) {
     throw new Error("Name and email are required.");
   }
 
+  // First-touch attribution from this browser, if the visitor ever landed
+  // with campaign tags. Null when there's nothing measured.
+  const attribution = attributionForSubmission(payload.source);
+
   // Check Antaris first — if this submitter is already an active member,
   // handle it server-side (insert + welcome SMS) and skip the normal flow.
   try {
@@ -45,6 +50,7 @@ export async function submitLead(input: LeadInput) {
         phone: payload.phone,
         interest: payload.interest,
         message: payload.message,
+        attribution,
       },
     });
     if (result?.handled) return;
@@ -68,6 +74,7 @@ export async function submitLead(input: LeadInput) {
       lead_score: classification.lead_score,
       should_notify: classification.should_notify,
       spam_reason: classification.spam_reason,
+      attribution,
     },
   });
   if (!result.ok) throw new Error(result.error);

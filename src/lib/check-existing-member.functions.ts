@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { AttributionSchema, attributionColumns } from "./attribution";
 
 const Schema = z.object({
   source: z.string().trim().min(1),
@@ -8,6 +9,7 @@ const Schema = z.object({
   phone: z.string().trim().max(40).nullable().optional(),
   interest: z.string().trim().max(200).nullable().optional(),
   message: z.string().trim().max(4000).nullable().optional(),
+  attribution: AttributionSchema,
 });
 
 function firstName(name: string): string {
@@ -63,6 +65,7 @@ export const checkExistingMemberSubmission = createServerFn({ method: "POST" })
           converted_at: now,
           sequence_status: "completed",
           notes: noteLine,
+          ...attributionColumns(data.attribution),
         })
         .select("id")
         .single();

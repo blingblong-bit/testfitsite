@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { AttributionSchema, attributionColumns } from "./attribution";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendReferralEmail } from "@/lib/send-referral-email.functions";
 import { advanceFollowUpIfStale } from "@/lib/follow-up";
@@ -202,6 +203,7 @@ const CreateReferralSchema = z.object({
   friend_phone: z.string().optional(),
   promo_type: z.enum(["day_pass", "free_week"]).default("day_pass"),
   is_self_referral: z.boolean().default(false),
+  attribution: AttributionSchema,
 });
 
 
@@ -457,6 +459,10 @@ export const createReferral = createServerFn({ method: "POST" })
                 const { data: newLead, error: leadErr } = await supabaseAdmin
                   .from("leads")
                   .insert({
+                    // Friend leads classify as Referral via source unless an
+                    // earlier tagged first touch exists on their browser, in
+                    // which case that original acquisition wins.
+                    ...attributionColumns(input.attribution),
                     source: "referral_free_week",
                     name: friend_name,
                     // leads.email is NOT NULL; free-week claims are phone-only.

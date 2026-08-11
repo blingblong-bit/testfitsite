@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { AttributionSchema, attributionColumns } from "./attribution";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateDayPassCode } from "./generate-day-pass-code.functions";
 import {
@@ -108,6 +109,7 @@ const SubmitSchema = z.object({
   requested_time: z.string().datetime(),
   sms_consent: z.boolean(),
   visit_type: z.enum(["tour", "day_pass"]).default("tour"),
+  attribution: AttributionSchema,
 });
 
 function looksFake(name: string, email: string): boolean {
@@ -175,6 +177,7 @@ export const submitAppointmentRequest = createServerFn({ method: "POST" })
           lead_score: 85,
           crm_status: "New Lead",
           sequence_status: "active",
+          ...attributionColumns(data.attribution),
         })
         .select("id")
         .single();

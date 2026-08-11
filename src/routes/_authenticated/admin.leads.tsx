@@ -33,6 +33,7 @@ function chicagoLocalInputToUtcIso(v: string): string | null {
   return chicagoWallToUTC(Number(y), Number(mo), Number(d), Number(h), Number(mi));
 }
 import { AnalyticsView } from "@/components/AnalyticsView";
+import { channelForLead, hasMeasuredAttribution } from "@/lib/analytics";
 import { computePriority, daysSince, followUpOverdueDays, type Priority } from "@/lib/lead-priority";
 
 type CrmStatus =
@@ -131,6 +132,15 @@ type Lead = {
   converted_at: string | null;
   last_sms_at: string | null;
   sms_opted_out: boolean;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  utm_term?: string | null;
+  landing_page?: string | null;
+  initial_referrer?: string | null;
+  attribution_channel?: string | null;
+  first_touch_at?: string | null;
 };
 
 
@@ -1472,6 +1482,49 @@ function LeadCard({ lead, updateLead, freeWeek }: { lead: Lead; updateLead: (id:
               )}
             </div>
           )}
+
+          {/* Acquisition (read-only, first touch) */}
+          <div className="rounded-md border border-border p-4 space-y-1">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Acquisition</p>
+            <p className="text-sm">
+              <span className="text-muted-foreground">Channel:</span> {channelForLead(lead)}
+              {!hasMeasuredAttribution(lead) && (
+                <span className="ml-2 text-xs text-muted-foreground">(from lead source — no campaign tags)</span>
+              )}
+            </p>
+            {lead.utm_campaign && (
+              <p className="text-sm">
+                <span className="text-muted-foreground">Campaign:</span> {lead.utm_campaign}
+              </p>
+            )}
+            {(lead.utm_source || lead.utm_medium) && (
+              <p className="text-sm">
+                <span className="text-muted-foreground">Source / medium:</span>{" "}
+                {lead.utm_source ?? "—"} / {lead.utm_medium ?? "—"}
+              </p>
+            )}
+            {(lead.utm_content || lead.utm_term) && (
+              <p className="text-sm">
+                <span className="text-muted-foreground">Creative / term:</span>{" "}
+                {lead.utm_content ?? "—"} / {lead.utm_term ?? "—"}
+              </p>
+            )}
+            {lead.landing_page && (
+              <p className="text-sm">
+                <span className="text-muted-foreground">Landing page:</span> {lead.landing_page}
+              </p>
+            )}
+            {lead.initial_referrer && (
+              <p className="text-sm">
+                <span className="text-muted-foreground">Came from:</span> {lead.initial_referrer}
+              </p>
+            )}
+            {lead.first_touch_at && (
+              <p className="text-xs text-muted-foreground">
+                First touch {chicagoDate(lead.first_touch_at)}
+              </p>
+            )}
+          </div>
 
           {/* Referral relationship (read-only) */}
           {(lead.referred_by || lead.source === "free_week_referrer") && (

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageHero } from "@/components/PageHero";
 import { createReferral } from "@/lib/referrals";
+import { attributionForSubmission } from "@/lib/attribution";
 
 export const Route = createFileRoute("/claim-free-week")({
   head: () => ({
@@ -87,7 +88,12 @@ function ClaimFreeWeekPage() {
 
 
     setSubmitting(true);
-    const res = await createReferral({ data: payload });
+    const res = await createReferral({
+      data: {
+        ...payload,
+        attribution: attributionForSubmission("referral_free_week"),
+      },
+    });
     setSubmitting(false);
 
     if (!res.ok) {
