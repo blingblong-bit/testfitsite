@@ -140,6 +140,7 @@ function ScheduleVisit() {
           requested_time: selectedSlot,
           sms_consent: smsConsent,
           visit_type: visitType,
+          attribution: attributionForSubmission("schedule_visit"),
         },
       });
       if (!result.ok) {
