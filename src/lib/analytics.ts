@@ -235,3 +235,163 @@ export function listMonths(earliest: Date, latest: Date): Date[] {
   }
   return out;
 }
+
+// ---------------------------------------------------------------------------
+// Marketing attribution (UTM-based) — single source of truth for channel rules.
+// Used by both the CRM lead cards and Business Analytics so the two can never
+// drift apart.
+// ---------------------------------------------------------------------------
+
+export type ChannelKey =
+  | "Website"
+  | "Google Business"
+  | "Paid Social"
+  | "Organic Social"
+  | "Social Media"
+  | "Referral"
+  | "Walk-In"
+  | "Phone Call"
+  | "Day Pass"
+  | "Other";
+
+export const CHANNEL_KEYS: ChannelKey[] = [
+  "Website",
+  "Google Business",
+  "Paid Social",
+  "Organic Social",
+  "Social Media",
+  "Referral",
+  "Walk-In",
+  "Phone Call",
+  "Day Pass",
+  "Other",
+];
+
+export type AttributionFields = {
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  utm_term?: string | null;
+  landing_page?: string | null;
+  initial_referrer?: string | null;
+  attribution_channel?: string | null;
+};
+
+export function hasUtms(a: AttributionFields | null | undefined): boolean {
+  if (!a) return false;
+  return Boolean(
+    a.utm_source || a.utm_medium || a.utm_campaign || a.utm_content || a.utm_term,
+  );
+}
+
+const PAID_MEDIUMS = ["paid_social", "paidsocial", "cpc", "ppc", "paid"];
+const ORGANIC_SOCIAL_MEDIUMS = ["organic_social", "organicsocial", "social"];
+
+const PLATFORM_LABELS: Record<string, string> = {
+  facebook: "Facebook",
+  fb: "Facebook",
+  meta: "Meta",
+  instagram: "Instagram",
+  ig: "Instagram",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+  x: "X",
+  twitter: "X",
+  linkedin: "LinkedIn",
+  snapchat: "Snapchat",
+  google: "Google",
+  google_business: "Google Business",
+  gbp: "Google Business",
+};
+
+export function platformLabel(utmSource: string | null | undefined): string | null {
+  const s = (utmSource ?? "").trim().toLowerCase();
+  if (!s) return null;
+  return PLATFORM_LABELS[s] ?? titleizeToken(s);
+}
+
+/** Turns `free_week_aug2026` / `still-image-v1` into readable labels. */
+export function titleizeToken(raw: string | null | undefined): string {
+  const s = (raw ?? "").trim();
+  if (!s) return "";
+  return s
+    .replace(/[_-]+/g, " ")
+    .split(/\s+/)
+    .map((w) => (w.length <= 1 ? w.toUpperCase() : w[0]!.toUpperCase() + w.slice(1)))
+    .join(" ");
+}
+
+/**
+ * Derives a channel from UTM evidence ONLY. Returns null when there is no
+ * positive evidence — callers then fall back to the lead's own source string
+ * via `channelForLead`. A no-UTM visit is never labeled "organic".
+ */
+export function deriveChannelName(
+  a: AttributionFields | null | undefined,
+  _source?: string | null,
+): ChannelKey | null {
+  if (!hasUtms(a)) return null;
+  const src = (a?.utm_source ?? "").trim().toLowerCase();
+  const med = (a?.utm_medium ?? "").trim().toLowerCase();
+
+  // Source is checked before medium so `google_business` + `organic` resolves
+  // to Google Business rather than Organic Social.
+  if (src.includes("google_business") || src.includes("google business") || src === "gbp") {
+    return "Google Business";
+  }
+
+  const isSocialPlatform =
+    src.includes("facebook") ||
+    src === "fb" ||
+    src.includes("meta") ||
+    src.includes("instagram") ||
+    src === "ig" ||
+    src.includes("tiktok") ||
+    src.includes("snapchat") ||
+    src.includes("youtube") ||
+    src.includes("twitter") ||
+    src === "x" ||
+    src.includes("linkedin");
+
+  if (PAID_MEDIUMS.some((m) => med.includes(m))) {
+    return isSocialPlatform ? "Paid Social" : "Website";
+  }
+  if (ORGANIC_SOCIAL_MEDIUMS.some((m) => med.includes(m))) {
+    return "Organic Social";
+  }
+  if (isSocialPlatform) return "Organic Social";
+
+  if (med.includes("referral")) return "Referral";
+
+  // Tagged but not a channel we model — still a website visit with a campaign.
+  return "Website";
+}
+
+/** Maps a legacy source bucket onto the channel vocabulary. */
+export function channelFromSourceKey(key: SourceKey): ChannelKey {
+  return key === "Social Media" ? "Social Media" : (key as ChannelKey);
+}
+
+/**
+ * The channel a lead should be reported under. UTM evidence wins; otherwise
+ * we fall back to existing source classification, unchanged.
+ */
+export function channelForLead(
+  lead: AttributionFields & { source: string | null | undefined },
+): ChannelKey {
+  const stored = (lead.attribution_channel ?? "").trim();
+  if (stored && (CHANNEL_KEYS as string[]).includes(stored)) {
+    return stored as ChannelKey;
+  }
+  const derived = deriveChannelName(lead, lead.source);
+  if (derived) return derived;
+  return channelFromSourceKey(classifySource(lead.source));
+}
+
+/** True when this lead's channel came from measured UTM data. */
+export function hasMeasuredAttribution(
+  lead: AttributionFields & { source?: string | null },
+): boolean {
+  return hasUtms(lead);
+}
