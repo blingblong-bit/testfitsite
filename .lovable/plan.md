@@ -35,7 +35,7 @@ A small `src/lib/attribution.ts`:
 | `utm_medium` contains `organic_social` | Organic Social (+ platform) |
 | `utm_source` = `google_business` (any medium) | Google Business |
 | other UTMs present | Website (campaign retained) |
-| no UTMs | fall back to existing `classifySource(source)` — unchanged behavior |
+| no UTMs | no channel asserted — fall back to existing `classifySource(source)`, unchanged behavior |
 
 Existing bucket names and filters keep working; Paid Social / Organic Social are added as refinements of Social Media, and legacy leads keep their current bucket.
 
