@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { AttributionSchema, attributionColumns } from "./attribution";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const Schema = z.object({
@@ -7,6 +8,7 @@ const Schema = z.object({
   email: z.string().trim().email().max(200),
   phone: z.string().trim().min(1).max(40),
   payment_method: z.enum(["venmo", "paid_at_desk"]),
+  attribution: AttributionSchema,
 });
 
 // Same signal patterns already proven in lead-classifier.ts, reused here
@@ -137,6 +139,7 @@ async function finalizeDayPassLead(data: FinalizeInput): Promise<FinalizeResult>
       payment_status,
       payment_method: data.payment_method,
       day_pass_price: 10,
+      ...attributionColumns(data.attribution),
       status: "checked_in",
       notes: noteEntry,
     })
