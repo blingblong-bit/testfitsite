@@ -12,6 +12,9 @@ import {
   type AnalyticsReferral,
   type MonthMetrics,
   classifySource,
+  computeChannelBreakdown,
+  computeCampaignBreakdown,
+  type AcquisitionRow,
   computeFunnel,
   computeMonth,
   avgHoursBetween,
@@ -116,8 +119,11 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
     const allLeadsCount = customer.length;
     const overallConversion = allLeadsCount === 0 ? 0 : Math.round((allMembers / allLeadsCount) * 100);
 
+    const channels = computeChannelBreakdown(leads, thisStart, thisEnd);
+    const campaigns = computeCampaignBreakdown(leads, thisStart, thisEnd);
+
     return {
-      current, previous, funnel, history, availableMonths,
+      current, previous, funnel, history, availableMonths, channels, campaigns,
       avgFirstContactHrs, avgResponseHrs, avgDaysToTour, avgDaysToMember,
       health: {
         activeLeads, highPriority, followUpsDue, toursToday,
@@ -307,6 +313,25 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
       </Section>
 
 
+
+      {/* Acquisition */}
+      <Section
+        title="Acquisition by Channel"
+        subtitle="Where this period's leads came from, and how many became members"
+      >
+        <AcquisitionTable rows={data.channels} emptyText="No leads in this period." labelHeader="Channel" />
+      </Section>
+
+      <Section
+        title="Campaign Performance"
+        subtitle="Tagged campaigns only — links without campaign tags can't be credited to a campaign"
+      >
+        <AcquisitionTable
+          rows={data.campaigns}
+          emptyText="No tagged campaign traffic in this period. Add utm_source / utm_medium / utm_campaign to your ad and post links to track them here."
+          labelHeader="Campaign"
+        />
+      </Section>
 
       {/* Referral Analytics */}
       <Section title="Referral Analytics" subtitle="Performance of the referral program">
@@ -767,6 +792,65 @@ function DayPassAnalytics({ leads }: { leads: AnalyticsLead[] }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function AcquisitionTable({
+  rows,
+  emptyText,
+  labelHeader,
+}: {
+  rows: AcquisitionRow[];
+  emptyText: string;
+  labelHeader: string;
+}) {
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed border-border bg-card/40 p-4">
+        <p className="text-sm text-muted-foreground">{emptyText}</p>
+      </div>
+    );
+  }
+  const totalLeads = rows.reduce((a, r) => a + r.leads, 0);
+  return (
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border text-left text-[10px] uppercase tracking-widest text-muted-foreground">
+            <th className="px-4 py-3 font-medium">{labelHeader}</th>
+            <th className="px-4 py-3 font-medium text-right">Leads</th>
+            <th className="px-4 py-3 font-medium text-right">Share</th>
+            <th className="px-4 py-3 font-medium text-right">Tours</th>
+            <th className="px-4 py-3 font-medium text-right">Members</th>
+            <th className="px-4 py-3 font-medium text-right">Conv.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.key} className="border-b border-border/50 last:border-0">
+              <td className="px-4 py-3">
+                <span className="font-medium">{r.label}</span>
+                {r.sublabel && (
+                  <span className="block text-xs text-muted-foreground">{r.sublabel}</span>
+                )}
+                {!r.measured && (
+                  <span className="block text-[10px] uppercase tracking-widest text-muted-foreground">
+                    from lead source
+                  </span>
+                )}
+              </td>
+              <td className="px-4 py-3 text-right font-semibold">{r.leads}</td>
+              <td className="px-4 py-3 text-right text-muted-foreground">
+                {totalLeads === 0 ? "—" : `${Math.round((r.leads / totalLeads) * 100)}%`}
+              </td>
+              <td className="px-4 py-3 text-right">{r.tours}</td>
+              <td className="px-4 py-3 text-right">{r.members}</td>
+              <td className="px-4 py-3 text-right">{r.leads === 0 ? "—" : `${r.conversionRate}%`}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
