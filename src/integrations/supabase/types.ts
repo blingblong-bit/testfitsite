@@ -333,15 +333,19 @@ export type Database = {
       }
       leads: {
         Row: {
+          attribution_channel: string | null
           became_member: boolean
           converted_at: string | null
           created_at: string
           crm_status: string | null
           day_pass_price: number | null
           email: string
+          first_touch_at: string | null
           followup_count: number
           id: string
+          initial_referrer: string | null
           interest: string | null
+          landing_page: string | null
           last_contact_method: string | null
           last_contacted_at: string | null
           last_response_at: string | null
@@ -369,17 +373,26 @@ export type Database = {
           tour_completed: boolean
           tour_date: string | null
           tour_scheduled: boolean
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
         }
         Insert: {
+          attribution_channel?: string | null
           became_member?: boolean
           converted_at?: string | null
           created_at?: string
           crm_status?: string | null
           day_pass_price?: number | null
           email: string
+          first_touch_at?: string | null
           followup_count?: number
           id?: string
+          initial_referrer?: string | null
           interest?: string | null
+          landing_page?: string | null
           last_contact_method?: string | null
           last_contacted_at?: string | null
           last_response_at?: string | null
@@ -407,17 +420,26 @@ export type Database = {
           tour_completed?: boolean
           tour_date?: string | null
           tour_scheduled?: boolean
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Update: {
+          attribution_channel?: string | null
           became_member?: boolean
           converted_at?: string | null
           created_at?: string
           crm_status?: string | null
           day_pass_price?: number | null
           email?: string
+          first_touch_at?: string | null
           followup_count?: number
           id?: string
+          initial_referrer?: string | null
           interest?: string | null
+          landing_page?: string | null
           last_contact_method?: string | null
           last_contacted_at?: string | null
           last_response_at?: string | null
@@ -445,6 +467,11 @@ export type Database = {
           tour_completed?: boolean
           tour_date?: string | null
           tour_scheduled?: boolean
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: []
       }
