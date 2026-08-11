@@ -263,8 +263,8 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
           <Score label="Website Leads" value={current.websiteLeads} change={pctChange(current.websiteLeads, previous.websiteLeads)} />
           <Score label="Walk-In Leads" value={current.walkInLeads} change={pctChange(current.walkInLeads, previous.walkInLeads)} />
           <Score label="Phone Call Leads" value={current.phoneLeads} change={pctChange(current.phoneLeads, previous.phoneLeads)} />
-          <Score label="Google Business Leads" notTracked />
-          <Score label="Social Media Leads" notTracked />
+          <Score label="Google Business Leads" value={current.googleBusinessLeads} change={pctChange(current.googleBusinessLeads, previous.googleBusinessLeads)} />
+          <Score label="Social Media Leads" value={current.socialLeads} change={pctChange(current.socialLeads, previous.socialLeads)} />
           <Score label="Referral Leads" value={current.referralLeads} change={pctChange(current.referralLeads, previous.referralLeads)} />
           <Score label="Day Passes Sold" value={current.dayPassesSold} change={pctChange(current.dayPassesSold, previous.dayPassesSold)} />
           <Score label="Tours Scheduled" value={current.toursScheduled} change={pctChange(current.toursScheduled, previous.toursScheduled)} />
