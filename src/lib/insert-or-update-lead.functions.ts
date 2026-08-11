@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { AttributionSchema, attributionColumns } from "./attribution";
 
 const Schema = z.object({
   source: z.string(),
@@ -19,6 +20,7 @@ const Schema = z.object({
   lead_score: z.number().nullable(),
   should_notify: z.boolean(),
   spam_reason: z.string().nullable(),
+  attribution: AttributionSchema,
 });
 
 /**
@@ -115,6 +117,9 @@ export const insertOrUpdateLead = createServerFn({ method: "POST" })
         lead_score: data.lead_score ?? undefined,
         should_notify: data.should_notify,
         spam_reason: data.spam_reason,
+        // First touch, written on INSERT only — never on the update path
+        // above, so the original acquisition can't be overwritten later.
+        ...attributionColumns(data.attribution),
       })
       .select("id")
       .single();
