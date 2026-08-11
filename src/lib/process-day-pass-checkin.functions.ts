@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { AttributionSchema, attributionColumns } from "./attribution";
+import { AttributionSchema, attributionColumns, type AttributionInput } from "./attribution";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const Schema = z.object({
@@ -33,6 +33,7 @@ type FinalizeInput = {
   email: string;
   phone: string;
   payment_method: "venmo" | "paid_at_desk";
+  attribution?: AttributionInput;
 };
 
 type FinalizeResult =

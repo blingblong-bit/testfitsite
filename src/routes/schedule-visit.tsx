@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { CalendarClock, Pencil } from "lucide-react";
 import { SmsConsentCheckbox } from "@/components/SmsConsent";
+import { attributionForSubmission } from "@/lib/attribution";
 import {
   upcomingDates,
   formatChicagoDate,
