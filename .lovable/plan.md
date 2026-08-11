@@ -90,7 +90,7 @@ Historical leads get nothing — no guessing. `attribution_channel` is stored at
 - **A — Paid Meta:** `/claim-free-week?utm_source=facebook&utm_medium=paid_social&utm_campaign=free_week_aug2026&utm_content=still_image_v1`, submit → card shows Paid Social / Facebook / Free Week Aug 2026 / Still Image V1 / `/claim-free-week`; analytics counts under Paid Social → Facebook → campaign → creative.
 - **B — Google Business:** `utm_source=google_business&utm_medium=organic` → Google Business channel, campaign retained, Google Business Leads count increments.
 - **C — Organic Instagram:** `utm_source=instagram&utm_medium=organic_social` → Organic Social / Instagram, not Paid.
-- **D — Direct:** no UTMs → Website, no campaign or creative shown.
+- **D — Direct:** no UTMs → falls back to existing source (Website for a website form), no campaign, no creative, nothing labeled organic.
 - **E — Persistence:** tagged entry, browse two pages, submit from `/contact` → original first touch and original landing page intact.
-- **F — Referral:** Meta-acquired lead refers a friend → referrer stays Paid Social, friend records separately, referral rows/rewards unaffected.
+- **F — Referral:** Meta-acquired lead refers a friend → referrer stays Paid Social; friend arriving from the plain referral link with no UTMs is classified Referral (not Website); referral rows/rewards unaffected. Also verify a friend who previously arrived via a tagged ad keeps that earlier first touch while still showing the referral relationship.
 - **Regression:** submit contact form (SMS + emails fire), claim a free week (code sent), day-pass check-in, staff Add Lead with Walk-In, and confirm existing analytics numbers are unchanged for months with no attribution data.
