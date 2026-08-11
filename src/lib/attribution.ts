@@ -2,6 +2,8 @@
 // never overwritten. Deliberately minimal: no PII, no cookies, no full URLs
 // with query strings, no third-party scripts.
 
+import { deriveChannelName } from "./analytics";
+
 const STORAGE_KEY = "fbp_first_touch";
 
 export type FirstTouch = {
@@ -14,8 +16,6 @@ export type FirstTouch = {
   initial_referrer: string | null;
   first_touch_at: string;
 };
-
-const UTM_KEYS = ["source", "medium", "campaign", "content", "term"] as const;
 
 function clean(v: string | null, max: number): string | null {
   if (!v) return null;
@@ -94,8 +94,6 @@ export function captureFirstTouch(): FirstTouch | null {
     first_touch_at: new Date().toISOString(),
   };
 
-  void UTM_KEYS; // keys documented above; kept for readability
-
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
   } catch {
@@ -117,11 +115,7 @@ export function attributionForSubmission(
 ): LeadAttribution | null {
   const ft = getFirstTouch();
   if (!ft) return null;
-  // Lazy import avoided on purpose: analytics.ts is pure and browser-safe.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // deriveChannelName returns null without positive UTM evidence, so a
+  // plain visit never fabricates a channel.
   return { ...ft, attribution_channel: deriveChannelName(ft, source) };
 }
-
-// Re-exported here so callers only need one import. Implementation lives in
-// analytics.ts, which is the single source of truth for channel rules.
-import { deriveChannelName } from "./analytics";
