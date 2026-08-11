@@ -20,7 +20,7 @@
 
 A small `src/lib/attribution.ts`:
 - On every page load, read `utm_source/medium/campaign/content/term` from the URL. If any exist **and no first touch is stored yet**, store a record in `localStorage` (key `fbp_first_touch`) with the UTMs, `landing_page` (pathname only), `initial_referrer` (`document.referrer` hostname only), and a timestamp.
-- If no UTMs are present and no first touch is stored, store a minimal direct/organic first touch (landing page + referrer host) so Test D still records a landing page without inventing a campaign.
+- If no UTMs are present and no first touch is stored, record landing page + referrer host **only** — no channel is inferred, nothing is labeled "organic". Channel derivation then falls back entirely to existing source logic. A channel is only asserted when there is positive evidence (UTMs, or a flow whose source already means something specific like referral/walk-in/day pass).
 - Once written, it is **never overwritten** — later tagged visits, referral links, and tour bookings all leave it alone.
 - Only these fields are stored; no PII, no full URLs with query strings, no cookies.
 - A tiny `useFirstTouch()` / `getFirstTouch()` accessor used by forms.
@@ -35,13 +35,15 @@ A small `src/lib/attribution.ts`:
 | `utm_medium` contains `organic_social` | Organic Social (+ platform) |
 | `utm_source` = `google_business` (any medium) | Google Business |
 | other UTMs present | Website (campaign retained) |
-| no UTMs | fall back to existing `classifySource(source)` — unchanged behavior |
+| no UTMs | no channel asserted — fall back to existing `classifySource(source)`, unchanged behavior |
 
 Existing bucket names and filters keep working; Paid Social / Organic Social are added as refinements of Social Media, and legacy leads keep their current bucket.
 
 ### 3. Attribution attaches to the lead
 
 `LeadInput` gains an optional `attribution` object. `submitLead` reads first touch from the browser and passes it through; the contact form, combat form, schedule-visit, free-week claim, and the day-pass screen all flow through this. Referral/free-week server paths accept the same optional object.
+
+**Referral-created friend leads:** the friend's lead keeps its `referral_free_week` / `referral_day_pass` source, so with no UTMs it classifies as **Referral** — never Website. A friend who arrives from a plain referral SMS/link with no UTMs stores landing page/referrer only and stays Referral. If that friend has a legitimate earlier first touch (they had already visited through a tagged ad, so UTMs are stored), the earlier attribution wins for acquisition reporting and the referral stays tracked separately in `referrals` / `referral_code`.
 
 `insertOrUpdateLead` writes attribution **only on INSERT**. On the update branch (repeat submitter) attribution columns are left untouched — that plus a DB-level `COALESCE`-style guard means first touch can never be overwritten by a later form, a referral event, a day pass, or a tour booking. Referral data stays in its own existing `referrals` table and `referral_code`/`referred_by` columns, fully separate from acquisition.
 
@@ -88,7 +90,7 @@ Historical leads get nothing — no guessing. `attribution_channel` is stored at
 - **A — Paid Meta:** `/claim-free-week?utm_source=facebook&utm_medium=paid_social&utm_campaign=free_week_aug2026&utm_content=still_image_v1`, submit → card shows Paid Social / Facebook / Free Week Aug 2026 / Still Image V1 / `/claim-free-week`; analytics counts under Paid Social → Facebook → campaign → creative.
 - **B — Google Business:** `utm_source=google_business&utm_medium=organic` → Google Business channel, campaign retained, Google Business Leads count increments.
 - **C — Organic Instagram:** `utm_source=instagram&utm_medium=organic_social` → Organic Social / Instagram, not Paid.
-- **D — Direct:** no UTMs → Website, no campaign or creative shown.
+- **D — Direct:** no UTMs → falls back to existing source (Website for a website form), no campaign, no creative, nothing labeled organic.
 - **E — Persistence:** tagged entry, browse two pages, submit from `/contact` → original first touch and original landing page intact.
-- **F — Referral:** Meta-acquired lead refers a friend → referrer stays Paid Social, friend records separately, referral rows/rewards unaffected.
+- **F — Referral:** Meta-acquired lead refers a friend → referrer stays Paid Social; friend arriving from the plain referral link with no UTMs is classified Referral (not Website); referral rows/rewards unaffected. Also verify a friend who previously arrived via a tagged ad keeps that earlier first touch while still showing the referral relationship.
 - **Regression:** submit contact form (SMS + emails fire), claim a free week (code sent), day-pass check-in, staff Add Lead with Walk-In, and confirm existing analytics numbers are unchanged for months with no attribution data.
