@@ -319,7 +319,12 @@ Deno.serve(async (_req) => {
       }
 
       if (freeWeek) {
-        const line = `[${ts}] Antaris record detected as free-week trial (not a paying conversion) — payment: $${freeWeek.amount}, note: '${freeWeek.note}'`;
+        const detail =
+          `Antaris record detected as free-week trial (not a paying conversion) — payment: $${freeWeek.amount}, note: '${freeWeek.note}'`;
+        // Sync runs every 2 hours; only note the trial once per detected amount
+        // so the lead's history doesn't fill with identical lines all week.
+        if ((lead.notes ?? "").includes(detail)) continue;
+        const line = `[${ts}] ${detail}`;
         const notes = lead.notes ? `${lead.notes}\n${line}` : line;
         const { error: fwErr } = await supabase
           .from("leads")
@@ -328,6 +333,7 @@ Deno.serve(async (_req) => {
         if (fwErr) throw fwErr;
         continue;
       }
+
 
       // Antaris date_joined is day-granular (YYYY-MM-DD), so compare days —
       // joining the same day the lead came in is still a genuine conversion.
