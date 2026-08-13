@@ -82,8 +82,9 @@ function AdminClassCheckins() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const start = `${date}T00:00:00`;
-    const end = `${date}T23:59:59.999`;
+    const off = chicagoOffset(date);
+    const start = `${date}T00:00:00.000${off}`;
+    const end = `${date}T23:59:59.999${off}`;
     const [ci, cs] = await Promise.all([
       supabase
         .from("class_checkins")
