@@ -52,6 +52,23 @@ function dayFromISO(iso: string): DayOfWeek {
   return DAYS[d.getDay()];
 }
 
+/**
+ * Chicago UTC offset (e.g. "-05:00" in summer, "-06:00" in winter) for the
+ * given calendar date. Needed so the check-in list window matches the real
+ * Central-time day: a naive "YYYY-MM-DDT00:00:00" string is read as UTC by
+ * Postgres, which drops every check-in after 7pm Central off "today".
+ */
+function chicagoOffset(iso: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    timeZoneName: "longOffset",
+  }).formatToParts(new Date(iso + "T12:00:00Z"));
+  const name = parts.find((p) => p.type === "timeZoneName")?.value ?? "GMT-6";
+  const m = name.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+  if (!m) return "-06:00";
+  return `${m[1]}${m[2].padStart(2, "0")}:${m[3] ?? "00"}`;
+}
+
 function AdminClassCheckins() {
   const submit = useServerFn(submitClassCheckIn);
   const [date, setDate] = useState<string>(todayISO());
