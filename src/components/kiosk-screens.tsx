@@ -308,8 +308,16 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
               className="h-full w-full object-contain"
             />
           </div>
-          <p className="mt-4 text-sm text-foreground font-semibold">
-            Scan to pay $10 through Venmo, or select Paid at desk below.
+          <a
+            href="https://account.venmo.com/u/Philip-Hill-11"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-block text-base font-semibold text-primary underline underline-offset-4"
+          >
+            Pay on Venmo: @Philip-Hill-11
+          </a>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Enter $10 and include the day-pass visitor’s name in the payment note.
           </p>
         </div>
 
