@@ -52,12 +52,16 @@ async function sendTwilioSms(
   return { ok: true, sid: json.sid };
 }
 
-// Pacing guardrails — the drip must never fire back-to-back just because
-// several steps are already "due" for an older lead.
+// Pacing guardrails — mirrored from src/lib/sms-pacing.ts (separate runtime,
+// cannot share the module). Keep values in sync. The drip must never fire
+// back-to-back just because several steps are already "due" for an older lead,
+// and it must not land on top of another automated job's text.
 const MIN_GAP_HOURS_DRIP = 48;
 const MIN_GAP_HOURS_POSTVISIT = 3;
+const MIN_GAP_HOURS_AUTOMATED = 24;
 const QUIET_START_HOUR = 9; // 9:00 am Chicago
 const QUIET_END_HOUR = 19; // last send starts before 7:00 pm Chicago
+const AUTOMATED_KINDS = ["drip", "post_trial_nudge", "free_week_reactivation"];
 
 function chicagoHour(now: Date): number {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -67,6 +71,42 @@ function chicagoHour(now: Date): number {
   }).formatToParts(now);
   return Number(parts.find((p) => p.type === "hour")?.value ?? "0") % 24;
 }
+
+function last10(raw: string | null | undefined): string {
+  return (raw ?? "").replace(/\D/g, "").slice(-10);
+}
+
+// Most recent AUTOMATED outbound text to this phone number, regardless of
+// which lead record or which job sent it.
+// deno-lint-ignore no-explicit-any
+async function lastAutomatedOutboundForPhone(
+  supabase: any,
+  phone: string | null | undefined,
+  nowMs: number,
+): Promise<string | null> {
+  const digits = last10(phone);
+  if (digits.length !== 10) return null;
+  const sinceIso = new Date(nowMs - 96 * 60 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from("sms_conversation_log")
+    .select("phone, created_at, metadata")
+    .eq("direction", "outbound")
+    .gte("created_at", sinceIso)
+    .order("created_at", { ascending: false })
+    .limit(500);
+  for (const row of (data ?? []) as Array<{
+    phone: string | null;
+    created_at: string;
+    metadata: Record<string, unknown> | null;
+  }>) {
+    if (last10(row.phone) !== digits) continue;
+    const kind = (row.metadata?.["kind"] ?? "") as string;
+    if (!AUTOMATED_KINDS.includes(kind)) continue;
+    return row.created_at;
+  }
+  return null;
+}
+
 
 // Cold cadence: 4 follow-ups after the initial welcome text.
 // Each entry: { minDays, build(fn) } — minimum days since lead created_at.
