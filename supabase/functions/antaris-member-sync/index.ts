@@ -149,11 +149,17 @@ async function sendWelcomeIfNeeded(
     return;
   }
 
+  // Release the claim so a later run can retry.
+  const releaseClaim = async () => {
+    await supabase.from("leads").update({ last_sms_at: null }).eq("id", lead.id);
+  };
+
   const sid = Deno.env.get("TWILIO_ACCOUNT_SID");
   const token = Deno.env.get("TWILIO_AUTH_TOKEN");
   const from = Deno.env.get("TWILIO_FROM_NUMBER");
   if (!sid || !token || !from) {
     console.error("[antaris-sync] missing Twilio env");
+    await releaseClaim();
     return;
   }
   const auth = btoa(`${sid}:${token}`);
@@ -170,10 +176,12 @@ async function sendWelcomeIfNeeded(
   );
   if (!res.ok) {
     console.error("[antaris-sync] twilio error", res.status, await res.text());
+    await releaseClaim();
     return;
   }
   const j = (await res.json()) as { sid?: string };
   await supabase.from("leads").update({ last_sms_at: now }).eq("id", lead.id);
+
   await supabase.from("sms_conversation_log").insert({
     lead_id: lead.id,
     phone: to,
