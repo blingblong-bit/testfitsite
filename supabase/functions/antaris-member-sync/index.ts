@@ -43,12 +43,90 @@ function normalizePhone(raw: string): string {
   return `+${digits}`;
 }
 
+// Pacing rules for AUTOMATED texts — mirrored from src/lib/sms-pacing.ts
+// (separate runtime, cannot share the module). Keep values in sync.
+const QUIET_START_HOUR = 9; // 9:00 am Chicago
+const QUIET_END_HOUR = 19; // last automated send starts before 7:00 pm
+const MIN_GAP_HOURS_AUTOMATED = 24;
+const AUTOMATED_KINDS = ["drip", "post_trial_nudge", "free_week_reactivation"];
+
+function chicagoHour(now: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    hour: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+  return Number(parts.find((p) => p.type === "hour")?.value ?? "0") % 24;
+}
+
+function isQuietHours(now: Date = new Date()): boolean {
+  const hour = chicagoHour(now);
+  return hour < QUIET_START_HOUR || hour >= QUIET_END_HOUR;
+}
+
+function last10(raw: string | null | undefined): string {
+  return (raw ?? "").replace(/\D/g, "").slice(-10);
+}
+
+// True when another automated job already texted this person inside the
+// minimum gap, or we're outside allowed hours.
+async function automatedSendBlocked(
+  supabase: ReturnType<typeof createClient>,
+  phone: string | null | undefined,
+  now: Date = new Date(),
+): Promise<{ blocked: boolean; reason?: string }> {
+  if (isQuietHours(now)) return { blocked: true, reason: "quiet_hours" };
+
+  const digits = last10(phone);
+  if (digits.length !== 10) return { blocked: false };
+
+  const sinceIso = new Date(now.getTime() - 96 * 60 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from("sms_conversation_log")
+    .select("phone, created_at, metadata")
+    .eq("direction", "outbound")
+    .gte("created_at", sinceIso)
+    .order("created_at", { ascending: false })
+    .limit(500);
+
+  for (const row of (data ?? []) as unknown as Array<{
+    phone: string | null;
+    created_at: string;
+    metadata: Record<string, unknown> | null;
+  }>) {
+    if (last10(row.phone) !== digits) continue;
+    const kind = (row.metadata?.["kind"] ?? "") as string;
+    if (!AUTOMATED_KINDS.includes(kind)) continue;
+    const hoursSince = (now.getTime() - new Date(row.created_at).getTime()) / (1000 * 60 * 60);
+    return hoursSince < MIN_GAP_HOURS_AUTOMATED
+      ? { blocked: true, reason: "too_soon" }
+      : { blocked: false };
+  }
+  return { blocked: false };
+}
+
 async function sendWelcomeIfNeeded(
   supabase: ReturnType<typeof createClient>,
   lead: LeadRow,
 ): Promise<void> {
   if (lead.last_sms_at) return;
   if (!lead.phone) return;
+
+  // Welcome-on-join is transactional, but still respect quiet hours so nobody
+  // gets a 2am text; it will go out on the next sync inside business hours.
+  if (isQuietHours()) return;
+
+  // Atomically claim the send: only one run can flip last_sms_at from null,
+  // so overlapping syncs can't both send a welcome text.
+  const claimIso = new Date().toISOString();
+  const { data: claimed, error: claimErr } = await supabase
+    .from("leads")
+    .update({ last_sms_at: claimIso })
+    .eq("id", lead.id)
+    .is("last_sms_at", null)
+    .select("id");
+  if (claimErr || !claimed || claimed.length === 0) return;
+
 
   const to = normalizePhone(lead.phone);
   const body = `Welcome to the FIT Beyond Plus family, ${firstName(lead.name)}! 💪 We're pumped to have you. If you ever have questions, need to update your schedule, or just want to know what's going on at the gym — just text here. See you soon!`;
@@ -71,11 +149,17 @@ async function sendWelcomeIfNeeded(
     return;
   }
 
+  // Release the claim so a later run can retry.
+  const releaseClaim = async () => {
+    await supabase.from("leads").update({ last_sms_at: null }).eq("id", lead.id);
+  };
+
   const sid = Deno.env.get("TWILIO_ACCOUNT_SID");
   const token = Deno.env.get("TWILIO_AUTH_TOKEN");
   const from = Deno.env.get("TWILIO_FROM_NUMBER");
   if (!sid || !token || !from) {
     console.error("[antaris-sync] missing Twilio env");
+    await releaseClaim();
     return;
   }
   const auth = btoa(`${sid}:${token}`);
@@ -92,10 +176,12 @@ async function sendWelcomeIfNeeded(
   );
   if (!res.ok) {
     console.error("[antaris-sync] twilio error", res.status, await res.text());
+    await releaseClaim();
     return;
   }
   const j = (await res.json()) as { sid?: string };
   await supabase.from("leads").update({ last_sms_at: now }).eq("id", lead.id);
+
   await supabase.from("sms_conversation_log").insert({
     lead_id: lead.id,
     phone: to,
@@ -213,6 +299,15 @@ async function runPostTrialNudges(
       if (lead.became_member === true) continue;
       if (lead.sms_opted_out) continue;
       if (!lead.phone) continue;
+
+      // Cross-job pacing: quiet hours + no automated text inside 24h, so the
+      // nudge never lands on top of a drip message.
+      const pacing = await automatedSendBlocked(supabase, lead.phone);
+      if (pacing.blocked) {
+        console.log("[antaris-sync] nudge held", r.id, pacing.reason);
+        continue;
+      }
+
 
       const name = firstName(lead.name ?? r.friend_name);
       const body = `Hey ${name}! Your free week at FIT Beyond Plus just wrapped up — hope you loved it! Ready to make it official? Reply here and we'll get you set up, or stop by anytime.`;
