@@ -178,7 +178,9 @@ Deno.serve(async (_req) => {
         let markCompleted: boolean;
 
         // Pacing: measure from the last time we actually texted them (welcome
-        // text, promo nudge, manual staff text — anything outbound counts).
+        // text, promo nudge, manual staff text — anything outbound counts),
+        // and additionally from any automated text sent to the same phone
+        // number by another job, even under a different lead record.
         const minGapHours = usePostVisit ? MIN_GAP_HOURS_POSTVISIT : MIN_GAP_HOURS_DRIP;
         const { data: lastOut } = await supabase
           .from("sms_conversation_log")
@@ -192,11 +194,21 @@ Deno.serve(async (_req) => {
           const hoursSinceLast = (now - new Date(lastOutIso).getTime()) / (1000 * 60 * 60);
           // Hard cap of one automated text per lead per day, plus the
           // sequence-specific minimum gap.
-          if (hoursSinceLast < Math.max(minGapHours, 24)) {
+          if (hoursSinceLast < Math.max(minGapHours, MIN_GAP_HOURS_AUTOMATED)) {
             results.push({ lead_id: lead.id, ok: true, skipped: "too_soon" });
             continue;
           }
         }
+
+        const lastAutomatedIso = await lastAutomatedOutboundForPhone(supabase, lead.phone, now);
+        if (lastAutomatedIso) {
+          const hoursSince = (now - new Date(lastAutomatedIso).getTime()) / (1000 * 60 * 60);
+          if (hoursSince < MIN_GAP_HOURS_AUTOMATED) {
+            results.push({ lead_id: lead.id, ok: true, skipped: "too_soon_other_job" });
+            continue;
+          }
+        }
+
 
         if (usePostVisit) {
           if (idx < 0 || idx >= POSTVISIT.length) continue;
