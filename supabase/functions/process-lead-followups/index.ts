@@ -52,9 +52,26 @@ async function sendTwilioSms(
   return { ok: true, sid: json.sid };
 }
 
-// Hormozi Gym Launch cadence: 6 follow-ups after the initial welcome text.
+// Pacing guardrails — the drip must never fire back-to-back just because
+// several steps are already "due" for an older lead.
+const MIN_GAP_HOURS_DRIP = 48;
+const MIN_GAP_HOURS_POSTVISIT = 3;
+const QUIET_START_HOUR = 9; // 9:00 am Chicago
+const QUIET_END_HOUR = 19; // last send starts before 7:00 pm Chicago
+
+function chicagoHour(now: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    hour: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+  return Number(parts.find((p) => p.type === "hour")?.value ?? "0") % 24;
+}
+
+// Cold cadence: 4 follow-ups after the initial welcome text.
 // Each entry: { minDays, build(fn) } — minimum days since lead created_at.
 const FOLLOWUPS: Array<{ minDays: number; build: (fn: string, interest?: string | null) => string }> = [
+
   {
     minDays: 1,
     build: (fn) =>
@@ -79,16 +96,6 @@ const FOLLOWUPS: Array<{ minDays: number; build: (fn: string, interest?: string 
     minDays: 7,
     build: (fn) =>
       `${fn}, let's make this easy — come try FIT Beyond Plus completely free for 7 days. Full access, no strings, see if it's the right fit. Just reply YES and I'll get you set up.`,
-  },
-  {
-    minDays: 10,
-    build: (_fn) =>
-      `No contracts, no pressure, no weird sales pitch — just wanted you to know that's genuinely how we operate at FIT Beyond Plus. Whenever you're ready, we're here.`,
-  },
-  {
-    minDays: 14,
-    build: (fn) =>
-      `${fn}, last message from me — the 7-day free trial offer is still on the table if you want it, no pressure either way. Just reply here anytime, we're at 449 W Lincoln St in Tullahoma 🙏`,
   },
 ];
 
@@ -119,10 +126,19 @@ Deno.serve(async (_req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // Quiet hours: nothing automated goes out outside 9:00am-7:00pm Chicago.
+    const hourNowChicago = chicagoHour(new Date());
+    if (hourNowChicago < QUIET_START_HOUR || hourNowChicago >= QUIET_END_HOUR) {
+      return new Response(
+        JSON.stringify({ ok: true, skipped: "quiet_hours", hour: hourNowChicago }),
+        { headers: { "Content-Type": "application/json" } },
+      );
+    }
+
     const { data: leads, error } = await supabase
       .from("leads")
       .select(
-        "id, name, email, phone, interest, source, created_at, tour_completed, tour_date, followup_count, sequence_status, crm_status, last_response_at",
+        "id, name, email, phone, interest, source, created_at, tour_completed, tour_date, followup_count, sequence_status, crm_status, last_response_at, last_sms_at",
       )
       .eq("lead_type", "customer_lead")
       .eq("should_notify", true)
@@ -130,7 +146,7 @@ Deno.serve(async (_req) => {
       .eq("became_member", false)
       .eq("sequence_status", "active")
       .is("last_response_at", null)
-      .lt("followup_count", 6)
+      .lt("followup_count", FOLLOWUPS.length)
       .not("crm_status", "in", '("Joined","Lost Lead")');
 
     if (error) {
@@ -161,6 +177,27 @@ Deno.serve(async (_req) => {
         let newCount: number;
         let markCompleted: boolean;
 
+        // Pacing: measure from the last time we actually texted them (welcome
+        // text, promo nudge, manual staff text — anything outbound counts).
+        const minGapHours = usePostVisit ? MIN_GAP_HOURS_POSTVISIT : MIN_GAP_HOURS_DRIP;
+        const { data: lastOut } = await supabase
+          .from("sms_conversation_log")
+          .select("created_at")
+          .eq("lead_id", lead.id)
+          .eq("direction", "outbound")
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const lastOutIso = lastOut?.[0]?.created_at ?? lead.last_sms_at ?? null;
+        if (lastOutIso) {
+          const hoursSinceLast = (now - new Date(lastOutIso).getTime()) / (1000 * 60 * 60);
+          // Hard cap of one automated text per lead per day, plus the
+          // sequence-specific minimum gap.
+          if (hoursSinceLast < Math.max(minGapHours, 24)) {
+            results.push({ lead_id: lead.id, ok: true, skipped: "too_soon" });
+            continue;
+          }
+        }
+
         if (usePostVisit) {
           if (idx < 0 || idx >= POSTVISIT.length) continue;
           const step = POSTVISIT[idx];
@@ -183,6 +220,7 @@ Deno.serve(async (_req) => {
           markCompleted = newCount >= FOLLOWUPS.length;
           stepLabel = `followup_${newCount}`;
         }
+
 
         const to = normalizePhone(lead.phone);
         const update: Record<string, unknown> = {
