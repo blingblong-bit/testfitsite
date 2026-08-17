@@ -179,6 +179,15 @@ export const Route = createFileRoute("/api/public/webhooks/twilio-missed-call")(
             }
           }
 
+          // Pacing: never text the same number back more than once an hour.
+          // Repeat calls inside that window still get logged on the lead above,
+          // they just don't retrigger a text.
+          const { missedCallOnCooldown } = await import("@/lib/sms-pacing");
+          if (await missedCallOnCooldown(supabaseAdmin, caller)) {
+            console.log("[twilio-missed-call] cooldown active, no text sent", digits);
+            return okTwiml();
+          }
+
           const send = await sendTwilioSms(caller, TEXT_BACK_BODY);
           if (!send.ok) {
             console.error("[twilio-missed-call] twilio error", send.error);
@@ -188,6 +197,7 @@ export const Route = createFileRoute("/api/public/webhooks/twilio-missed-call")(
               .update({ last_sms_at: nowIso, sequence_status: "active" })
               .eq("id", leadId);
           }
+
 
           await supabaseAdmin.from("sms_conversation_log").insert({
             lead_id: leadId,
