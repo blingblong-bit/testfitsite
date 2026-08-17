@@ -126,10 +126,19 @@ Deno.serve(async (_req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // Quiet hours: nothing automated goes out outside 9:00am-7:00pm Chicago.
+    const hourNowChicago = chicagoHour(new Date());
+    if (hourNowChicago < QUIET_START_HOUR || hourNowChicago >= QUIET_END_HOUR) {
+      return new Response(
+        JSON.stringify({ ok: true, skipped: "quiet_hours", hour: hourNowChicago }),
+        { headers: { "Content-Type": "application/json" } },
+      );
+    }
+
     const { data: leads, error } = await supabase
       .from("leads")
       .select(
-        "id, name, email, phone, interest, source, created_at, tour_completed, tour_date, followup_count, sequence_status, crm_status, last_response_at",
+        "id, name, email, phone, interest, source, created_at, tour_completed, tour_date, followup_count, sequence_status, crm_status, last_response_at, last_sms_at",
       )
       .eq("lead_type", "customer_lead")
       .eq("should_notify", true)
@@ -137,7 +146,7 @@ Deno.serve(async (_req) => {
       .eq("became_member", false)
       .eq("sequence_status", "active")
       .is("last_response_at", null)
-      .lt("followup_count", 6)
+      .lt("followup_count", FOLLOWUPS.length)
       .not("crm_status", "in", '("Joined","Lost Lead")');
 
     if (error) {
@@ -168,6 +177,27 @@ Deno.serve(async (_req) => {
         let newCount: number;
         let markCompleted: boolean;
 
+        // Pacing: measure from the last time we actually texted them (welcome
+        // text, promo nudge, manual staff text — anything outbound counts).
+        const minGapHours = usePostVisit ? MIN_GAP_HOURS_POSTVISIT : MIN_GAP_HOURS_DRIP;
+        const { data: lastOut } = await supabase
+          .from("sms_conversation_log")
+          .select("created_at")
+          .eq("lead_id", lead.id)
+          .eq("direction", "outbound")
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const lastOutIso = lastOut?.[0]?.created_at ?? lead.last_sms_at ?? null;
+        if (lastOutIso) {
+          const hoursSinceLast = (now - new Date(lastOutIso).getTime()) / (1000 * 60 * 60);
+          // Hard cap of one automated text per lead per day, plus the
+          // sequence-specific minimum gap.
+          if (hoursSinceLast < Math.max(minGapHours, 24)) {
+            results.push({ lead_id: lead.id, ok: true, skipped: "too_soon" });
+            continue;
+          }
+        }
+
         if (usePostVisit) {
           if (idx < 0 || idx >= POSTVISIT.length) continue;
           const step = POSTVISIT[idx];
@@ -190,6 +220,7 @@ Deno.serve(async (_req) => {
           markCompleted = newCount >= FOLLOWUPS.length;
           stepLabel = `followup_${newCount}`;
         }
+
 
         const to = normalizePhone(lead.phone);
         const update: Record<string, unknown> = {
