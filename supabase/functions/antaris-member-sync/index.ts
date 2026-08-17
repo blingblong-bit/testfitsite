@@ -300,6 +300,15 @@ async function runPostTrialNudges(
       if (lead.sms_opted_out) continue;
       if (!lead.phone) continue;
 
+      // Cross-job pacing: quiet hours + no automated text inside 24h, so the
+      // nudge never lands on top of a drip message.
+      const pacing = await automatedSendBlocked(supabase, lead.phone);
+      if (pacing.blocked) {
+        console.log("[antaris-sync] nudge held", r.id, pacing.reason);
+        continue;
+      }
+
+
       const name = firstName(lead.name ?? r.friend_name);
       const body = `Hey ${name}! Your free week at FIT Beyond Plus just wrapped up — hope you loved it! Ready to make it official? Reply here and we'll get you set up, or stop by anytime.`;
 
