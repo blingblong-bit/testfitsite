@@ -52,9 +52,26 @@ async function sendTwilioSms(
   return { ok: true, sid: json.sid };
 }
 
-// Hormozi Gym Launch cadence: 6 follow-ups after the initial welcome text.
+// Pacing guardrails — the drip must never fire back-to-back just because
+// several steps are already "due" for an older lead.
+const MIN_GAP_HOURS_DRIP = 48;
+const MIN_GAP_HOURS_POSTVISIT = 3;
+const QUIET_START_HOUR = 9; // 9:00 am Chicago
+const QUIET_END_HOUR = 19; // last send starts before 7:00 pm Chicago
+
+function chicagoHour(now: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    hour: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+  return Number(parts.find((p) => p.type === "hour")?.value ?? "0") % 24;
+}
+
+// Cold cadence: 4 follow-ups after the initial welcome text.
 // Each entry: { minDays, build(fn) } — minimum days since lead created_at.
 const FOLLOWUPS: Array<{ minDays: number; build: (fn: string, interest?: string | null) => string }> = [
+
   {
     minDays: 1,
     build: (fn) =>
