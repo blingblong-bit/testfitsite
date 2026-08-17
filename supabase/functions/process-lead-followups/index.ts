@@ -97,16 +97,6 @@ const FOLLOWUPS: Array<{ minDays: number; build: (fn: string, interest?: string 
     build: (fn) =>
       `${fn}, let's make this easy — come try FIT Beyond Plus completely free for 7 days. Full access, no strings, see if it's the right fit. Just reply YES and I'll get you set up.`,
   },
-  {
-    minDays: 10,
-    build: (_fn) =>
-      `No contracts, no pressure, no weird sales pitch — just wanted you to know that's genuinely how we operate at FIT Beyond Plus. Whenever you're ready, we're here.`,
-  },
-  {
-    minDays: 14,
-    build: (fn) =>
-      `${fn}, last message from me — the 7-day free trial offer is still on the table if you want it, no pressure either way. Just reply here anytime, we're at 449 W Lincoln St in Tullahoma 🙏`,
-  },
 ];
 
 // Post-visit sequence for day-pass walk-ins / referral day-pass leads with a completed tour.
