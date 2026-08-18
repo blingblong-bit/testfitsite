@@ -411,6 +411,37 @@ Deno.serve(async (req) => {
       })
       .eq("id", lead.id);
 
+    // ---- Hard stop: real-world, right-now gym conditions ----
+    // Equipment/amenity status, closures, canceled classes, lost items, facility
+    // complaints. The AI has no live visibility into any of it, so it never gets
+    // to answer — the question goes straight to staff with no reply sent.
+    const OPERATIONAL_PATTERNS =
+      /(out of order|not working|isn'?t working|doesn'?t work|broken|broke down|fixed yet|repaired|shut off|turned off|temporarily)|(tanning|sauna|shower|locker|bathroom|restroom|towel|machine|treadmill|bike|rower|equipment|weights?|door|wifi|ac\b|air condition|heat(er)?\b|parking)|(class(es)? (today|tonight|canceled|cancelled)|is (there|the) .*class|who'?s teaching|instructor (there|today))|(are (you|y'?all|we) open|you open (today|now|right now)|closed (today|now)|what time do you (open|close)|open (today|right now))|(lost|left) (my|a|an) |(found my)|(dirty|filthy|messy|smell|gross|nobody was|no one was) /i;
+
+    if (OPERATIONAL_PATTERNS.test(body)) {
+      const memberTag = lead.lead_type === "existing_member" ? "[EXISTING MEMBER] " : "";
+      await sendStaffAlert(
+        `⚡ ${memberTag}${lead.name ?? "A lead"} asked about something at the gym that needs a real person — they said: "${body}". Reason: operational_question. No auto-reply was sent.`,
+        "operations",
+      );
+      await supabase.from("sms_conversation_log").insert({
+        lead_id: lead.id,
+        phone: from,
+        direction: "system",
+        body: `[operational_handoff] no AI reply sent — staff alerted`,
+        from_ai: false,
+        provider_message_id: null,
+        status: "operational_handoff",
+        metadata: {
+          kind: "operational_handoff",
+          reason: "operational_question",
+          inbound_body: body,
+        },
+      });
+      return twiml();
+    }
+
+
     // Build conversation history
     const { data: history } = await supabase
       .from("sms_conversation_log")
@@ -469,6 +500,18 @@ or when escalating:
 { "reply": null, "needs_human": true, "reason": "brief reason" }`;
 
     const memberPrompt = `You are the friendly support assistant for FIT Beyond Plus. You are texting with an EXISTING MEMBER named ${lead.name ?? "there"}. Do not try to sell them on joining — they are already a member. Help them with questions about class schedules, hours, freezing or pausing membership, billing questions, guest passes, or general gym info. For anything involving actual account changes, billing disputes, or cancellations, set needs_human to true — staff needs to handle those personally. Keep the same warm, short, conversational tone as the prospect-facing assistant.
+
+If your reply promises that staff/our team will follow up, check on something, or get back to them, you MUST also set needs_human to true (keep your reply text) so staff get alerted.
+
+Set needs_human to true and stop responding if:
+- You cannot confidently answer their question, or you would have to say you don't know / don't have real-time information
+- They ask about anything happening at the gym right now: equipment or amenity status, something broken or out of order, whether we're open, a class being canceled, a lost item, or a cleanliness/facility issue
+- They ask to negotiate price or mention a competitor price
+- They express frustration or complaint
+- They say call me, speak to someone, or manager
+- This is the 5th or more exchange in the conversation
+- Their message is emotionally complex or ambiguous
+- Anything involving account changes, billing disputes, or cancellations
 
 About FIT Beyond Plus:
 - Address: 449 W Lincoln St, Tullahoma, TN 37388
@@ -644,9 +687,26 @@ or
       const alert = `${prefix}${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${alertReason}. Check the lead tracker.`;
       await sendStaffAlert(alert, "operations");
 
-      // If the AI produced a reply (e.g. "let me check with staff"), still send
-      // it so the lead isn't left hanging — then fall through to the send path.
-      if (!aiReply) return twiml();
+      // Escalation means silence: any draft the AI wrote is NOT texted out.
+      // Staff answer from the lead tracker so the person never gets a
+      // non-answer like "I don't have real-time info, call the front desk".
+      if (aiReply) {
+        await supabase.from("sms_conversation_log").insert({
+          lead_id: lead.id,
+          phone: from,
+          direction: "system",
+          body: `[suppressed_ai_reply] ${aiReply}`,
+          from_ai: false,
+          provider_message_id: null,
+          status: "suppressed",
+          metadata: {
+            kind: "suppressed_ai_reply",
+            reason: alertReason,
+            inbound_body: body,
+          },
+        });
+      }
+      return twiml();
     }
 
 
