@@ -280,6 +280,16 @@ function stageRank(lead: Lead): number {
   return 0;
 }
 
+// Which section of the main list a lead belongs to, so converted members and
+// closed-out records don't clutter the leads staff still need to work.
+type ListGroup = "working" | "converted" | "closed";
+function listGroup(lead: Lead): ListGroup {
+  const type = lead.lead_type ?? "customer_lead";
+  if (lead.became_member || lead.crm_status === "Joined") return "converted";
+  if (lead.crm_status === "Lost Lead" || type === "spam" || type === "vendor_solicitation") return "closed";
+  return "working";
+}
+
 
 
 
