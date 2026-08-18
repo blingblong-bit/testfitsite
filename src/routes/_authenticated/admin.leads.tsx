@@ -1071,7 +1071,7 @@ type SmsMessage = {
   metadata: { sent_by?: string; kind?: string; test_mode?: boolean } | null;
 };
 
-function LeadCard({ lead, updateLead, freeWeek }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void>; freeWeek?: FreeWeekInfo | null }) {
+function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void>; freeWeek?: FreeWeekInfo | null; onConverted?: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
