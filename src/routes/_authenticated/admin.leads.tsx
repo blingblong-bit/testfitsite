@@ -280,6 +280,16 @@ function stageRank(lead: Lead): number {
   return 0;
 }
 
+// Which section of the main list a lead belongs to, so converted members and
+// closed-out records don't clutter the leads staff still need to work.
+type ListGroup = "working" | "converted" | "closed";
+function listGroup(lead: Lead): ListGroup {
+  const type = lead.lead_type ?? "customer_lead";
+  if (lead.became_member || lead.crm_status === "Joined") return "converted";
+  if (lead.crm_status === "Lost Lead" || type === "spam" || type === "vendor_solicitation") return "closed";
+  return "working";
+}
+
 
 
 
@@ -814,6 +824,18 @@ function LeadsView({
     return arr;
   }, [filtered, sortBy]);
 
+  // Section the list: working leads first, converted members and closed-out
+  // records tucked into collapsible groups below.
+  const groups = useMemo(() => {
+    const out: Record<ListGroup, Lead[]> = { working: [], converted: [], closed: [] };
+    for (const l of sorted) out[listGroup(l)].push(l);
+    return out;
+  }, [sorted]);
+
+  const [showConverted, setShowConverted] = useState(false);
+  const [showClosed, setShowClosed] = useState(false);
+  const searching = query.trim().length > 0;
+
   // Dashboard stats — always computed over customer_lead pool, excluding existing_member
   const customerLeads = useMemo(
     () => leads?.filter((l) => (l.lead_type ?? "customer_lead") === "customer_lead") ?? [],
@@ -921,12 +943,72 @@ function LeadsView({
       {leads === null && <p className="mt-10 text-muted-foreground">Loading leads…</p>}
       {leads !== null && sorted.length === 0 && <p className="mt-10 text-muted-foreground">No leads match your filters.</p>}
 
-      <div className="mt-6 space-y-3">
-        {sorted.map((lead) => (
-          <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
-        ))}
-      </div>
+      {quickFilter !== "none" ? (
+        <div className="mt-6 space-y-3">
+          {sorted.map((lead) => (
+            <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-6 space-y-6">
+          {groups.working.length > 0 && (
+            <div className="space-y-3">
+              <SectionHeader label={`Working Leads (${groups.working.length})`} />
+              {groups.working.map((lead) => (
+                <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
+              ))}
+            </div>
+          )}
+
+          {groups.converted.length > 0 && (
+            <div className="space-y-3">
+              <SectionHeader
+                label={`Converted Members (${groups.converted.length})`}
+                open={searching || showConverted}
+                onToggle={() => setShowConverted((v) => !v)}
+              />
+              {(searching || showConverted) &&
+                groups.converted.map((lead) => (
+                  <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
+                ))}
+            </div>
+          )}
+
+          {groups.closed.length > 0 && (
+            <div className="space-y-3">
+              <SectionHeader
+                label={`Closed / Not A Fit (${groups.closed.length})`}
+                open={searching || showClosed}
+                onToggle={() => setShowClosed((v) => !v)}
+              />
+              {(searching || showClosed) &&
+                groups.closed.map((lead) => (
+                  <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
+                ))}
+            </div>
+          )}
+        </div>
+      )}
     </>
+  );
+}
+
+function SectionHeader({ label, open, onToggle }: { label: string; open?: boolean; onToggle?: () => void }) {
+  if (!onToggle) {
+    return (
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={open}
+      className="flex w-full items-center gap-2 rounded-md border border-border bg-secondary/30 px-3 py-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground hover:bg-secondary/60"
+    >
+      <span>{open ? "▾" : "▸"}</span>
+      {label}
+    </button>
   );
 }
 
