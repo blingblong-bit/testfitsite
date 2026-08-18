@@ -1207,21 +1207,8 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
 
 
 
-  async function markContactedToday() {
-    const iso = new Date().toISOString();
-    const patch: Partial<Lead> = { last_contacted_at: iso };
-    if ((lead.crm_status ?? "New Lead") === "New Lead") patch.crm_status = "Contacted";
-    const suggested = suggestNextFollowUp(lead);
-    if (suggested === null) patch.next_follow_up_date = null;
-    else if (suggested !== "keep") patch.next_follow_up_date = suggested;
-    await updateLead(lead.id, patch);
-    toast.success("Marked as contacted today");
-  }
 
-  async function markResponded() {
-    await updateLead(lead.id, { last_response_at: new Date().toISOString() });
-    toast.success("Response logged");
-  }
+
 
   async function saveNotes() {
     setSavingNotes(true);
