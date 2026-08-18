@@ -687,9 +687,26 @@ or
       const alert = `${prefix}${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${alertReason}. Check the lead tracker.`;
       await sendStaffAlert(alert, "operations");
 
-      // If the AI produced a reply (e.g. "let me check with staff"), still send
-      // it so the lead isn't left hanging — then fall through to the send path.
-      if (!aiReply) return twiml();
+      // Escalation means silence: any draft the AI wrote is NOT texted out.
+      // Staff answer from the lead tracker so the person never gets a
+      // non-answer like "I don't have real-time info, call the front desk".
+      if (aiReply) {
+        await supabase.from("sms_conversation_log").insert({
+          lead_id: lead.id,
+          phone: from,
+          direction: "system",
+          body: `[suppressed_ai_reply] ${aiReply}`,
+          from_ai: false,
+          provider_message_id: null,
+          status: "suppressed",
+          metadata: {
+            kind: "suppressed_ai_reply",
+            reason: alertReason,
+            inbound_body: body,
+          },
+        });
+      }
+      return twiml();
     }
 
 
