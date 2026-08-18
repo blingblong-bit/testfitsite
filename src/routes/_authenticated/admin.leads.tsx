@@ -1185,7 +1185,11 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
       else if (lead.sms_opted_out) toast.message("SMS opted out — welcome text skipped");
     }
     setConvertBusy(false);
+    // Jump the view to the Converted This Month tile so the lead is visibly
+    // out of New Leads and in its new bucket.
+    onConverted?.();
   }
+
 
   async function markNotConverted(reason: string) {
     if (convertBusy) return;
