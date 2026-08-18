@@ -993,6 +993,25 @@ function LeadsView({
   );
 }
 
+function SectionHeader({ label, open, onToggle }: { label: string; open?: boolean; onToggle?: () => void }) {
+  if (!onToggle) {
+    return (
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={open}
+      className="flex w-full items-center gap-2 rounded-md border border-border bg-secondary/30 px-3 py-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground hover:bg-secondary/60"
+    >
+      <span>{open ? "▾" : "▸"}</span>
+      {label}
+    </button>
+  );
+}
+
 function Stat({ label, value, accent, active, onClick }: { label: string; value: number | string; accent?: "primary" | "destructive"; active?: boolean; onClick?: () => void }) {
   const color =
     accent === "destructive" ? "text-destructive" : accent === "primary" ? "text-primary" : "text-foreground";
