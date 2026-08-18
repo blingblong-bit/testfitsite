@@ -1297,20 +1297,6 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
 
         </div>
         <div className="flex flex-col items-end gap-2">
-          <div className="flex gap-2">
-            <button
-              onClick={markContactedToday}
-              className="h-9 rounded-md bg-primary px-3 text-xs font-semibold uppercase tracking-widest text-primary-foreground hover:opacity-90"
-            >
-              Contacted Today
-            </button>
-            <button
-              onClick={markResponded}
-              className="h-9 rounded-md border border-primary/40 bg-primary/10 px-3 text-xs font-semibold uppercase tracking-widest text-primary hover:bg-primary/20"
-            >
-              Lead Responded
-            </button>
-          </div>
           <button
             onClick={() => setExpanded((v) => !v)}
             className="inline-flex items-center gap-1 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
