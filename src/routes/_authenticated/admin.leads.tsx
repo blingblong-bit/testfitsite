@@ -946,7 +946,7 @@ function LeadsView({
 
       <div className="mt-6 space-y-3">
         {sorted.map((lead) => (
-          <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} />
+          <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
         ))}
       </div>
     </>
