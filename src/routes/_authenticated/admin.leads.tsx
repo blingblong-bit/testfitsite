@@ -279,14 +279,19 @@ function isFollowUpDueToday(lead: Lead): boolean {
 // bucket until it converts (Joined / became_member) or is marked Lost Lead.
 function needsFirstTouch(lead: Lead): boolean {
   const status = lead.crm_status ?? "New Lead";
-  if (status === "Joined" || status === "Lost Lead") return false;
+  // Members of any kind are never "new": converted leads, leads whose status is
+  // Joined, and existing Antaris members (the "Member" badge) all drop out even
+  // if an automated sequence is still marked active on the record.
+  if ((lead.lead_type ?? "customer_lead") === "existing_member") return false;
   if (lead.became_member) return false;
+  if (status === "Joined" || status === "Lost Lead") return false;
   const seq = lead.sequence_status ?? null;
   if (seq === "active" || seq === "pending") return true;
   if (lead.last_contacted_at) return false;
   if (lead.last_response_at) return false;
   return true;
 }
+
 
 // Pipeline stage ordering for the default list order:
 // open leads (by priority) → tour scheduled → tour completed → member → lost.
