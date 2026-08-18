@@ -240,29 +240,6 @@ export const Route = createFileRoute("/_authenticated/admin/leads")({
   component: AdminLeads,
 });
 
-function addDaysISODate(n: number): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
-}
-
-// Returns the YYYY-MM-DD date to set; null = clear; "keep" = do not change.
-function suggestNextFollowUp(lead: Lead): string | null | "keep" {
-  const tourDate = lead.tour_date ? new Date(lead.tour_date).toISOString().slice(0, 10) : null;
-  switch (lead.next_action) {
-    case "Waiting for Response": return addDaysISODate(3);
-    case "Email Follow-Up": return addDaysISODate(3);
-    case "Phone Follow-Up": return addDaysISODate(1);
-    case "Text Follow-Up": return addDaysISODate(1);
-    case "Schedule Tour": return tourDate ?? addDaysISODate(1);
-    case "Waiting for Tour": return tourDate ?? "keep";
-    case "Ready to Join": return addDaysISODate(2);
-    case "No Further Follow-Up": return null;
-  }
-  if ((lead.crm_status ?? "New Lead") === "New Lead") return addDaysISODate(2);
-  return "keep";
-}
 
 function isFollowUpDueToday(lead: Lead): boolean {
   if (!lead.next_follow_up_date) return false;
