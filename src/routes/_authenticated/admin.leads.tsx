@@ -943,11 +943,52 @@ function LeadsView({
       {leads === null && <p className="mt-10 text-muted-foreground">Loading leads…</p>}
       {leads !== null && sorted.length === 0 && <p className="mt-10 text-muted-foreground">No leads match your filters.</p>}
 
-      <div className="mt-6 space-y-3">
-        {sorted.map((lead) => (
-          <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
-        ))}
-      </div>
+      {quickFilter !== "none" ? (
+        <div className="mt-6 space-y-3">
+          {sorted.map((lead) => (
+            <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-6 space-y-6">
+          {groups.working.length > 0 && (
+            <div className="space-y-3">
+              <SectionHeader label={`Working Leads (${groups.working.length})`} />
+              {groups.working.map((lead) => (
+                <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
+              ))}
+            </div>
+          )}
+
+          {groups.converted.length > 0 && (
+            <div className="space-y-3">
+              <SectionHeader
+                label={`Converted Members (${groups.converted.length})`}
+                open={searching || showConverted}
+                onToggle={() => setShowConverted((v) => !v)}
+              />
+              {(searching || showConverted) &&
+                groups.converted.map((lead) => (
+                  <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
+                ))}
+            </div>
+          )}
+
+          {groups.closed.length > 0 && (
+            <div className="space-y-3">
+              <SectionHeader
+                label={`Closed / Not A Fit (${groups.closed.length})`}
+                open={searching || showClosed}
+                onToggle={() => setShowClosed((v) => !v)}
+              />
+              {(searching || showClosed) &&
+                groups.closed.map((lead) => (
+                  <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
+                ))}
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 }
