@@ -240,29 +240,6 @@ export const Route = createFileRoute("/_authenticated/admin/leads")({
   component: AdminLeads,
 });
 
-function addDaysISODate(n: number): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
-}
-
-// Returns the YYYY-MM-DD date to set; null = clear; "keep" = do not change.
-function suggestNextFollowUp(lead: Lead): string | null | "keep" {
-  const tourDate = lead.tour_date ? new Date(lead.tour_date).toISOString().slice(0, 10) : null;
-  switch (lead.next_action) {
-    case "Waiting for Response": return addDaysISODate(3);
-    case "Email Follow-Up": return addDaysISODate(3);
-    case "Phone Follow-Up": return addDaysISODate(1);
-    case "Text Follow-Up": return addDaysISODate(1);
-    case "Schedule Tour": return tourDate ?? addDaysISODate(1);
-    case "Waiting for Tour": return tourDate ?? "keep";
-    case "Ready to Join": return addDaysISODate(2);
-    case "No Further Follow-Up": return null;
-  }
-  if ((lead.crm_status ?? "New Lead") === "New Lead") return addDaysISODate(2);
-  return "keep";
-}
 
 function isFollowUpDueToday(lead: Lead): boolean {
   if (!lead.next_follow_up_date) return false;
@@ -279,14 +256,19 @@ function isFollowUpDueToday(lead: Lead): boolean {
 // bucket until it converts (Joined / became_member) or is marked Lost Lead.
 function needsFirstTouch(lead: Lead): boolean {
   const status = lead.crm_status ?? "New Lead";
-  if (status === "Joined" || status === "Lost Lead") return false;
+  // Members of any kind are never "new": converted leads, leads whose status is
+  // Joined, and existing Antaris members (the "Member" badge) all drop out even
+  // if an automated sequence is still marked active on the record.
+  if ((lead.lead_type ?? "customer_lead") === "existing_member") return false;
   if (lead.became_member) return false;
+  if (status === "Joined" || status === "Lost Lead") return false;
   const seq = lead.sequence_status ?? null;
   if (seq === "active" || seq === "pending") return true;
   if (lead.last_contacted_at) return false;
   if (lead.last_response_at) return false;
   return true;
 }
+
 
 // Pipeline stage ordering for the default list order:
 // open leads (by priority) → tour scheduled → tour completed → member → lost.
@@ -871,7 +853,7 @@ function LeadsView({
         <Stat label="High Priority" value={stats.highPriority} accent="destructive" active={quickFilter === "high_priority"} onClick={() => toggleQuick("high_priority")} />
         <Stat label="Tours Scheduled" value={stats.toursScheduled} active={quickFilter === "tours_scheduled"} onClick={() => toggleQuick("tours_scheduled")} />
         <Stat label="Tours Completed" value={stats.toursCompleted} active={quickFilter === "tours_completed"} onClick={() => toggleQuick("tours_completed")} />
-        <Stat label="Joined This Month" value={stats.joinedThisMonth} accent="primary" active={quickFilter === "joined_this_month"} onClick={() => toggleQuick("joined_this_month")} />
+        <Stat label="Converted This Month" value={stats.joinedThisMonth} accent="primary" active={quickFilter === "joined_this_month"} onClick={() => toggleQuick("joined_this_month")} />
         <Stat label="Conversion Rate" value={`${stats.conversionRate}%`} accent="primary" />
         <Stat label="Existing Members Detected" value={existingMembersCount} onClick={() => setTypeFilter("existing_member")} active={typeFilter === "existing_member"} />
       </div>
@@ -941,7 +923,7 @@ function LeadsView({
 
       <div className="mt-6 space-y-3">
         {sorted.map((lead) => (
-          <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} />
+          <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
         ))}
       </div>
     </>
@@ -1066,7 +1048,7 @@ type SmsMessage = {
   metadata: { sent_by?: string; kind?: string; test_mode?: boolean } | null;
 };
 
-function LeadCard({ lead, updateLead, freeWeek }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void>; freeWeek?: FreeWeekInfo | null }) {
+function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void>; freeWeek?: FreeWeekInfo | null; onConverted?: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
@@ -1180,7 +1162,11 @@ function LeadCard({ lead, updateLead, freeWeek }: { lead: Lead; updateLead: (id:
       else if (lead.sms_opted_out) toast.message("SMS opted out — welcome text skipped");
     }
     setConvertBusy(false);
+    // Jump the view to the Converted This Month tile so the lead is visibly
+    // out of New Leads and in its new bucket.
+    onConverted?.();
   }
+
 
   async function markNotConverted(reason: string) {
     if (convertBusy) return;
@@ -1202,21 +1188,8 @@ function LeadCard({ lead, updateLead, freeWeek }: { lead: Lead; updateLead: (id:
 
 
 
-  async function markContactedToday() {
-    const iso = new Date().toISOString();
-    const patch: Partial<Lead> = { last_contacted_at: iso };
-    if ((lead.crm_status ?? "New Lead") === "New Lead") patch.crm_status = "Contacted";
-    const suggested = suggestNextFollowUp(lead);
-    if (suggested === null) patch.next_follow_up_date = null;
-    else if (suggested !== "keep") patch.next_follow_up_date = suggested;
-    await updateLead(lead.id, patch);
-    toast.success("Marked as contacted today");
-  }
 
-  async function markResponded() {
-    await updateLead(lead.id, { last_response_at: new Date().toISOString() });
-    toast.success("Response logged");
-  }
+
 
   async function saveNotes() {
     setSavingNotes(true);
@@ -1305,20 +1278,6 @@ function LeadCard({ lead, updateLead, freeWeek }: { lead: Lead; updateLead: (id:
 
         </div>
         <div className="flex flex-col items-end gap-2">
-          <div className="flex gap-2">
-            <button
-              onClick={markContactedToday}
-              className="h-9 rounded-md bg-primary px-3 text-xs font-semibold uppercase tracking-widest text-primary-foreground hover:opacity-90"
-            >
-              Contacted Today
-            </button>
-            <button
-              onClick={markResponded}
-              className="h-9 rounded-md border border-primary/40 bg-primary/10 px-3 text-xs font-semibold uppercase tracking-widest text-primary hover:bg-primary/20"
-            >
-              Lead Responded
-            </button>
-          </div>
           <button
             onClick={() => setExpanded((v) => !v)}
             className="inline-flex items-center gap-1 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
