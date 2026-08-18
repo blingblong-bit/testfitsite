@@ -876,7 +876,7 @@ function LeadsView({
         <Stat label="High Priority" value={stats.highPriority} accent="destructive" active={quickFilter === "high_priority"} onClick={() => toggleQuick("high_priority")} />
         <Stat label="Tours Scheduled" value={stats.toursScheduled} active={quickFilter === "tours_scheduled"} onClick={() => toggleQuick("tours_scheduled")} />
         <Stat label="Tours Completed" value={stats.toursCompleted} active={quickFilter === "tours_completed"} onClick={() => toggleQuick("tours_completed")} />
-        <Stat label="Joined This Month" value={stats.joinedThisMonth} accent="primary" active={quickFilter === "joined_this_month"} onClick={() => toggleQuick("joined_this_month")} />
+        <Stat label="Converted This Month" value={stats.joinedThisMonth} accent="primary" active={quickFilter === "joined_this_month"} onClick={() => toggleQuick("joined_this_month")} />
         <Stat label="Conversion Rate" value={`${stats.conversionRate}%`} accent="primary" />
         <Stat label="Existing Members Detected" value={existingMembersCount} onClick={() => setTypeFilter("existing_member")} active={typeFilter === "existing_member"} />
       </div>
