@@ -824,6 +824,18 @@ function LeadsView({
     return arr;
   }, [filtered, sortBy]);
 
+  // Section the list: working leads first, converted members and closed-out
+  // records tucked into collapsible groups below.
+  const groups = useMemo(() => {
+    const out: Record<ListGroup, Lead[]> = { working: [], converted: [], closed: [] };
+    for (const l of sorted) out[listGroup(l)].push(l);
+    return out;
+  }, [sorted]);
+
+  const [showConverted, setShowConverted] = useState(false);
+  const [showClosed, setShowClosed] = useState(false);
+  const searching = query.trim().length > 0;
+
   // Dashboard stats — always computed over customer_lead pool, excluding existing_member
   const customerLeads = useMemo(
     () => leads?.filter((l) => (l.lead_type ?? "customer_lead") === "customer_lead") ?? [],
