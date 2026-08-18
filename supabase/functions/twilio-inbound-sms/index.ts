@@ -411,6 +411,37 @@ Deno.serve(async (req) => {
       })
       .eq("id", lead.id);
 
+    // ---- Hard stop: real-world, right-now gym conditions ----
+    // Equipment/amenity status, closures, canceled classes, lost items, facility
+    // complaints. The AI has no live visibility into any of it, so it never gets
+    // to answer — the question goes straight to staff with no reply sent.
+    const OPERATIONAL_PATTERNS =
+      /(out of order|not working|isn'?t working|doesn'?t work|broken|broke down|fixed yet|repaired|shut off|turned off|temporarily)|(tanning|sauna|shower|locker|bathroom|restroom|towel|machine|treadmill|bike|rower|equipment|weights?|door|wifi|ac\b|air condition|heat(er)?\b|parking)|(class(es)? (today|tonight|canceled|cancelled)|is (there|the) .*class|who'?s teaching|instructor (there|today))|(are (you|y'?all|we) open|you open (today|now|right now)|closed (today|now)|what time do you (open|close)|open (today|right now))|(lost|left) (my|a|an) |(found my)|(dirty|filthy|messy|smell|gross|nobody was|no one was) /i;
+
+    if (OPERATIONAL_PATTERNS.test(body)) {
+      const memberTag = lead.lead_type === "existing_member" ? "[EXISTING MEMBER] " : "";
+      await sendStaffAlert(
+        `⚡ ${memberTag}${lead.name ?? "A lead"} asked about something at the gym that needs a real person — they said: "${body}". Reason: operational_question. No auto-reply was sent.`,
+        "operations",
+      );
+      await supabase.from("sms_conversation_log").insert({
+        lead_id: lead.id,
+        phone: from,
+        direction: "system",
+        body: `[operational_handoff] no AI reply sent — staff alerted`,
+        from_ai: false,
+        provider_message_id: null,
+        status: "operational_handoff",
+        metadata: {
+          kind: "operational_handoff",
+          reason: "operational_question",
+          inbound_body: body,
+        },
+      });
+      return twiml();
+    }
+
+
     // Build conversation history
     const { data: history } = await supabase
       .from("sms_conversation_log")
