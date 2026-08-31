@@ -121,73 +121,70 @@ export const notifyNewLead = createServerFn({ method: "POST" })
       const messageId = crypto.randomUUID();
       const idempotencyKey = `lead-${data.source}-${data.email.toLowerCase()}-${submittedAt.getTime()}`;
 
-      // Unsubscribe token (required by email API for transactional sends)
-      const recipientLower = NOTIFY_TO.toLowerCase();
-      let unsubscribeToken: string;
-      const { data: existingTok } = await supabaseAdmin
-        .from("email_unsubscribe_tokens")
-        .select("token, used_at")
-        .eq("email", recipientLower)
-        .maybeSingle();
-      if (existingTok && !existingTok.used_at) {
-        unsubscribeToken = existingTok.token;
-      } else {
-        const bytes = new Uint8Array(32);
-        crypto.getRandomValues(bytes);
-        unsubscribeToken = Array.from(bytes)
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
-        await supabaseAdmin
-          .from("email_unsubscribe_tokens")
-          .upsert(
-            { token: unsubscribeToken, email: recipientLower },
-            { onConflict: "email", ignoreDuplicates: true },
-          );
-        const { data: stored } = await supabaseAdmin
-          .from("email_unsubscribe_tokens")
-          .select("token")
-          .eq("email", recipientLower)
-          .maybeSingle();
-        if (stored?.token) unsubscribeToken = stored.token;
+      const { sendLovableEmail, EmailAPIError } = await import(
+        "@lovable.dev/email-js"
+      );
+
+      try {
+        await sendLovableEmail(
+          {
+            to: NOTIFY_TO,
+            from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+            reply_to: data.email,
+            sender_domain: SENDER_DOMAIN,
+            subject,
+            html,
+            text,
+            purpose: "transactional",
+            label: "lead-notification",
+            idempotency_key: idempotencyKey,
+          },
+          {
+            apiKey: process.env["LOVABLE_API_KEY"]!,
+            sendUrl: process.env["LOVABLE_SEND_URL"],
+          },
+        );
+      } catch (sendErr) {
+        if (
+          sendErr instanceof EmailAPIError &&
+          sendErr.code === "recipient_suppressed"
+        ) {
+          const { error: logErr } = await supabaseAdmin
+            .from("email_send_log")
+            .insert({
+              message_id: messageId,
+              template_name: "lead-notification",
+              recipient_email: NOTIFY_TO,
+              status: "suppressed",
+            });
+          if (logErr) console.error("[notifyNewLead] log failed", logErr);
+          return { ok: false as const, error: "suppressed" };
+        }
+        const sendMsg =
+          sendErr instanceof Error ? sendErr.message : String(sendErr);
+        const { error: logErr } = await supabaseAdmin
+          .from("email_send_log")
+          .insert({
+            message_id: messageId,
+            template_name: "lead-notification",
+            recipient_email: NOTIFY_TO,
+            status: "failed",
+            error_message: sendMsg.slice(0, 1000),
+          });
+        if (logErr) console.error("[notifyNewLead] log failed", logErr);
+        console.error("[notifyNewLead] send failed", sendMsg);
+        return { ok: false as const, error: "send_failed" };
       }
 
-      await supabaseAdmin.from("email_send_log").insert({
-        message_id: messageId,
-        template_name: "lead-notification",
-        recipient_email: NOTIFY_TO,
-        status: "pending",
-      });
-
-      const { error: enqueueError } = await supabaseAdmin.rpc("enqueue_email", {
-        queue_name: "transactional_emails",
-        payload: {
-          message_id: messageId,
-          to: NOTIFY_TO,
-          from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-          reply_to: data.email,
-          sender_domain: SENDER_DOMAIN,
-          subject,
-          html,
-          text,
-          unsubscribe_token: unsubscribeToken,
-          purpose: "transactional",
-          label: "lead-notification",
-          idempotency_key: idempotencyKey,
-          queued_at: new Date().toISOString(),
-        },
-      });
-
-      if (enqueueError) {
-        await supabaseAdmin.from("email_send_log").insert({
+      const { error: sentLogErr } = await supabaseAdmin
+        .from("email_send_log")
+        .insert({
           message_id: messageId,
           template_name: "lead-notification",
           recipient_email: NOTIFY_TO,
-          status: "failed",
-          error_message: enqueueError.message.slice(0, 1000),
+          status: "sent",
         });
-        console.error("[notifyNewLead] enqueue failed", enqueueError);
-        return { ok: false as const, error: "enqueue_failed" };
-      }
+      if (sentLogErr) console.error("[notifyNewLead] log failed", sentLogErr);
 
       return { ok: true as const };
     } catch (err) {
