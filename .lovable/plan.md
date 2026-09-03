@@ -44,3 +44,7 @@ File name: `class-checkins-2026-09.xlsx`
 ## Verification
 
 Export the current month and a past month, then confirm the CSV row count matches the on-page daily counts for a couple of sampled dates, and that the workbook has a Summary sheet plus one sheet per date with classes grouped correctly.
+
+## Follow-up (not part of this change)
+
+Writing check-ins back into Antaris: the Antaris client is intentionally read-only today (only `/v1/login` is a POST; lookups use `/v1/clients/search` and `/v1/clients/{id}/membershipStatus`). Posting attendance would require a documented Antaris check-in/attendance write endpoint, which needs confirmation from Antaris before it can be built. Tracked as a separate task.
