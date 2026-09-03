@@ -186,6 +186,26 @@ function StaffHome() {
             Open Campaign →
           </span>
         </Link>
+
+        <Link
+          to="/admin/followup-catchup"
+          className="group rounded-2xl border border-border bg-card p-8 flex flex-col justify-between min-h-[240px] hover:border-primary transition-colors"
+        >
+          <div>
+            <div className="h-12 w-12 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
+              <MessageSquare className="h-6 w-6" />
+            </div>
+            <h2 className="mt-5 text-2xl">Follow-Up Catch-Up</h2>
+            <p className="mt-3 text-sm text-muted-foreground max-w-sm">
+              Leads whose automated follow-up text is overdue. Preview the exact messages,
+              then send one text each.
+            </p>
+          </div>
+          <span className="mt-8 text-xs uppercase tracking-widest text-primary group-hover:translate-x-1 transition-transform">
+            Open Catch-Up →
+          </span>
+        </Link>
+
       </div>
     </section>
   );
