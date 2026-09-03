@@ -46,6 +46,7 @@ import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/e
 import { Route as AuthenticatedAdminReengagementRouteImport } from './routes/_authenticated/admin.reengagement'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 import { Route as AuthenticatedAdminFreeWeekArrivalsRouteImport } from './routes/_authenticated/admin.free-week-arrivals'
+import { Route as AuthenticatedAdminFollowupCatchupRouteImport } from './routes/_authenticated/admin.followup-catchup'
 import { Route as AuthenticatedAdminDayPassApprovalsRouteImport } from './routes/_authenticated/admin.day-pass-approvals'
 import { Route as AuthenticatedAdminClassCheckinsRouteImport } from './routes/_authenticated/admin.class-checkins'
 import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
@@ -248,6 +249,12 @@ const AuthenticatedAdminFreeWeekArrivalsRoute =
     path: '/admin/free-week-arrivals',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminFollowupCatchupRoute =
+  AuthenticatedAdminFollowupCatchupRouteImport.update({
+    id: '/admin/followup-catchup',
+    path: '/admin/followup-catchup',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminDayPassApprovalsRoute =
   AuthenticatedAdminDayPassApprovalsRouteImport.update({
     id: '/admin/day-pass-approvals',
@@ -362,6 +369,7 @@ export interface FileRoutesByFullPath {
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
+  '/admin/followup-catchup': typeof AuthenticatedAdminFollowupCatchupRoute
   '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
@@ -410,6 +418,7 @@ export interface FileRoutesByTo {
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
+  '/admin/followup-catchup': typeof AuthenticatedAdminFollowupCatchupRoute
   '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
@@ -463,6 +472,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/_authenticated/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
   '/_authenticated/admin/day-pass-approvals': typeof AuthenticatedAdminDayPassApprovalsRoute
+  '/_authenticated/admin/followup-catchup': typeof AuthenticatedAdminFollowupCatchupRoute
   '/_authenticated/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
@@ -516,6 +526,7 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/class-checkins'
     | '/admin/day-pass-approvals'
+    | '/admin/followup-catchup'
     | '/admin/free-week-arrivals'
     | '/admin/leads'
     | '/admin/reengagement'
@@ -564,6 +575,7 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/class-checkins'
     | '/admin/day-pass-approvals'
+    | '/admin/followup-catchup'
     | '/admin/free-week-arrivals'
     | '/admin/leads'
     | '/admin/reengagement'
@@ -616,6 +628,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/blog'
     | '/_authenticated/admin/class-checkins'
     | '/_authenticated/admin/day-pass-approvals'
+    | '/_authenticated/admin/followup-catchup'
     | '/_authenticated/admin/free-week-arrivals'
     | '/_authenticated/admin/leads'
     | '/_authenticated/admin/reengagement'
@@ -928,6 +941,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFreeWeekArrivalsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/followup-catchup': {
+      id: '/_authenticated/admin/followup-catchup'
+      path: '/admin/followup-catchup'
+      fullPath: '/admin/followup-catchup'
+      preLoaderRoute: typeof AuthenticatedAdminFollowupCatchupRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/day-pass-approvals': {
       id: '/_authenticated/admin/day-pass-approvals'
       path: '/admin/day-pass-approvals'
@@ -1029,6 +1049,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminBlogRoute: typeof AuthenticatedAdminBlogRoute
   AuthenticatedAdminClassCheckinsRoute: typeof AuthenticatedAdminClassCheckinsRoute
   AuthenticatedAdminDayPassApprovalsRoute: typeof AuthenticatedAdminDayPassApprovalsRoute
+  AuthenticatedAdminFollowupCatchupRoute: typeof AuthenticatedAdminFollowupCatchupRoute
   AuthenticatedAdminFreeWeekArrivalsRoute: typeof AuthenticatedAdminFreeWeekArrivalsRoute
   AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
   AuthenticatedAdminReengagementRoute: typeof AuthenticatedAdminReengagementRoute
@@ -1043,6 +1064,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminClassCheckinsRoute: AuthenticatedAdminClassCheckinsRoute,
   AuthenticatedAdminDayPassApprovalsRoute:
     AuthenticatedAdminDayPassApprovalsRoute,
+  AuthenticatedAdminFollowupCatchupRoute:
+    AuthenticatedAdminFollowupCatchupRoute,
   AuthenticatedAdminFreeWeekArrivalsRoute:
     AuthenticatedAdminFreeWeekArrivalsRoute,
   AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
