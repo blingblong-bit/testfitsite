@@ -307,8 +307,10 @@ Deno.serve(async (_req) => {
           .select("created_at")
           .eq("lead_id", lead.id)
           .eq("direction", "outbound")
+          .neq("status", "failed")
           .order("created_at", { ascending: false })
           .limit(1);
+
         const lastOutIso = lastOut?.[0]?.created_at ?? lead.last_sms_at ?? null;
         if (lastOutIso) {
           const hoursSinceLast = (now - new Date(lastOutIso).getTime()) / (1000 * 60 * 60);
