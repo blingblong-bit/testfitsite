@@ -108,51 +108,126 @@ async function lastAutomatedOutboundForPhone(
 }
 
 
-// Cold cadence: 4 follow-ups after the initial welcome text.
-// Each entry: { minDays, build(fn) } — minimum days since lead created_at.
-const FOLLOWUPS: Array<{ minDays: number; build: (fn: string, interest?: string | null) => string }> = [
+// ---------------------------------------------------------------------------
+// Personalized copy — mirrored from src/lib/followup-copy.ts (separate Deno
+// runtime cannot import from src/). Keep the two in sync. Fixed templates,
+// selected by what the lead actually asked about. Raw form text is never
+// spliced into a sentence.
+// ---------------------------------------------------------------------------
 
-  {
-    minDays: 1,
-    build: (fn) =>
-      `Hey ${fn}, just wanted to make sure you saw my message! We'd love to have you come check out FIT Beyond Plus. Still interested? 💪`,
-  },
-  {
-    minDays: 3,
-    build: (fn) =>
-      `${fn}, no pressure at all — but if you want to swing by and see the gym for yourself, just say the word and I'll get you set up with a free visit. Takes 15 minutes, zero obligation.`,
-  },
-  {
-    minDays: 5,
-    build: (fn, interest) => {
-      const goal = interest?.trim();
-      if (goal) {
-        return `${fn}, a lot of people who come in wanting to ${goal} end up surprised how fast things click once they have a real plan. That's kind of our thing here. Whenever you're ready, we've got you.`;
-      }
-      return `A lot of our members came in not knowing exactly what they wanted and left with a real plan. That's kind of our thing at FIT Beyond Plus. Happy to do the same for you whenever you're ready.`;
-    },
-  },
-  {
-    minDays: 7,
-    build: (fn) =>
-      `${fn}, let's make this easy — come try FIT Beyond Plus completely free for 7 days. Full access, no strings, see if it's the right fit. Just reply YES and I'll get you set up.`,
-  },
+type LeadCategory =
+  | "kickboxing"
+  | "bjj_kids"
+  | "bjj"
+  | "personal_training"
+  | "classes"
+  | "weight_loss"
+  | "day_pass"
+  | "referral"
+  | "general";
+
+function categorizeLead(
+  interest: string | null | undefined,
+  source: string | null | undefined,
+): LeadCategory {
+  const t = `${interest ?? ""}`.toLowerCase();
+  const s = `${source ?? ""}`.toLowerCase();
+  const has = (...words: string[]) => words.some((w) => t.includes(w));
+
+  if (has("kickbox", "muay thai", "striking")) return "kickboxing";
+  if (has("bjj", "jiu", "jujitsu", "jiu-jitsu", "grappl", "wrestl")) {
+    return has("kid", "child", "son", "daughter", "youth", "teen") ? "bjj_kids" : "bjj";
+  }
+  if (has("kid", "child", "youth", "teen")) return "bjj_kids";
+  if (has("personal train", "pt", "one on one", "1 on 1", "trainer", "coach")) {
+    return "personal_training";
+  }
+  if (has("class", "group", "yoga", "barre", "hiit", "cardio class")) return "classes";
+  if (has("weight", "lose", "loss", "tone", "shape", "fat", "get fit", "get in shape")) {
+    return "weight_loss";
+  }
+  if (has("day pass", "drop in", "drop-in", "visit", "tour")) return "day_pass";
+  if (s === "day_pass_walkin") return "day_pass";
+  if (s === "referral_day_pass" || s.includes("referral")) return "referral";
+  return "general";
+}
+
+const HOOK: Record<LeadCategory, string> = {
+  kickboxing: "our kickboxing classes are honestly the most fun way to get in shape here",
+  bjj_kids: "our kids Brazilian Jiu-Jitsu classes are a great fit for building confidence",
+  bjj: "our adult Brazilian Jiu-Jitsu classes run several nights a week, beginners welcome",
+  personal_training: "our trainers build you a real plan instead of guessing",
+  classes: "our group classes make it easy to show up and just follow along",
+  weight_loss: "most people see the biggest change once they have a real plan to follow",
+  day_pass: "you're welcome to come use the gym anytime and see how it feels",
+  referral: "your friend already knows how good it is in here",
+  general: "we'll help you figure out the right starting point",
+};
+
+const INVITE: Record<LeadCategory, string> = {
+  kickboxing: "come try a kickboxing class on us",
+  bjj_kids: "bring them by to watch or try a kids class",
+  bjj: "come try a BJJ class on us",
+  personal_training: "come in for a free walkthrough with one of our trainers",
+  classes: "come try a class on us",
+  weight_loss: "come in for a quick walkthrough and we'll map out a plan",
+  day_pass: "come by for a free visit",
+  referral: "come by for your free visit",
+  general: "come by for a free visit",
+};
+
+type CopyLead = { name?: string | null; interest?: string | null; source?: string | null };
+
+function buildFollowupMessage(step: number, lead: CopyLead): string {
+  const fn = firstName(lead.name ?? null);
+  const cat = categorizeLead(lead.interest, lead.source);
+  const hook = HOOK[cat];
+  const invite = INVITE[cat];
+
+  switch (step) {
+    case 1:
+      return `Hey ${fn}, just making sure you saw my message! We'd love to have you check out FIT Beyond Plus — ${invite} whenever it works for you. Still interested? 💪`;
+    case 2:
+      return `${fn}, no pressure at all — but if you want to see the place for yourself, say the word and I'll ${invite === "come by for a free visit" ? "get you set up with a free visit" : `set you up to ${invite}`}. Takes about 15 minutes, zero obligation.`;
+    case 3:
+      return `${fn}, ${hook}. That's kind of our thing at FIT Beyond Plus. Whenever you're ready, we've got you.`;
+    default:
+      return `${fn}, let's make this easy — try FIT Beyond Plus free for 7 days. Full access, no strings, and you can ${invite} while you're at it. Just reply YES and I'll get you set up.`;
+  }
+}
+
+function buildPostvisitMessage(step: number, lead: CopyLead): string {
+  const fn = firstName(lead.name ?? null);
+  const cat = categorizeLead(lead.interest, lead.source);
+  const referral = (lead.source ?? "").toLowerCase().includes("referral");
+
+  if (step <= 1) {
+    return referral
+      ? `Hey ${fn}, hope you loved your visit today at FIT Beyond Plus! 💪 Glad your friend sent you our way — any questions about membership or classes?`
+      : `Hey ${fn}, hope you loved your visit today at FIT Beyond Plus! 💪 Any questions about membership, classes, or anything you want to know more about?`;
+  }
+
+  const nudge =
+    cat === "kickboxing" || cat === "bjj" || cat === "bjj_kids" || cat === "classes"
+      ? " We can also get you on the class schedule so you know exactly when to come in."
+      : cat === "personal_training"
+        ? " We can also pair you with a trainer so you've got a plan from day one."
+        : "";
+  return `Hey ${fn}! Still thinking about it? We'd love to have you as a member.${nudge} Just reply here 🙏`;
+}
+
+// Cold cadence: 4 follow-ups after the initial welcome text (days since created_at).
+const FOLLOWUPS: Array<{ minDays: number }> = [
+  { minDays: 1 },
+  { minDays: 3 },
+  { minDays: 5 },
+  { minDays: 7 },
 ];
 
-// Post-visit sequence for day-pass walk-ins / referral day-pass leads with a completed tour.
-// Anchored on tour_date (hours since). Completes after step 2.
-const POSTVISIT: Array<{ minHours: number; build: (fn: string) => string }> = [
-  {
-    minHours: 3,
-    build: (fn) =>
-      `Hey ${fn}, hope you loved your visit today at FIT Beyond Plus! 💪 Any questions about membership or anything you want to know more about?`,
-  },
-  {
-    minHours: 24,
-    build: (fn) =>
-      `Hey ${fn}! Still thinking about it? We'd love to have you as a member — happy to answer any questions or set up a time to chat. Just reply here 🙏`,
-  },
-];
+// Post-visit sequence for day-pass walk-ins / referral day-pass leads with a
+// completed tour. Anchored on tour_date (hours since). Completes after step 2.
+const POSTVISIT: Array<{ minHours: number }> = [{ minHours: 3 }, { minHours: 24 }];
+
 
 function isDayPassSource(source: string | null): boolean {
   const s = (source ?? "").toLowerCase();
