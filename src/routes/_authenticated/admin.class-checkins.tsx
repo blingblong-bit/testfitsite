@@ -174,6 +174,10 @@ function AdminClassCheckins() {
           </div>
         </div>
 
+        <MonthExportCard />
+
+
+
         {loading ? (
           <div className="text-muted-foreground">Loading…</div>
         ) : classes.length === 0 ? (
