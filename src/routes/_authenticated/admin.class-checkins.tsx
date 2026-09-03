@@ -278,7 +278,101 @@ function AdminClassCheckins() {
   );
 }
 
+function MonthExportCard() {
+  const [month, setMonth] = useState<string>(currentMonthChicago());
+  const [data, setData] = useState<MonthExport | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setData(null);
+    (async () => {
+      try {
+        const result = await fetchMonthExport(month);
+        if (active) setData(result);
+      } catch (e) {
+        if (active) toast.error(e instanceof Error ? e.message : "Could not load month");
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [month]);
+
+  async function exportCsv() {
+    if (!data) return;
+    setBusy(true);
+    try {
+      const csv = buildMonthCsv(data);
+      downloadBlob(
+        new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+        `class-checkins-${month}.csv`,
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function exportXlsx() {
+    if (!data) return;
+    setBusy(true);
+    try {
+      const blob = await buildMonthWorkbook(data);
+      downloadBlob(blob, `class-checkins-${month}.xlsx`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const empty = data !== null && data.rows.length === 0;
+
+  return (
+    <div className="mb-6 rounded-xl border border-border bg-card p-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div>
+          <div className="text-sm font-semibold">Export a month</div>
+          <div className="text-xs text-muted-foreground">
+            Separated by date and class, with attendance totals.
+          </div>
+        </div>
+        <input
+          type="month"
+          value={month}
+          onChange={(e) => setMonth(e.target.value)}
+          className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+        />
+        <button
+          onClick={exportCsv}
+          disabled={busy || !data || empty}
+          className="inline-flex items-center gap-2 h-10 rounded-md border border-border px-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" /> CSV
+        </button>
+        <button
+          onClick={exportXlsx}
+          disabled={busy || !data || empty}
+          className="inline-flex items-center gap-2 h-10 rounded-md bg-primary px-4 text-sm font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" /> Excel
+        </button>
+        <span className="ml-auto text-sm text-muted-foreground">
+          {data === null
+            ? "Counting…"
+            : empty
+              ? `No check-ins in ${monthLabel(month)}`
+              : `${data.rows.length} check-in${data.rows.length === 1 ? "" : "s"} across ${data.dates.length} day${data.dates.length === 1 ? "" : "s"} in ${monthLabel(month)}`}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function ManualCheckinModal({
+
   day,
   date,
   classes,
