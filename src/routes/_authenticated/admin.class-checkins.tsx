@@ -1,11 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Trash2, Plus, Ban, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Trash2, Plus, Ban, CheckCircle2, AlertCircle, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { submitClassCheckIn } from "@/lib/class-checkin.functions";
 import { getClassesForDay, DAYS, type DayOfWeek } from "@/lib/class-schedule";
+import { chicagoDayRange, currentMonthChicago, todayChicago } from "@/lib/chicago-time";
+import {
+  buildMonthCsv,
+  buildMonthWorkbook,
+  downloadBlob,
+  fetchMonthExport,
+  monthLabel,
+  type MonthExport,
+} from "@/lib/class-checkin-export";
+
 
 export const Route = createFileRoute("/_authenticated/admin/class-checkins")({
   head: () => ({
