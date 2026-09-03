@@ -66,8 +66,9 @@ export async function lastOutboundOfKind(
   const sinceIso = new Date(Date.now() - lookbackHours * 60 * 60 * 1000).toISOString();
   const { data, error } = await supabase
     .from("sms_conversation_log")
-    .select("phone, created_at, metadata")
+    .select("phone, created_at, metadata, status")
     .eq("direction", "outbound")
+    .neq("status", "failed")
     .gte("created_at", sinceIso)
     .order("created_at", { ascending: false })
     .limit(500);
@@ -77,10 +78,14 @@ export async function lastOutboundOfKind(
     phone: string | null;
     created_at: string;
     metadata: Record<string, unknown> | null;
+    status: string | null;
   }>) {
+    // A failed send never happened as far as pacing is concerned.
+    if (row.status === "failed") continue;
     if (last10(row.phone) !== digits) continue;
     const kind = (row.metadata?.["kind"] ?? "") as string;
     if (!kinds.includes(kind)) continue;
+
     return row.created_at;
   }
   return null;
