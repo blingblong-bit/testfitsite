@@ -1,11 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Trash2, Plus, Ban, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Trash2, Plus, Ban, CheckCircle2, AlertCircle, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { submitClassCheckIn } from "@/lib/class-checkin.functions";
 import { getClassesForDay, DAYS, type DayOfWeek } from "@/lib/class-schedule";
+import { chicagoDayRange, currentMonthChicago, todayChicago } from "@/lib/chicago-time";
+import {
+  buildMonthCsv,
+  buildMonthWorkbook,
+  downloadBlob,
+  fetchMonthExport,
+  monthLabel,
+  type MonthExport,
+} from "@/lib/class-checkin-export";
+
 
 export const Route = createFileRoute("/_authenticated/admin/class-checkins")({
   head: () => ({
@@ -37,36 +47,12 @@ type CanceledSession = {
 };
 
 function todayISO() {
-  // Pin to America/Chicago so "today" matches Central time, not the
-  // server's UTC clock (which rolls over at 7pm Central during SSR).
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Chicago",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
+  return todayChicago();
 }
 
 function dayFromISO(iso: string): DayOfWeek {
   const d = new Date(iso + "T12:00:00");
   return DAYS[d.getDay()];
-}
-
-/**
- * Chicago UTC offset (e.g. "-05:00" in summer, "-06:00" in winter) for the
- * given calendar date. Needed so the check-in list window matches the real
- * Central-time day: a naive "YYYY-MM-DDT00:00:00" string is read as UTC by
- * Postgres, which drops every check-in after 7pm Central off "today".
- */
-function chicagoOffset(iso: string): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
-    timeZoneName: "longOffset",
-  }).formatToParts(new Date(iso + "T12:00:00Z"));
-  const name = parts.find((p) => p.type === "timeZoneName")?.value ?? "GMT-6";
-  const m = name.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
-  if (!m) return "-06:00";
-  return `${m[1]}${m[2].padStart(2, "0")}:${m[3] ?? "00"}`;
 }
 
 function AdminClassCheckins() {
@@ -82,9 +68,8 @@ function AdminClassCheckins() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const off = chicagoOffset(date);
-    const start = `${date}T00:00:00.000${off}`;
-    const end = `${date}T23:59:59.999${off}`;
+    const { start, end } = chicagoDayRange(date);
+
     const [ci, cs] = await Promise.all([
       supabase
         .from("class_checkins")
@@ -189,6 +174,10 @@ function AdminClassCheckins() {
           </div>
         </div>
 
+        <MonthExportCard />
+
+
+
         {loading ? (
           <div className="text-muted-foreground">Loading…</div>
         ) : classes.length === 0 ? (
@@ -289,7 +278,101 @@ function AdminClassCheckins() {
   );
 }
 
+function MonthExportCard() {
+  const [month, setMonth] = useState<string>(currentMonthChicago());
+  const [data, setData] = useState<MonthExport | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setData(null);
+    (async () => {
+      try {
+        const result = await fetchMonthExport(month);
+        if (active) setData(result);
+      } catch (e) {
+        if (active) toast.error(e instanceof Error ? e.message : "Could not load month");
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [month]);
+
+  async function exportCsv() {
+    if (!data) return;
+    setBusy(true);
+    try {
+      const csv = buildMonthCsv(data);
+      downloadBlob(
+        new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+        `class-checkins-${month}.csv`,
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function exportXlsx() {
+    if (!data) return;
+    setBusy(true);
+    try {
+      const blob = await buildMonthWorkbook(data);
+      downloadBlob(blob, `class-checkins-${month}.xlsx`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const empty = data !== null && data.rows.length === 0;
+
+  return (
+    <div className="mb-6 rounded-xl border border-border bg-card p-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div>
+          <div className="text-sm font-semibold">Export a month</div>
+          <div className="text-xs text-muted-foreground">
+            Separated by date and class, with attendance totals.
+          </div>
+        </div>
+        <input
+          type="month"
+          value={month}
+          onChange={(e) => setMonth(e.target.value)}
+          className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+        />
+        <button
+          onClick={exportCsv}
+          disabled={busy || !data || empty}
+          className="inline-flex items-center gap-2 h-10 rounded-md border border-border px-4 text-sm font-bold uppercase tracking-wide disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" /> CSV
+        </button>
+        <button
+          onClick={exportXlsx}
+          disabled={busy || !data || empty}
+          className="inline-flex items-center gap-2 h-10 rounded-md bg-primary px-4 text-sm font-bold uppercase tracking-wide text-primary-foreground disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" /> Excel
+        </button>
+        <span className="ml-auto text-sm text-muted-foreground">
+          {data === null
+            ? "Counting…"
+            : empty
+              ? `No check-ins in ${monthLabel(month)}`
+              : `${data.rows.length} check-in${data.rows.length === 1 ? "" : "s"} across ${data.dates.length} day${data.dates.length === 1 ? "" : "s"} in ${monthLabel(month)}`}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function ManualCheckinModal({
+
   day,
   date,
   classes,
