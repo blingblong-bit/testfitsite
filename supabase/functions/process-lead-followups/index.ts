@@ -332,7 +332,7 @@ Deno.serve(async (_req) => {
           const anchorMs = anchorIso ? new Date(anchorIso).getTime() : 0;
           const hoursSince = (now - anchorMs) / (1000 * 60 * 60);
           if (hoursSince < step.minHours) continue;
-          body = step.build(firstName(lead.name ?? ""));
+          body = buildPostvisitMessage(idx + 1, lead);
           newCount = idx + 1;
           markCompleted = newCount >= POSTVISIT.length;
           stepLabel = `postvisit_${newCount}`;
@@ -342,7 +342,7 @@ Deno.serve(async (_req) => {
           const createdMs = lead.created_at ? new Date(lead.created_at).getTime() : 0;
           const daysSinceCreated = (now - createdMs) / (1000 * 60 * 60 * 24);
           if (daysSinceCreated < step.minDays) continue;
-          body = step.build(firstName(lead.name ?? ""), lead.interest ?? null);
+          body = buildFollowupMessage(idx + 1, lead);
           newCount = idx + 1;
           markCompleted = newCount >= FOLLOWUPS.length;
           stepLabel = `followup_${newCount}`;
@@ -381,9 +381,28 @@ Deno.serve(async (_req) => {
             `[process-lead-followups] send failed lead=${lead.id} step=${stepLabel}`,
             send.error,
           );
+          // Log the failure durably so an outage (bad credentials, unfunded
+          // account) is visible in the Lead Tracker instead of only in the
+          // function logs. followup_count is intentionally NOT advanced, so the
+          // step is retried once sending works again.
+          await supabase.from("sms_conversation_log").insert({
+            lead_id: lead.id,
+            phone: to,
+            direction: "outbound",
+            body,
+            from_ai: false,
+            provider_message_id: null,
+            status: "failed",
+            metadata: {
+              kind: usePostVisit ? "postvisit" : "drip",
+              step: stepLabel,
+              error: send.error,
+            },
+          });
           results.push({ lead_id: lead.id, step: stepLabel, ok: false, error: send.error });
           continue;
         }
+
 
         await supabase.from("leads").update(update).eq("id", lead.id);
         await supabase.from("sms_conversation_log").insert({
