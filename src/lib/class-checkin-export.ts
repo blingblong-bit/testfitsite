@@ -61,6 +61,10 @@ export function monthLabel(month: string): string {
 /** Load a full Chicago month of check-ins plus cancellations, pre-sorted. */
 export async function fetchMonthExport(month: string): Promise<MonthExport> {
   const { start, end } = chicagoMonthRange(month);
+  // Real last day of the month — "-31" is an invalid date for 30-day months
+  // and February, which made the cancellations query fail silently.
+  const [y, m] = month.split("-").map(Number);
+  const lastDay = String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, "0");
   const [ci, cs] = await Promise.all([
     supabase
       .from("class_checkins")
@@ -72,11 +76,12 @@ export async function fetchMonthExport(month: string): Promise<MonthExport> {
       .from("class_sessions")
       .select("session_date, class_name, canceled_reason, status")
       .gte("session_date", `${month}-01`)
-      .lte("session_date", `${month}-31`)
+      .lte("session_date", `${month}-${lastDay}`)
       .eq("status", "canceled"),
   ]);
 
   if (ci.error) throw new Error(ci.error.message);
+  if (cs.error) console.error("[export] cancellations query failed", cs.error.message);
 
   const rows: ExportRow[] = (ci.data ?? []).map((r) => {
     const date = chicagoDateOf(r.checked_in_at);
