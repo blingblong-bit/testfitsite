@@ -1,8 +1,13 @@
 // READ-ONLY Antaris API client.
 // Only POST used is /v1/login. Never POST/PUT/PATCH/DELETE any other endpoint.
-// Token expires every 300s — always login fresh, never cache.
+// Tokens expire after ~300s, so one is reused for 240s and then re-minted.
+// Logging in on every lookup tripped the provider's rate limit (HTTP 429).
 
 const BASE_URL = "https://fitbeyondplus.antarisapi.com";
+
+const TOKEN_TTL_MS = 240_000;
+let cachedToken: { token: string; expiresAt: number } | null = null;
+let inFlight: Promise<string | null> | null = null;
 
 type AntarisEnv = {
   get(key: string): string | undefined;
@@ -20,29 +25,66 @@ function getEnv(): AntarisEnv {
   };
 }
 
-async function login(): Promise<string | null> {
-  try {
-    const env = getEnv();
-    const email = env.get("ANTARIS_EMAIL");
-    const password = env.get("ANTARIS_PASSWORD");
-    if (!email || !password) {
-      console.error("[antaris] missing ANTARIS_EMAIL/ANTARIS_PASSWORD");
-      return null;
-    }
-    const res = await fetch(`${BASE_URL}/v1/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    if (!res.ok) {
-      console.error("[antaris] login failed", res.status);
-      return null;
-    }
-    const json = (await res.json()) as { access_token?: string };
-    return json.access_token ?? null;
-  } catch (e) {
-    console.error("[antaris] login exception", e);
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function requestToken(): Promise<string | null> {
+  const env = getEnv();
+  const email = env.get("ANTARIS_EMAIL");
+  const password = env.get("ANTARIS_PASSWORD");
+  if (!email || !password) {
+    console.error("[antaris] missing ANTARIS_EMAIL/ANTARIS_PASSWORD");
     return null;
+  }
+
+  // Retry with backoff on rate limits / transient server errors.
+  const delays = [500, 1500, 4000];
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    try {
+      const res = await fetch(`${BASE_URL}/v1/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (res.ok) {
+        const json = (await res.json()) as { access_token?: string };
+        return json.access_token ?? null;
+      }
+      const retryable = res.status === 429 || res.status >= 500;
+      if (!retryable || attempt === delays.length) {
+        console.error("[antaris] login failed", res.status);
+        return null;
+      }
+      const retryAfter = Number(res.headers.get("retry-after"));
+      await sleep(
+        Number.isFinite(retryAfter) && retryAfter > 0
+          ? retryAfter * 1000
+          : delays[attempt],
+      );
+    } catch (e) {
+      if (attempt === delays.length) {
+        console.error("[antaris] login exception", e);
+        return null;
+      }
+      await sleep(delays[attempt]);
+    }
+  }
+  return null;
+}
+
+async function login(): Promise<string | null> {
+  const now = Date.now();
+  if (cachedToken && cachedToken.expiresAt > now) return cachedToken.token;
+  if (inFlight) return inFlight;
+
+  inFlight = (async () => {
+    const token = await requestToken();
+    cachedToken = token ? { token, expiresAt: Date.now() + TOKEN_TTL_MS } : null;
+    return token;
+  })();
+  try {
+    return await inFlight;
+  } finally {
+    inFlight = null;
   }
 }
 
