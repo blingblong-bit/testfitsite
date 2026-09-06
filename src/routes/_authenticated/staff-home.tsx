@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ClipboardList, LayoutDashboard, LogOut, CalendarCheck, Receipt, Newspaper, CalendarClock, Ticket, MessageSquare } from "lucide-react";
+import { ClipboardList, LayoutDashboard, LogOut, CalendarCheck, Receipt, Newspaper, CalendarClock, Ticket, MessageSquare, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/staff-home")({
