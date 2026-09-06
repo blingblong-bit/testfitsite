@@ -795,8 +795,14 @@ or
     // follow up" while leaving needs_human false. That's a silent handoff with
     // nobody notified, so detect the promise in the reply text itself.
     const HANDOFF_PATTERNS =
-      /(let me (have|check|ask|find out|confirm)|someone (from our team |from the team )?(will|can) (follow up|reach out|get back|check)|(our|the) team (will|can) (follow up|reach out|get back|check)|staff (will|can) (follow up|reach out|get back|check)|(i'?ll|we'?ll) (have (someone|staff)|follow up|get back to you|double.?check|check on)|have someone (from )?(our team |the team )?(follow up|reach out))/i;
+      /(let me (have|check|ask|find out|confirm|look into|look up|verify|get back to you on)|someone (from our team |from the team )?(will|can) (follow up|reach out|get back|check|contact you|call you|message you)|(our|the) team (will|can) (follow up|reach out|get back|check|contact you|call you|message you)|staff (will|can) (follow up|reach out|get back|check|contact you|call you|message you)|(i'?ll|we'?ll) (have (someone|staff)|follow up|get back to you|double.?check|check on|look into|look up|verify|find out|confirm|pass this along)|have someone (from )?(our team |the team )?(follow up|reach out|get back|contact you|call you)|we can check|i can check|someone will contact you|i will pass this along|we will pass this along)/i;
     const promisedHandoff = Boolean(aiReply && HANDOFF_PATTERNS.test(aiReply));
+
+    // Second safety net: suppress non-answers that send the customer back to
+    // the gym without actually helping, or that admit the AI doesn't know.
+    const NON_ANSWER_PATTERNS =
+      /(i don't have (real-time|live|current|up-to-date) (info|information|data|status)|i don't know|i'm not sure|i cannot confirm|i can't confirm|call the (front desk|gym|desk)|stop by the (front desk|gym|desk)|check with the (front desk|gym|staff)|i have no way to know|i'm unable to verify|i don't have access)/i;
+    const nonAnswer = Boolean(aiReply && NON_ANSWER_PATTERNS.test(aiReply));
 
     if (needsHuman || promisedHandoff || !aiReply) {
       await supabase
