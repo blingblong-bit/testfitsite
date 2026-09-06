@@ -119,7 +119,123 @@ async function sendStaffAlert(
   );
 }
 
+// ---- inquiry classifier + response playbook (mirrors src/lib/ai-reply-rules.ts) ----
 
+type InquiryType =
+  | "pricing"
+  | "schedule_classes"
+  | "membership_options"
+  | "day_pass_tour"
+  | "complaint_frustrated"
+  | "general_info"
+  | "operational";
+
+function classifyInquiry(body: string): InquiryType {
+  const lower = body.toLowerCase();
+
+  if (
+    /(out of order|not working|isn'?t working|doesn'?t work|broken|broke down|fixed yet|repaired|shut off|turned off|temporarily)/.test(
+      lower,
+    ) ||
+    /(tanning|sauna|shower|locker|bathroom|restroom|towel|machine|treadmill|bike|rower|equipment|weights?|door|wifi|ac\b|air condition|heat(er)?\b|parking)/.test(
+      lower,
+    ) ||
+    /(class(es)? (today|tonight|canceled|cancelled)|is (there|the) .*class|who'?s teaching|instructor (there|today))/.test(
+      lower,
+    ) ||
+    /(are (you|y'?all|we) open|you open (today|now|right now)|closed (today|now)|what time do you (open|close)|open (today|right now))/.test(
+      lower,
+    ) ||
+    /(lost|left) (my|a|an) /i.test(lower) ||
+    /found my/i.test(lower) ||
+    /(dirty|filthy|messy|smell|gross|nobody was|no one was)/i.test(lower)
+  ) {
+    return "operational";
+  }
+
+  if (
+    /\b(price|pricing|cost|how much|rate|membership fee|monthly|annual|pay|payment|discount|deal|offer)\b/i.test(
+      lower,
+    )
+  ) {
+    return "pricing";
+  }
+
+  if (
+    /\b(class|classes|schedule|when.*(class|kickbox|bjj|yoga|barre|hiit)|what time|today|tonight|tomorrow|instructor|teacher|coach.*class)\b/i.test(
+      lower,
+    )
+  ) {
+    return "schedule_classes";
+  }
+
+  if (
+    /\b(membership|join|joining|sign up|contract|commit|silver and fit|family|duo|single|couple|plan)\b/i.test(
+      lower,
+    )
+  ) {
+    return "membership_options";
+  }
+
+  if (
+    /\b(day pass|drop in|drop-in|tour|visit|come in|stop by|check out|try.*(gym|class|day)|free week|free pass)\b/i.test(
+      lower,
+    )
+  ) {
+    return "day_pass_tour";
+  }
+
+  if (
+    /\b(angry|pissed|frustrat|disappoint|terrible|awful|horrible|unhappy|complaint|complain|cancel.*membership|quit|refund|bad experience|worst|ridiculous|unacceptable)\b/i.test(
+      lower,
+    )
+  ) {
+    return "complaint_frustrated";
+  }
+
+  return "general_info";
+}
+
+const LEAD_ID_PLACEHOLDER = "{{lead_id}}";
+
+const RESPONSE_PLAYBOOK = `Response playbook — match the customer's inquiry type:
+
+PRICING
+- Never quote exact prices, fees, or percentages.
+- Example: "I'd love to have someone walk you through the options and exact pricing — want me to set up a quick tour or call?"
+- Always set needs_human: true.
+
+SCHEDULE / CLASSES
+- General schedule: point to fitbeyondplus.com/classes.
+- Same-day "is X running?" / "who's teaching?": say you'll have someone confirm and get back to them.
+- Example: "I'll have someone confirm today's schedule and get back to you."
+- Always set needs_human: true for same-day or instructor questions.
+
+MEMBERSHIP OPTIONS
+- Mention we offer single, duo, family, 3-month paid-in-full, 12-month paid-in-full, and Silver and Fit.
+- Example: "We have several membership options depending on what fits you best. Want me to have someone reach out with details?"
+- Set needs_human: true if they ask for specific terms, cancellation policy, or account changes.
+
+DAY PASS / TOUR / FREE VISIT
+- Use the personalized scheduling link: fitbeyondplus.com/schedule-visit?lead=${LEAD_ID_PLACEHOLDER}
+- Example: "You can grab a day pass or book a tour at fitbeyondplus.com/schedule-visit?lead=${LEAD_ID_PLACEHOLDER} — it's already pre-filled with your info."
+- Do not try to book a specific time yourself.
+
+COMPLAINT / FRUSTRATED
+- Apologize briefly and sincerely. Do not defend, explain, or argue.
+- Set needs_human: true and reply: null.
+
+GENERAL INFO
+- Keep it warm, short, and helpful. One to three sentences.
+- If you don't know or would need real-time info, set needs_human: true instead of guessing.
+
+OPERATIONAL
+- You should not see this; operational questions are handled before you are called.
+- If present, set needs_human: true and reply: null.`;
+
+function playbookForLead(leadId: string): string {
+  return RESPONSE_PLAYBOOK.replaceAll(LEAD_ID_PLACEHOLDER, leadId);
+}
 
 // ---- appointment availability (inline, mirrors src/lib/appointment-availability.ts) ----
 
@@ -460,10 +576,22 @@ Deno.serve(async (req) => {
     }
     // The current inbound is already logged; don't re-append.
 
+    const inquiryType = classifyInquiry(body);
     const isExistingMember = lead.lead_type === "existing_member";
 
-    const personalizedScheduleUrl = `fitbeyondplus.com/schedule-visit?lead=${lead.id}`;
-    const scheduleLine = `\n\nIf the customer wants to schedule a visit, tour, or day pass, simply direct them to ${personalizedScheduleUrl} to pick a time that works for them — this link already has their info attached so they won't need to retype it. Do not try to offer or book specific times yourself.`;
+    const playbook = playbookForLead(lead.id);
+
+    const sharedRules = `${playbook}
+
+Global rules for every reply:
+- Keep replies to 1-3 short, warm sentences. Text like a real person, not a bot.
+- Never make up specific prices, fees, or percentages.
+- Never give medical or injury advice.
+- Never tell the customer to "call the front desk" or "stop by the desk" as a substitute for answering — either answer helpfully or escalate to staff.
+- If your reply promises that staff/our team will follow up, check on something, or get back to them, you MUST set needs_human: true.
+- If you cannot confidently answer, set needs_human: true instead of guessing.
+- On the 5th or later exchange in this conversation, set needs_human: true.
+- If the message is emotionally complex or ambiguous, set needs_human: true.`;
 
     const prospectPrompt = `You are the friendly front desk assistant for FIT Beyond Plus, a full-service gym in Tullahoma, Tennessee. You are texting with a potential member named ${lead.name ?? "there"} who is interested in ${lead.interest ?? "getting started"}.
 
@@ -472,16 +600,12 @@ About FIT Beyond Plus:
 - Phone: (931) 222-4449
 - Email: info@fitbeyondplus.com
 - Offerings: Strength training, cardio, group fitness, kickboxing, Brazilian Jiu-Jitsu (adult and kids), athlete performance training, sauna, connected physical therapy
-- Membership options: Single, duo, family, 3-month PIF, 12-month PIF, Silver and Fit
-- Free day passes available for first-time visitors
+- Membership options: Single, duo, family, 3-month paid-in-full, 12-month paid-in-full, Silver and Fit
+- Free day passes / tours available for first-time visitors
 
-Your job:
-- Reply warmly and conversationally like a real person texting — not a bot. Keep replies to 1-3 sentences max.
-- Help them take the next step: book a tour, grab a day pass, or get their question answered.
-- Never make up specific prices — say someone will follow up with exact pricing.
-- Never give medical or injury advice — say we have a physical therapy partner on site they can speak to.
+The customer's latest message looks like an "${inquiryType}" inquiry.
 
-If your reply promises that staff/our team will follow up, check on something, or get back to them, you MUST also set needs_human to true (keep your reply text) so staff get alerted.
+${sharedRules}
 
 Set needs_human to true and stop responding if:
 - They ask to negotiate price or mention a competitor price
@@ -489,7 +613,7 @@ Set needs_human to true and stop responding if:
 - They say call me, speak to someone, or manager
 - You cannot confidently answer their question
 - This is the 5th or more exchange in the conversation
-- Their message is emotionally complex or ambiguous${scheduleLine}${declinedAltLabel ? `\n\nIMPORTANT CONTEXT — RECENT ALTERNATIVE TIME OFFER:\nOur staff previously suggested "${declinedAltLabel}" as an alternative visit time. The customer's latest reply was NOT a clear yes to that time (they either declined it or were ambiguous). Do NOT ignore this. In your reply, briefly acknowledge that "${declinedAltLabel}" doesn't work, and let them know you'll have staff reach out with another time, or point them to ${personalizedScheduleUrl} to pick something themselves. Do not respond generically or as if the alternative offer never happened.` : ""}
+- Their message is emotionally complex or ambiguous${declinedAltLabel ? `\n\nIMPORTANT CONTEXT — RECENT ALTERNATIVE TIME OFFER:\nOur staff previously suggested "${declinedAltLabel}" as an alternative visit time. The customer's latest reply was NOT a clear yes to that time (they either declined it or were ambiguous). Do NOT ignore this. In your reply, briefly acknowledge that "${declinedAltLabel}" doesn't work, and let them know you'll have staff reach out with another time, or point them to fitbeyondplus.com/schedule-visit?lead=${lead.id} to pick something themselves. Do not respond generically or as if the alternative offer never happened.` : ""}
 
 CRITICAL OUTPUT FORMAT — READ CAREFULLY:
 Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
@@ -499,9 +623,17 @@ Use exactly this shape:
 or when escalating:
 { "reply": null, "needs_human": true, "reason": "brief reason" }`;
 
-    const memberPrompt = `You are the friendly support assistant for FIT Beyond Plus. You are texting with an EXISTING MEMBER named ${lead.name ?? "there"}. Do not try to sell them on joining — they are already a member. Help them with questions about class schedules, hours, freezing or pausing membership, billing questions, guest passes, or general gym info. For anything involving actual account changes, billing disputes, or cancellations, set needs_human to true — staff needs to handle those personally. Keep the same warm, short, conversational tone as the prospect-facing assistant.
+    const memberPrompt = `You are the friendly support assistant for FIT Beyond Plus. You are texting with an EXISTING MEMBER named ${lead.name ?? "there"}. Do not try to sell them on joining — they are already a member. Help them with questions about class schedules, hours, freezing or pausing membership, billing questions, guest passes, or general gym info.
 
-If your reply promises that staff/our team will follow up, check on something, or get back to them, you MUST also set needs_human to true (keep your reply text) so staff get alerted.
+About FIT Beyond Plus:
+- Address: 449 W Lincoln St, Tullahoma, TN 37388
+- Phone: (931) 222-4449
+- Email: info@fitbeyondplus.com
+- Offerings: Strength training, cardio, group fitness, kickboxing, Brazilian Jiu-Jitsu (adult and kids), athlete performance training, sauna, connected physical therapy
+
+The member's latest message looks like an "${inquiryType}" inquiry.
+
+${sharedRules}
 
 Set needs_human to true and stop responding if:
 - You cannot confidently answer their question, or you would have to say you don't know / don't have real-time information
@@ -511,13 +643,7 @@ Set needs_human to true and stop responding if:
 - They say call me, speak to someone, or manager
 - This is the 5th or more exchange in the conversation
 - Their message is emotionally complex or ambiguous
-- Anything involving account changes, billing disputes, or cancellations
-
-About FIT Beyond Plus:
-- Address: 449 W Lincoln St, Tullahoma, TN 37388
-- Phone: (931) 222-4449
-- Email: info@fitbeyondplus.com
-- Offerings: Strength training, cardio, group fitness, kickboxing, Brazilian Jiu-Jitsu (adult and kids), athlete performance training, sauna, connected physical therapy
+- Anything involving account changes, billing disputes, cancellations, or membership changes
 
 CRITICAL OUTPUT FORMAT — READ CAREFULLY:
 Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
@@ -669,10 +795,16 @@ or
     // follow up" while leaving needs_human false. That's a silent handoff with
     // nobody notified, so detect the promise in the reply text itself.
     const HANDOFF_PATTERNS =
-      /(let me (have|check|ask|find out|confirm)|someone (from our team |from the team )?(will|can) (follow up|reach out|get back|check)|(our|the) team (will|can) (follow up|reach out|get back|check)|staff (will|can) (follow up|reach out|get back|check)|(i'?ll|we'?ll) (have (someone|staff)|follow up|get back to you|double.?check|check on)|have someone (from )?(our team |the team )?(follow up|reach out))/i;
+      /(let me (have|check|ask|find out|confirm|look into|look up|verify|get back to you on)|someone (from our team |from the team )?(will|can) (follow up|reach out|get back|check|contact you|call you|message you)|(our|the) team (will|can) (follow up|reach out|get back|check|contact you|call you|message you)|staff (will|can) (follow up|reach out|get back|check|contact you|call you|message you)|(i'?ll|we'?ll) (have (someone|staff)|follow up|get back to you|double.?check|check on|look into|look up|verify|find out|confirm|pass this along)|have someone (from )?(our team |the team )?(follow up|reach out|get back|contact you|call you)|we can check|i can check|someone will contact you|i will pass this along|we will pass this along)/i;
     const promisedHandoff = Boolean(aiReply && HANDOFF_PATTERNS.test(aiReply));
 
-    if (needsHuman || promisedHandoff || !aiReply) {
+    // Second safety net: suppress non-answers that send the customer back to
+    // the gym without actually helping, or that admit the AI doesn't know.
+    const NON_ANSWER_PATTERNS =
+      /(i don't have (real-time|live|current|up-to-date) (info|information|data|status)|i don't know|i'm not sure|i cannot confirm|i can't confirm|call the (front desk|gym|desk)|stop by the (front desk|gym|desk)|check with the (front desk|gym|staff)|i have no way to know|i'm unable to verify|i don't have access)/i;
+    const nonAnswer = Boolean(aiReply && NON_ANSWER_PATTERNS.test(aiReply));
+
+    if (needsHuman || promisedHandoff || nonAnswer || !aiReply) {
       await supabase
         .from("leads")
         .update({
@@ -682,8 +814,9 @@ or
         .eq("id", lead.id);
 
       const prefix = isExistingMember ? "⚡ [EXISTING MEMBER] " : "⚡ ";
-      const alertReason =
-        reason || (promisedHandoff ? "assistant promised staff follow-up" : "n/a");
+      let alertReason = reason || "n/a";
+      if (promisedHandoff) alertReason = "assistant promised staff follow-up";
+      if (nonAnswer) alertReason = "assistant gave a non-answer";
       const alert = `${prefix}${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${alertReason}. Check the lead tracker.`;
       await sendStaffAlert(alert, "operations");
 
@@ -702,6 +835,7 @@ or
           metadata: {
             kind: "suppressed_ai_reply",
             reason: alertReason,
+            inquiry_type: inquiryType,
             inbound_body: body,
           },
         });
@@ -721,7 +855,7 @@ or
         from_ai: true,
         provider_message_id: sendResult.sid ?? null,
         status: "sent",
-        metadata: null,
+        metadata: { inquiry_type: inquiryType },
       });
       await supabase
         .from("leads")
