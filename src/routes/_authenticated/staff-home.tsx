@@ -206,6 +206,25 @@ function StaffHome() {
           </span>
         </Link>
 
+        <Link
+          to="/admin/ai-reply-rules"
+          className="group rounded-2xl border border-border bg-card p-8 flex flex-col justify-between min-h-[240px] hover:border-primary transition-colors"
+        >
+          <div>
+            <div className="h-12 w-12 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
+              <BookOpen className="h-6 w-6" />
+            </div>
+            <h2 className="mt-5 text-2xl">AI Reply Rules</h2>
+            <p className="mt-3 text-sm text-muted-foreground max-w-sm">
+              Reference page showing exactly what Claude is instructed to say
+              for pricing, schedule, membership, complaints, and more.
+            </p>
+          </div>
+          <span className="mt-8 text-xs uppercase tracking-widest text-primary group-hover:translate-x-1 transition-transform">
+            View Rules →
+          </span>
+        </Link>
+
       </div>
     </section>
   );
