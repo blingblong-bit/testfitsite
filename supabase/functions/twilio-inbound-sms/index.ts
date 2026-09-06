@@ -855,7 +855,7 @@ or
         from_ai: true,
         provider_message_id: sendResult.sid ?? null,
         status: "sent",
-        metadata: null,
+        metadata: { inquiry_type: inquiryType },
       });
       await supabase
         .from("leads")
