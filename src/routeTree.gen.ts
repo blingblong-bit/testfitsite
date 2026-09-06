@@ -51,6 +51,7 @@ import { Route as AuthenticatedAdminDayPassApprovalsRouteImport } from './routes
 import { Route as AuthenticatedAdminClassCheckinsRouteImport } from './routes/_authenticated/admin.class-checkins'
 import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
 import { Route as AuthenticatedAdminAppointmentApprovalsRouteImport } from './routes/_authenticated/admin.appointment-approvals'
+import { Route as AuthenticatedAdminAiReplyRulesRouteImport } from './routes/_authenticated/admin.ai-reply-rules'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
@@ -278,6 +279,12 @@ const AuthenticatedAdminAppointmentApprovalsRoute =
     path: '/admin/appointment-approvals',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminAiReplyRulesRoute =
+  AuthenticatedAdminAiReplyRulesRouteImport.update({
+    id: '/admin/ai-reply-rules',
+    path: '/admin/ai-reply-rules',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -365,6 +372,7 @@ export interface FileRoutesByFullPath {
   '/classes/': typeof ClassesIndexRoute
   '/combat-sports/': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/ai-reply-rules': typeof AuthenticatedAdminAiReplyRulesRoute
   '/admin/appointment-approvals': typeof AuthenticatedAdminAppointmentApprovalsRoute
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
@@ -414,6 +422,7 @@ export interface FileRoutesByTo {
   '/classes': typeof ClassesIndexRoute
   '/combat-sports': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/ai-reply-rules': typeof AuthenticatedAdminAiReplyRulesRoute
   '/admin/appointment-approvals': typeof AuthenticatedAdminAppointmentApprovalsRoute
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
@@ -468,6 +477,7 @@ export interface FileRoutesById {
   '/classes/': typeof ClassesIndexRoute
   '/combat-sports/': typeof CombatSportsIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/admin/ai-reply-rules': typeof AuthenticatedAdminAiReplyRulesRoute
   '/_authenticated/admin/appointment-approvals': typeof AuthenticatedAdminAppointmentApprovalsRoute
   '/_authenticated/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/_authenticated/admin/class-checkins': typeof AuthenticatedAdminClassCheckinsRoute
@@ -522,6 +532,7 @@ export interface FileRouteTypes {
     | '/classes/'
     | '/combat-sports/'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/ai-reply-rules'
     | '/admin/appointment-approvals'
     | '/admin/blog'
     | '/admin/class-checkins'
@@ -571,6 +582,7 @@ export interface FileRouteTypes {
     | '/classes'
     | '/combat-sports'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/ai-reply-rules'
     | '/admin/appointment-approvals'
     | '/admin/blog'
     | '/admin/class-checkins'
@@ -624,6 +636,7 @@ export interface FileRouteTypes {
     | '/classes/'
     | '/combat-sports/'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/admin/ai-reply-rules'
     | '/_authenticated/admin/appointment-approvals'
     | '/_authenticated/admin/blog'
     | '/_authenticated/admin/class-checkins'
@@ -976,6 +989,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAppointmentApprovalsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/ai-reply-rules': {
+      id: '/_authenticated/admin/ai-reply-rules'
+      path: '/admin/ai-reply-rules'
+      fullPath: '/admin/ai-reply-rules'
+      preLoaderRoute: typeof AuthenticatedAdminAiReplyRulesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -1045,6 +1065,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedFrontdeskRoute: typeof AuthenticatedFrontdeskRoute
   AuthenticatedStaffHomeRoute: typeof AuthenticatedStaffHomeRoute
+  AuthenticatedAdminAiReplyRulesRoute: typeof AuthenticatedAdminAiReplyRulesRoute
   AuthenticatedAdminAppointmentApprovalsRoute: typeof AuthenticatedAdminAppointmentApprovalsRoute
   AuthenticatedAdminBlogRoute: typeof AuthenticatedAdminBlogRoute
   AuthenticatedAdminClassCheckinsRoute: typeof AuthenticatedAdminClassCheckinsRoute
@@ -1058,6 +1079,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFrontdeskRoute: AuthenticatedFrontdeskRoute,
   AuthenticatedStaffHomeRoute: AuthenticatedStaffHomeRoute,
+  AuthenticatedAdminAiReplyRulesRoute: AuthenticatedAdminAiReplyRulesRoute,
   AuthenticatedAdminAppointmentApprovalsRoute:
     AuthenticatedAdminAppointmentApprovalsRoute,
   AuthenticatedAdminBlogRoute: AuthenticatedAdminBlogRoute,
