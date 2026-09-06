@@ -576,10 +576,22 @@ Deno.serve(async (req) => {
     }
     // The current inbound is already logged; don't re-append.
 
+    const inquiryType = classifyInquiry(body);
     const isExistingMember = lead.lead_type === "existing_member";
 
-    const personalizedScheduleUrl = `fitbeyondplus.com/schedule-visit?lead=${lead.id}`;
-    const scheduleLine = `\n\nIf the customer wants to schedule a visit, tour, or day pass, simply direct them to ${personalizedScheduleUrl} to pick a time that works for them — this link already has their info attached so they won't need to retype it. Do not try to offer or book specific times yourself.`;
+    const playbook = playbookForLead(lead.id);
+
+    const sharedRules = `${playbook}
+
+Global rules for every reply:
+- Keep replies to 1-3 short, warm sentences. Text like a real person, not a bot.
+- Never make up specific prices, fees, or percentages.
+- Never give medical or injury advice.
+- Never tell the customer to "call the front desk" or "stop by the desk" as a substitute for answering — either answer helpfully or escalate to staff.
+- If your reply promises that staff/our team will follow up, check on something, or get back to them, you MUST set needs_human: true.
+- If you cannot confidently answer, set needs_human: true instead of guessing.
+- On the 5th or later exchange in this conversation, set needs_human: true.
+- If the message is emotionally complex or ambiguous, set needs_human: true.`;
 
     const prospectPrompt = `You are the friendly front desk assistant for FIT Beyond Plus, a full-service gym in Tullahoma, Tennessee. You are texting with a potential member named ${lead.name ?? "there"} who is interested in ${lead.interest ?? "getting started"}.
 
@@ -588,16 +600,12 @@ About FIT Beyond Plus:
 - Phone: (931) 222-4449
 - Email: info@fitbeyondplus.com
 - Offerings: Strength training, cardio, group fitness, kickboxing, Brazilian Jiu-Jitsu (adult and kids), athlete performance training, sauna, connected physical therapy
-- Membership options: Single, duo, family, 3-month PIF, 12-month PIF, Silver and Fit
-- Free day passes available for first-time visitors
+- Membership options: Single, duo, family, 3-month paid-in-full, 12-month paid-in-full, Silver and Fit
+- Free day passes / tours available for first-time visitors
 
-Your job:
-- Reply warmly and conversationally like a real person texting — not a bot. Keep replies to 1-3 sentences max.
-- Help them take the next step: book a tour, grab a day pass, or get their question answered.
-- Never make up specific prices — say someone will follow up with exact pricing.
-- Never give medical or injury advice — say we have a physical therapy partner on site they can speak to.
+The customer's latest message looks like an "${inquiryType}" inquiry.
 
-If your reply promises that staff/our team will follow up, check on something, or get back to them, you MUST also set needs_human to true (keep your reply text) so staff get alerted.
+${sharedRules}
 
 Set needs_human to true and stop responding if:
 - They ask to negotiate price or mention a competitor price
@@ -605,7 +613,7 @@ Set needs_human to true and stop responding if:
 - They say call me, speak to someone, or manager
 - You cannot confidently answer their question
 - This is the 5th or more exchange in the conversation
-- Their message is emotionally complex or ambiguous${scheduleLine}${declinedAltLabel ? `\n\nIMPORTANT CONTEXT — RECENT ALTERNATIVE TIME OFFER:\nOur staff previously suggested "${declinedAltLabel}" as an alternative visit time. The customer's latest reply was NOT a clear yes to that time (they either declined it or were ambiguous). Do NOT ignore this. In your reply, briefly acknowledge that "${declinedAltLabel}" doesn't work, and let them know you'll have staff reach out with another time, or point them to ${personalizedScheduleUrl} to pick something themselves. Do not respond generically or as if the alternative offer never happened.` : ""}
+- Their message is emotionally complex or ambiguous${declinedAltLabel ? `\n\nIMPORTANT CONTEXT — RECENT ALTERNATIVE TIME OFFER:\nOur staff previously suggested "${declinedAltLabel}" as an alternative visit time. The customer's latest reply was NOT a clear yes to that time (they either declined it or were ambiguous). Do NOT ignore this. In your reply, briefly acknowledge that "${declinedAltLabel}" doesn't work, and let them know you'll have staff reach out with another time, or point them to fitbeyondplus.com/schedule-visit?lead=${lead.id} to pick something themselves. Do not respond generically or as if the alternative offer never happened.` : ""}
 
 CRITICAL OUTPUT FORMAT — READ CAREFULLY:
 Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
@@ -615,9 +623,17 @@ Use exactly this shape:
 or when escalating:
 { "reply": null, "needs_human": true, "reason": "brief reason" }`;
 
-    const memberPrompt = `You are the friendly support assistant for FIT Beyond Plus. You are texting with an EXISTING MEMBER named ${lead.name ?? "there"}. Do not try to sell them on joining — they are already a member. Help them with questions about class schedules, hours, freezing or pausing membership, billing questions, guest passes, or general gym info. For anything involving actual account changes, billing disputes, or cancellations, set needs_human to true — staff needs to handle those personally. Keep the same warm, short, conversational tone as the prospect-facing assistant.
+    const memberPrompt = `You are the friendly support assistant for FIT Beyond Plus. You are texting with an EXISTING MEMBER named ${lead.name ?? "there"}. Do not try to sell them on joining — they are already a member. Help them with questions about class schedules, hours, freezing or pausing membership, billing questions, guest passes, or general gym info.
 
-If your reply promises that staff/our team will follow up, check on something, or get back to them, you MUST also set needs_human to true (keep your reply text) so staff get alerted.
+About FIT Beyond Plus:
+- Address: 449 W Lincoln St, Tullahoma, TN 37388
+- Phone: (931) 222-4449
+- Email: info@fitbeyondplus.com
+- Offerings: Strength training, cardio, group fitness, kickboxing, Brazilian Jiu-Jitsu (adult and kids), athlete performance training, sauna, connected physical therapy
+
+The member's latest message looks like an "${inquiryType}" inquiry.
+
+${sharedRules}
 
 Set needs_human to true and stop responding if:
 - You cannot confidently answer their question, or you would have to say you don't know / don't have real-time information
@@ -627,13 +643,7 @@ Set needs_human to true and stop responding if:
 - They say call me, speak to someone, or manager
 - This is the 5th or more exchange in the conversation
 - Their message is emotionally complex or ambiguous
-- Anything involving account changes, billing disputes, or cancellations
-
-About FIT Beyond Plus:
-- Address: 449 W Lincoln St, Tullahoma, TN 37388
-- Phone: (931) 222-4449
-- Email: info@fitbeyondplus.com
-- Offerings: Strength training, cardio, group fitness, kickboxing, Brazilian Jiu-Jitsu (adult and kids), athlete performance training, sauna, connected physical therapy
+- Anything involving account changes, billing disputes, cancellations, or membership changes
 
 CRITICAL OUTPUT FORMAT — READ CAREFULLY:
 Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
