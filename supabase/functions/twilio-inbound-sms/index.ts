@@ -804,7 +804,7 @@ or
       /(i don't have (real-time|live|current|up-to-date) (info|information|data|status)|i don't know|i'm not sure|i cannot confirm|i can't confirm|call the (front desk|gym|desk)|stop by the (front desk|gym|desk)|check with the (front desk|gym|staff)|i have no way to know|i'm unable to verify|i don't have access)/i;
     const nonAnswer = Boolean(aiReply && NON_ANSWER_PATTERNS.test(aiReply));
 
-    if (needsHuman || promisedHandoff || !aiReply) {
+    if (needsHuman || promisedHandoff || nonAnswer || !aiReply) {
       await supabase
         .from("leads")
         .update({
@@ -814,8 +814,9 @@ or
         .eq("id", lead.id);
 
       const prefix = isExistingMember ? "⚡ [EXISTING MEMBER] " : "⚡ ";
-      const alertReason =
-        reason || (promisedHandoff ? "assistant promised staff follow-up" : "n/a");
+      let alertReason = reason || "n/a";
+      if (promisedHandoff) alertReason = "assistant promised staff follow-up";
+      if (nonAnswer) alertReason = "assistant gave a non-answer";
       const alert = `${prefix}${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${alertReason}. Check the lead tracker.`;
       await sendStaffAlert(alert, "operations");
 
@@ -834,6 +835,7 @@ or
           metadata: {
             kind: "suppressed_ai_reply",
             reason: alertReason,
+            inquiry_type: inquiryType,
             inbound_body: body,
           },
         });
