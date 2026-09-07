@@ -141,6 +141,12 @@ type Lead = {
   initial_referrer?: string | null;
   attribution_channel?: string | null;
   first_touch_at?: string | null;
+  high_intent?: boolean | null;
+  high_intent_note?: string | null;
+  high_intent_at?: string | null;
+  high_intent_bucket?: string | null;
+  objections?: string[] | null;
+  lost_reasons?: string[] | null;
 };
 
 
