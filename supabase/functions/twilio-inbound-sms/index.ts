@@ -960,6 +960,52 @@ ${JSON_CONTRACT}`;
       /(i don't have (real-time|live|current|up-to-date) (info|information|data|status)|i don't know|i'm not sure|i cannot confirm|i can't confirm|call the (front desk|gym|desk)|stop by the (front desk|gym|desk)|check with the (front desk|gym|staff)|i have no way to know|i'm unable to verify|i don't have access)/i;
     const nonAnswer = Boolean(aiReply && NON_ANSWER_PATTERNS.test(aiReply));
 
+    // ---- Intent, objections, and lost reasons ----
+    // Status is NEVER changed automatically here; staff decide that. We only
+    // record what the person told us, and text staff when intent materially
+    // changes (browsing -> ready today, week pass -> monthly, tour -> how do
+    // I pay, pricing question -> wants to buy).
+    const existingObjections: string[] = Array.isArray(lead.objections) ? lead.objections : [];
+    const existingLost: string[] = Array.isArray(lead.lost_reasons) ? lead.lost_reasons : [];
+    const mergedObjections = [...new Set([...existingObjections, ...objections])];
+    const mergedLost = [...new Set([...existingLost, ...lostReasons])];
+
+    const leadUpdates: Record<string, unknown> = {};
+    if (mergedObjections.length !== existingObjections.length) {
+      leadUpdates["objections"] = mergedObjections;
+    }
+    if (mergedLost.length !== existingLost.length) leadUpdates["lost_reasons"] = mergedLost;
+
+    const bucketChanged = highIntent && highIntentBucket !== (lead.high_intent_bucket ?? "none");
+    const newlyHighIntent = highIntent && !lead.high_intent;
+    if (highIntent) {
+      leadUpdates["high_intent"] = true;
+      leadUpdates["high_intent_bucket"] = highIntentBucket;
+      if (highIntentNote) leadUpdates["high_intent_note"] = highIntentNote;
+      if (newlyHighIntent || bucketChanged) leadUpdates["high_intent_at"] = new Date().toISOString();
+    }
+    if (Object.keys(leadUpdates).length > 0) {
+      const { error: intentErr } = await supabase
+        .from("leads")
+        .update(leadUpdates)
+        .eq("id", lead.id);
+      if (intentErr) console.error("[twilio-inbound-sms] intent update failed", intentErr.message);
+    }
+
+    if (newlyHighIntent || bucketChanged) {
+      await sendStaffAlert(
+        `🔥 ${alertPrefix.trim()} ${lead.name ?? "A lead"} (${from}) is ready to buy.\nWhat they want: ${highIntentNote || highIntentBucket}\nThey said: "${body}"\n${leadLink}`,
+        "operations",
+      );
+    }
+
+    if (likelyLost) {
+      await sendStaffAlert(
+        `📉 ${lead.name ?? "A lead"} (${from}) sounds like they went another direction.\nReasons: ${mergedLost.join(", ") || "not stated"}\nThey said: "${body}"\nStatus was NOT changed — review and set it yourself.\n${leadLink}`,
+        "operations",
+      );
+    }
+
     if (needsHuman || promisedHandoff || nonAnswer || !aiReply) {
       await supabase
         .from("leads")
@@ -969,12 +1015,12 @@ ${JSON_CONTRACT}`;
         })
         .eq("id", lead.id);
 
-      const prefix = isExistingMember ? "⚡ [EXISTING MEMBER] " : "⚡ ";
       let alertReason = reason || "n/a";
       if (promisedHandoff) alertReason = "assistant promised staff follow-up";
       if (nonAnswer) alertReason = "assistant gave a non-answer";
-      const alert = `${prefix}${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${alertReason}. Check the lead tracker.`;
+      const alert = `${alertPrefix}${lead.name ?? "A lead"} (${from}) needs a real response.\nThey said: "${body}"\nInquiry type: ${inquiryType}\nReason: ${alertReason}\n${leadLink}`;
       await sendStaffAlert(alert, "operations");
+
 
       // Escalation means silence: any draft the AI wrote is NOT texted out.
       // Staff answer from the lead tracker so the person never gets a
