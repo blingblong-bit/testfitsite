@@ -33,6 +33,7 @@ Replace the assistant's rulebook with the sales-focused instructions provided, k
 
 6. **Staff takeover protection**
    - Today a manual staff text pauses the drip, but the assistant can still auto-reply into a conversation you're handling. That gets fixed: after a staff-sent text, inbound replies for the next several hours go straight to you with no automated reply, no free-pass or tour re-offer, and no drip restart.
+   - Takeover only silences the reply. The incoming message is still saved to the conversation history and still counts in reporting exactly as before, so nothing goes missing from the thread.
 
 7. **Unchanged**
    - Twilio sending/receiving, quiet hours, daily send caps, drip sequences, conversation history, appointment scheduling and reminders, day pass and free-week flows, analytics.
