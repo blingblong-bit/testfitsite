@@ -642,10 +642,14 @@ Deno.serve(async (req) => {
     const OPERATIONAL_PATTERNS =
       /(out of order|not working|isn'?t working|doesn'?t work|broken|broke down|fixed yet|repaired|shut off|turned off|temporarily)|(tanning|sauna|shower|locker|bathroom|restroom|towel|machine|treadmill|bike|rower|equipment|weights?|door|wifi|ac\b|air condition|heat(er)?\b|parking)|(class(es)? (today|tonight|canceled|cancelled)|is (there|the) .*class|who'?s teaching|instructor (there|today))|(are (you|y'?all|we) open|you open (today|now|right now)|closed (today|now)|what time do you (open|close)|open (today|right now))|(lost|left) (my|a|an) |(found my)|(dirty|filthy|messy|smell|gross|nobody was|no one was) /i;
 
+    const inquiryType = classifyInquiry(body);
+    const isExistingMember = lead.lead_type === "existing_member";
+    const leadLink = `https://fitbeyondplus.com/admin/leads?lead=${lead.id}`;
+    const alertPrefix = isExistingMember ? "⚡ [EXISTING MEMBER] " : "⚡ ";
+
     if (OPERATIONAL_PATTERNS.test(body)) {
-      const memberTag = lead.lead_type === "existing_member" ? "[EXISTING MEMBER] " : "";
       await sendStaffAlert(
-        `⚡ ${memberTag}${lead.name ?? "A lead"} asked about something at the gym that needs a real person — they said: "${body}". Reason: operational_question. No auto-reply was sent.`,
+        `${alertPrefix}${lead.name ?? "A lead"} (${from}) needs a real person.\nThey said: "${body}"\nInquiry type: ${inquiryType}\nReason: operational_question — no auto-reply was sent.\n${leadLink}`,
         "operations",
       );
       await supabase.from("sms_conversation_log").insert({
@@ -659,11 +663,56 @@ Deno.serve(async (req) => {
         metadata: {
           kind: "operational_handoff",
           reason: "operational_question",
+          inquiry_type: inquiryType,
           inbound_body: body,
         },
       });
       return twiml();
     }
+
+    // ---- Staff takeover protection ----
+    // Once a staff member texts this lead by hand, the assistant stays out of
+    // the way for a few hours: the inbound message is still logged and still
+    // counts in reporting (done above), we just don't auto-reply — staff do.
+    const TAKEOVER_WINDOW_HOURS = 4;
+    const takeoverSince = new Date(
+      Date.now() - TAKEOVER_WINDOW_HOURS * 60 * 60 * 1000,
+    ).toISOString();
+    const { data: staffTexts } = await supabase
+      .from("sms_conversation_log")
+      .select("id, created_at")
+      .eq("lead_id", lead.id)
+      .eq("direction", "outbound")
+      .eq("from_ai", false)
+      .gte("created_at", takeoverSince)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if ((staffTexts ?? []).length > 0) {
+      await sendStaffAlert(
+        `${alertPrefix}${lead.name ?? "A lead"} (${from}) replied to your text.\nThey said: "${body}"\nInquiry type: ${inquiryType}\nYou're handling this one, so no auto-reply was sent.\n${leadLink}`,
+        "operations",
+      );
+      await supabase.from("sms_conversation_log").insert({
+        lead_id: lead.id,
+        phone: from,
+        direction: "system",
+        body: `[staff_takeover_suppressed] staff texted within ${TAKEOVER_WINDOW_HOURS}h — no AI reply sent`,
+        from_ai: false,
+        provider_message_id: null,
+        status: "staff_takeover_suppressed",
+        metadata: {
+          kind: "staff_takeover_suppressed",
+          reason: "staff_takeover",
+          inquiry_type: inquiryType,
+          window_hours: TAKEOVER_WINDOW_HOURS,
+          inbound_body: body,
+        },
+      });
+      return twiml();
+    }
+
+
 
 
     // Build conversation history
