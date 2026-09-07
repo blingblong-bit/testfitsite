@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { RESPONSE_PLAYBOOK, LEAD_ID_PLACEHOLDER } from "@/lib/ai-reply-rules";
+import { SALES_RULEBOOK, LEAD_ID_PLACEHOLDER } from "@/lib/ai-reply-rules";
+import { buildApprovedContext } from "@/lib/gym-facts";
 
 export const Route = createFileRoute("/_authenticated/admin/ai-reply-rules")({
   head: () => ({
@@ -17,7 +18,8 @@ export const Route = createFileRoute("/_authenticated/admin/ai-reply-rules")({
 });
 
 function AiReplyRulesPage() {
-  const displayPlaybook = RESPONSE_PLAYBOOK.replaceAll(LEAD_ID_PLACEHOLDER, "[lead-id]");
+  const displayRulebook = SALES_RULEBOOK.replaceAll(LEAD_ID_PLACEHOLDER, "[lead-id]");
+  const approvedContext = buildApprovedContext();
 
   return (
     <section className="container-page py-12">
@@ -30,21 +32,30 @@ function AiReplyRulesPage() {
 
       <h1 className="mt-6 text-3xl">AI SMS Reply Rules</h1>
       <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-        This is the exact response playbook Claude follows when replying to inbound texts. If a
-        reply type isn't working, edit the wording here and it will be mirrored into the SMS
-        handler.
+        These are the exact instructions and the exact facts and prices the texting assistant
+        receives before it answers anyone. Nothing outside the approved list below can be stated to a
+        customer — anything else gets handed to a real person.
       </p>
 
-      <div className="mt-8 max-w-3xl rounded-xl border border-border bg-card p-6 shadow-sm">
+      <h2 className="mt-10 text-xl">Approved facts &amp; pricing</h2>
+      <div className="mt-3 max-w-3xl rounded-xl border border-border bg-card p-6 shadow-sm">
         <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-card-foreground">
-          {displayPlaybook}
+          {approvedContext}
+        </pre>
+      </div>
+
+      <h2 className="mt-10 text-xl">Rulebook</h2>
+      <div className="mt-3 max-w-3xl rounded-xl border border-border bg-card p-6 shadow-sm">
+        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-card-foreground">
+          {displayRulebook}
         </pre>
       </div>
 
       <p className="mt-6 max-w-3xl text-xs text-muted-foreground">
-        Operational questions (equipment status, cancellations, lost items, etc.) are escalated to
-        staff before the AI is ever called. Complaints and frustrated messages are also escalated
-        with no auto-reply.
+        Right-now questions about the gym itself (broken equipment, canceled class, lost item,
+        cleanliness, "are you open") go straight to staff with no automated reply. So do complaints.
+        After a staff member texts a lead, the assistant stays quiet on that conversation for several
+        hours so you can handle it yourself.
       </p>
     </section>
   );
