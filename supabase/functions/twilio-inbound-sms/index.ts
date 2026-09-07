@@ -505,7 +505,9 @@ Deno.serve(async (req) => {
     const last4 = fromDigits.slice(-4);
     const { data: leadRows, error: leadErr } = await supabase
       .from("leads")
-      .select("id, name, email, phone, interest, sms_opted_out, notes, lead_type, created_at")
+      .select(
+        "id, name, email, phone, interest, sms_opted_out, notes, lead_type, created_at, high_intent, high_intent_bucket, objections, lost_reasons",
+      )
       .ilike("phone", `%${last4}%`)
       .order("created_at", { ascending: false })
       .limit(50);
