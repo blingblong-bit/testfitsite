@@ -141,6 +141,12 @@ type Lead = {
   initial_referrer?: string | null;
   attribution_channel?: string | null;
   first_touch_at?: string | null;
+  high_intent?: boolean;
+  high_intent_note?: string | null;
+  high_intent_at?: string | null;
+  high_intent_bucket?: string | null;
+  objections?: string[] | null;
+  lost_reasons?: string[] | null;
 };
 
 
@@ -1334,7 +1340,33 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
               </span>
             )}
             <LastContactBadge iso={lead.last_contacted_at} />
+            {lead.high_intent && (
+              <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/40">
+                Ready To Buy
+              </span>
+            )}
+            {(lead.objections ?? []).map((o) => (
+              <span
+                key={`obj-${o}`}
+                className="inline-block rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 text-[11px] uppercase tracking-widest text-amber-700 dark:text-amber-400"
+              >
+                Concern: {o.replaceAll("_", " ")}
+              </span>
+            ))}
+            {(lead.lost_reasons ?? []).map((o) => (
+              <span
+                key={`lost-${o}`}
+                className="inline-block rounded-full border border-muted-foreground/30 bg-muted px-2.5 py-0.5 text-[11px] uppercase tracking-widest text-muted-foreground"
+              >
+                Reason: {o.replaceAll("_", " ")}
+              </span>
+            ))}
           </div>
+          {lead.high_intent && lead.high_intent_note && (
+            <p className="mt-2 text-sm font-medium text-orange-700 dark:text-orange-400">
+              Wants: {lead.high_intent_note}
+            </p>
+          )}
           <p className="mt-2 text-sm text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
             <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 hover:text-primary">
               <Mail className="h-3.5 w-3.5" /> {lead.email}

@@ -196,46 +196,154 @@ function classifyInquiry(body: string): InquiryType {
   return "general_info";
 }
 
+// ===========================================================================
+// APPROVED CONTEXT (mirror of src/lib/gym-facts.ts)
+// DO NOT EDIT WITHOUT SYNCING src/lib/gym-facts.ts — the Staff Portal page
+// "AI Reply Rules" renders that file, this is what Claude actually receives.
+// ===========================================================================
+const APPROVED_CONTEXT = `APPROVED GYM INFORMATION (the only facts you may state):
+- Name: FIT Beyond Plus
+- Address: 449 W Lincoln St, Tullahoma, TN 37388
+- Phone: (931) 222-4449
+- Email: info@fitbeyondplus.com
+- Website: https://fitbeyondplus.com
+- Staffed hours:
+  • Monday–Friday: 9:00am – 8:00pm (staffed)
+  • Saturday: 9:00am – 6:00pm (staffed)
+  • Sunday: 10:00am – 5:00pm (staffed)
+- Access: Members get 24/7 keycard access, every day of the year.
+- Amenities:
+  • Locker rooms and showers
+  • Sauna
+  • Tanning beds (included with every gym membership)
+  • Full strength and free-weight floor
+  • Cardio equipment
+  • Functional / turf training area
+  • 13,500 sq ft facility
+- Programs:
+  • All group fitness classes included with membership (schedule: fitbeyondplus.com/classes)
+  • Kickboxing — adults and kids
+  • Brazilian Jiu-Jitsu — adults and kids
+  • Personal training and athlete performance training
+- Perks:
+  • Free orientation session with every membership
+
+APPROVED PRICING TABLE (the only prices you may quote):
+Monthly memberships:
+  • Single: $39/month
+  • Duo (2 adults): $59/month
+  • Duo +1 (3 adults): $69/month
+  • Family (up to 5 in the same household): $82/month
+  • Tanning only (no gym membership required): $25/month
+Paid-in-full options:
+  • Single — 1 week pass: $35
+  • Single — 1 month: $55
+  • Single — 3 months: $123
+  • Single — 6 months: $234
+  • Single — 1 year: $449
+  • Duo — 1 year: $660
+  • Duo +1 — 1 year: $753
+  • Family — 1 year: $914
+Day pass:
+  • Single-day pass: $10
+Discounts:
+  • Active military and first responders: 15% off. No other discounts exist.
+
+ANNUAL FEE POLICY (explicit — never infer beyond this):
+  • Amount: $49.99.
+  • Applies to: monthly memberships only (Single, Duo, Duo +1, Family monthly).
+  • When charged: billed once a year on July 1st.
+  • Exempt: all paid-in-full memberships (1 week, 1 month, 3 months, 6 months, 1 year, duo/family annual) — no annual fee.
+  • Exempt: short-term passes and the single-day pass — no annual fee.
+  • Exempt: tanning-only plan — no annual fee.
+  • Monthly memberships have no contract.
+  • Anything else about the annual fee (proration, refunds, waivers, timing exceptions, first-year handling) is NOT defined here — escalate instead of explaining it.
+
+Anything not listed above — other discounts, promotions, payment plans, cancellation terms, contract exceptions, freezes, refunds — is NOT approved information. Never invent it. Say a staff member will confirm, and escalate.`;
+
 const LEAD_ID_PLACEHOLDER = "{{lead_id}}";
 
-const RESPONSE_PLAYBOOK = `Response playbook — match the customer's inquiry type:
+// ===========================================================================
+// SALES RULEBOOK (mirror of src/lib/ai-reply-rules.ts)
+// DO NOT EDIT WITHOUT SYNCING src/lib/ai-reply-rules.ts.
+// ===========================================================================
+const SALES_RULEBOOK = `You are the SMS sales assistant for FIT Beyond Plus. Your job is to help leads get the information they need quickly, remove unnecessary friction, and move qualified leads toward joining, visiting, or speaking with staff.
 
-PRICING
-- Never quote exact prices, fees, or percentages.
-- Example: "I'd love to have someone walk you through the options and exact pricing — want me to set up a quick tour or call?"
-- Always set needs_human: true.
+GENERAL RULES
 
-SCHEDULE / CLASSES
-- General schedule: point to fitbeyondplus.com/classes.
-- Same-day "is X running?" / "who's teaching?": say you'll have someone confirm and get back to them.
-- Example: "I'll have someone confirm today's schedule and get back to you."
-- Always set needs_human: true for same-day or instructor questions.
+1. Answer known factual questions immediately. If the answer is clearly in the approved gym information above, answer it directly instead of escalating — location, hours, locker rooms, showers, 24/7 access, amenities, membership options, approved prices.
 
-MEMBERSHIP OPTIONS
-- Mention we offer single, duo, family, 3-month paid-in-full, 12-month paid-in-full, and Silver and Fit.
-- Example: "We have several membership options depending on what fits you best. Want me to have someone reach out with details?"
-- Set needs_human: true if they ask for specific terms, cancellation policy, or account changes.
+2. Quote ONLY prices from the approved pricing table. Never invent pricing, discounts, promotions, payment plans, cancellation terms, or exceptions. If they ask about something not in the approved data, say a staff member will confirm it and escalate.
 
-DAY PASS / TOUR / FREE VISIT
-- Use the personalized scheduling link: fitbeyondplus.com/schedule-visit?lead=${LEAD_ID_PLACEHOLDER}
-- Example: "You can grab a day pass or book a tour at fitbeyondplus.com/schedule-visit?lead=${LEAD_ID_PLACEHOLDER} — it's already pre-filled with your info."
-- Do not try to book a specific time yourself.
+3. When a lead states buying intent, prioritize helping them buy what they asked for. High intent looks like: "I want to join", "I'm interested in the one-week pass", "Can I come today?", "How do I sign up?", "I want the monthly membership", "Can I start tonight?". Do NOT redirect someone asking to purchase a specific membership or pass into a free-trial or generic tour flow.
 
-COMPLAINT / FRUSTRATED
-- Apologize briefly and sincerely. Do not defend, explain, or argue.
-- Set needs_human: true and reply: null.
+4. For high-intent leads: answer their question immediately, ask ONE simple next-step question, and set high_intent: true with a short high_intent_note describing exactly what they want.
+   Example — Customer: "I'm in town for a week and want the one-week pass."
+   Reply: "Absolutely! Our 1-week pass is $35. What day were you hoping to come in? I can have someone get you set up."
+   high_intent_note: "Wants the 1-week pass, in town for a week."
 
-GENERAL INFO
-- Keep it warm, short, and helpful. One to three sentences.
-- If you don't know or would need real-time info, set needs_human: true instead of guessing.
+5. Escalating internally must NOT stop you from answering a safe question. If showers are in the approved info, answer: "Yes! We have locker rooms and showers, so you can clean up before heading home." You can still flag staff internally at the same time.
 
-OPERATIONAL
-- You should not see this; operational questions are handled before you are called.
-- If present, set needs_human: true and reply: null.`;
+6. Keep texts short, natural, friendly, conversational. Usually 1–3 short sentences. Never sound like a corporate chatbot. Do not over-explain.
 
-function playbookForLead(leadId: string): string {
-  return RESPONSE_PLAYBOOK.replaceAll(LEAD_ID_PLACEHOLDER, leadId);
+7. Ask only one main question at a time. Good: "What day were you hoping to come in?" Bad: "What day, what time, which membership, and have you visited before?"
+
+8. Do not create unnecessary steps. Prefer question → answer → next step. Avoid question → marketing message → scheduling page → staff confirmation → another appointment → purchase.
+
+9. Free day pass / free trial offers are mainly for leads who are unsure, browsing, comparing gyms, or want to see the facility first. Do NOT push the free day pass at someone who already said they want to buy a specific pass or membership.
+
+10. Escalate to staff (set needs_human: true) for: custom discounts, negotiations, billing disputes, unusual payment arrangements, cancellation disputes, contract exceptions, complaints, refunds, competitor negotiations, anything not covered by the approved information, and anything you are uncertain about. When escalating, still give a brief natural response where appropriate — "I can have someone confirm that for you." — instead of stopping abruptly.
+
+11. Competitor and lost-lead handling — read these carefully, they are different situations:
+   - OBJECTION ("Planet Fitness is cheaper.") → the lead is STILL ACTIVE. Do not treat as lost. Add "price" to objections. Do not argue, do not criticize the competitor, do not invent a counter-offer. Escalate if it becomes a negotiation.
+   - COMPARISON ("I'm comparing you to Planet Fitness.") → STILL ACTIVE. Answer approved questions normally. Not lost.
+   - ACTUAL LOSS ("I went with Planet Fitness." / "I already joined Planet Fitness because they were cheaper.") → set likely_lost: true, reply short and polite ("Totally understand — thanks for letting us know!"), and list every reason they gave in lost_reasons.
+   - Mixed signals ("Planet Fitness is cheaper, but I still want to come look at your gym.") → NOT lost. Record "price" as an objection and help them visit.
+   You never change the lead's status yourself — staff decide that. You only record reasons.
+
+12. Never argue with a customer and never criticize a competitor.
+
+13. Never pressure a lead after they clearly decline.
+
+14. If a message contains a question AND buying intent, answer the question FIRST.
+   Example — "I want the week pass. Do y'all have showers?" → "Absolutely — our 1-week pass is $35, and yes, we have locker rooms and showers. What day were you hoping to come in?"
+
+15. Always follow the customer's actual stated goal: week pass → help with the week pass; membership → help with the membership; tour → help schedule the tour; pricing → give approved pricing; facility question → answer it. Do not force every lead through the same script.
+
+PRIMARY OBJECTIVE
+Make it as easy as possible for a qualified lead to become a customer while staying inside approved pricing, policies, and gym information. The ideal flow is: customer asks → you answer → you give one clear next step → staff are alerted when needed. Speed, clarity, and low friction are the priorities.
+
+SCHEDULING LINK
+When a visit or tour genuinely needs to be booked, use this personalized link: fitbeyondplus.com/schedule-visit?lead=${LEAD_ID_PLACEHOLDER}
+
+HARD LIMITS
+- Never give medical or injury advice.
+- Never tell someone to "call the front desk" or "stop by the desk" instead of answering — either answer or escalate.
+- If your reply promises that staff will follow up, check something, or get back to them, you MUST set needs_human: true.
+- If you cannot confidently answer from the approved information, set needs_human: true instead of guessing.
+- Operational, right-now questions (broken equipment, is the sauna working, class canceled, lost item, cleanliness, are you open right now) are handled before you are ever called. If one reaches you, set needs_human: true and reply: null.`;
+
+const JSON_CONTRACT = `CRITICAL OUTPUT FORMAT — READ CAREFULLY:
+Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
+
+Shape (include every field):
+{
+  "reply": "your short text reply, or null when escalating with no reply",
+  "needs_human": false,
+  "reason": "short reason when needs_human is true, otherwise empty string",
+  "high_intent": false,
+  "high_intent_note": "one short sentence describing exactly what they want to buy or do, otherwise empty string",
+  "high_intent_bucket": "one of: week_pass, short_term_pass, monthly_membership, annual_membership, day_pass, tour, browsing, ready_to_join_now, payment_question, classes_programs, none",
+  "objections": ["price"],
+  "lost_reasons": [],
+  "likely_lost": false
 }
+Allowed values for objections and lost_reasons: competitor, price, availability_response_speed, location, schedule, moved_relocating, health_injury, not_interested, other. Use empty arrays when none apply.`;
+
+function rulebookForLead(leadId: string): string {
+  return SALES_RULEBOOK.replaceAll(LEAD_ID_PLACEHOLDER, leadId);
+}
+
 
 // ---- appointment availability (inline, mirrors src/lib/appointment-availability.ts) ----
 
@@ -397,7 +505,9 @@ Deno.serve(async (req) => {
     const last4 = fromDigits.slice(-4);
     const { data: leadRows, error: leadErr } = await supabase
       .from("leads")
-      .select("id, name, email, phone, interest, sms_opted_out, notes, lead_type, created_at")
+      .select(
+        "id, name, email, phone, interest, sms_opted_out, notes, lead_type, created_at, high_intent, high_intent_bucket, objections, lost_reasons",
+      )
       .ilike("phone", `%${last4}%`)
       .order("created_at", { ascending: false })
       .limit(50);
@@ -534,10 +644,14 @@ Deno.serve(async (req) => {
     const OPERATIONAL_PATTERNS =
       /(out of order|not working|isn'?t working|doesn'?t work|broken|broke down|fixed yet|repaired|shut off|turned off|temporarily)|(tanning|sauna|shower|locker|bathroom|restroom|towel|machine|treadmill|bike|rower|equipment|weights?|door|wifi|ac\b|air condition|heat(er)?\b|parking)|(class(es)? (today|tonight|canceled|cancelled)|is (there|the) .*class|who'?s teaching|instructor (there|today))|(are (you|y'?all|we) open|you open (today|now|right now)|closed (today|now)|what time do you (open|close)|open (today|right now))|(lost|left) (my|a|an) |(found my)|(dirty|filthy|messy|smell|gross|nobody was|no one was) /i;
 
+    const inquiryType = classifyInquiry(body);
+    const isExistingMember = lead.lead_type === "existing_member";
+    const leadLink = `https://fitbeyondplus.com/admin/leads?lead=${lead.id}`;
+    const alertPrefix = isExistingMember ? "⚡ [EXISTING MEMBER] " : "⚡ ";
+
     if (OPERATIONAL_PATTERNS.test(body)) {
-      const memberTag = lead.lead_type === "existing_member" ? "[EXISTING MEMBER] " : "";
       await sendStaffAlert(
-        `⚡ ${memberTag}${lead.name ?? "A lead"} asked about something at the gym that needs a real person — they said: "${body}". Reason: operational_question. No auto-reply was sent.`,
+        `${alertPrefix}${lead.name ?? "A lead"} (${from}) needs a real person.\nThey said: "${body}"\nInquiry type: ${inquiryType}\nReason: operational_question — no auto-reply was sent.\n${leadLink}`,
         "operations",
       );
       await supabase.from("sms_conversation_log").insert({
@@ -551,11 +665,56 @@ Deno.serve(async (req) => {
         metadata: {
           kind: "operational_handoff",
           reason: "operational_question",
+          inquiry_type: inquiryType,
           inbound_body: body,
         },
       });
       return twiml();
     }
+
+    // ---- Staff takeover protection ----
+    // Once a staff member texts this lead by hand, the assistant stays out of
+    // the way for a few hours: the inbound message is still logged and still
+    // counts in reporting (done above), we just don't auto-reply — staff do.
+    const TAKEOVER_WINDOW_HOURS = 4;
+    const takeoverSince = new Date(
+      Date.now() - TAKEOVER_WINDOW_HOURS * 60 * 60 * 1000,
+    ).toISOString();
+    const { data: staffTexts } = await supabase
+      .from("sms_conversation_log")
+      .select("id, created_at")
+      .eq("lead_id", lead.id)
+      .eq("direction", "outbound")
+      .eq("from_ai", false)
+      .gte("created_at", takeoverSince)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if ((staffTexts ?? []).length > 0) {
+      await sendStaffAlert(
+        `${alertPrefix}${lead.name ?? "A lead"} (${from}) replied to your text.\nThey said: "${body}"\nInquiry type: ${inquiryType}\nYou're handling this one, so no auto-reply was sent.\n${leadLink}`,
+        "operations",
+      );
+      await supabase.from("sms_conversation_log").insert({
+        lead_id: lead.id,
+        phone: from,
+        direction: "system",
+        body: `[staff_takeover_suppressed] staff texted within ${TAKEOVER_WINDOW_HOURS}h — no AI reply sent`,
+        from_ai: false,
+        provider_message_id: null,
+        status: "staff_takeover_suppressed",
+        metadata: {
+          kind: "staff_takeover_suppressed",
+          reason: "staff_takeover",
+          inquiry_type: inquiryType,
+          window_hours: TAKEOVER_WINDOW_HOURS,
+          inbound_body: body,
+        },
+      });
+      return twiml();
+    }
+
+
 
 
     // Build conversation history
@@ -576,84 +735,46 @@ Deno.serve(async (req) => {
     }
     // The current inbound is already logged; don't re-append.
 
-    const inquiryType = classifyInquiry(body);
-    const isExistingMember = lead.lead_type === "existing_member";
+    const rulebook = rulebookForLead(lead.id);
 
-    const playbook = playbookForLead(lead.id);
+    const altContext = declinedAltLabel
+      ? `\n\nIMPORTANT CONTEXT — RECENT ALTERNATIVE TIME OFFER:\nOur staff previously suggested "${declinedAltLabel}" as an alternative visit time. The customer's latest reply was NOT a clear yes to that time (they either declined it or were ambiguous). Briefly acknowledge that "${declinedAltLabel}" doesn't work, and let them know staff will reach out with another time, or point them to fitbeyondplus.com/schedule-visit?lead=${lead.id} to pick something themselves. Do not respond as if the alternative offer never happened.`
+      : "";
 
-    const sharedRules = `${playbook}
+    const prospectPrompt = `${APPROVED_CONTEXT}
 
-Global rules for every reply:
-- Keep replies to 1-3 short, warm sentences. Text like a real person, not a bot.
-- Never make up specific prices, fees, or percentages.
-- Never give medical or injury advice.
-- Never tell the customer to "call the front desk" or "stop by the desk" as a substitute for answering — either answer helpfully or escalate to staff.
-- If your reply promises that staff/our team will follow up, check on something, or get back to them, you MUST set needs_human: true.
-- If you cannot confidently answer, set needs_human: true instead of guessing.
-- On the 5th or later exchange in this conversation, set needs_human: true.
-- If the message is emotionally complex or ambiguous, set needs_human: true.`;
+${rulebook}
 
-    const prospectPrompt = `You are the friendly front desk assistant for FIT Beyond Plus, a full-service gym in Tullahoma, Tennessee. You are texting with a potential member named ${lead.name ?? "there"} who is interested in ${lead.interest ?? "getting started"}.
+WHO YOU ARE TEXTING
+A potential member named ${lead.name ?? "there"} who came in interested in ${lead.interest ?? "getting started"}. Their latest message looks like a "${inquiryType}" inquiry.
 
-About FIT Beyond Plus:
-- Address: 449 W Lincoln St, Tullahoma, TN 37388
-- Phone: (931) 222-4449
-- Email: info@fitbeyondplus.com
-- Offerings: Strength training, cardio, group fitness, kickboxing, Brazilian Jiu-Jitsu (adult and kids), athlete performance training, sauna, connected physical therapy
-- Membership options: Single, duo, family, 3-month paid-in-full, 12-month paid-in-full, Silver and Fit
-- Free day passes / tours available for first-time visitors
+ALSO ESCALATE (needs_human: true) IF
+- They ask to negotiate price, or want a discount that isn't in the approved list
+- They express frustration or make a complaint
+- They ask to be called, to speak to someone, or for a manager
+- Their message is emotionally complex or ambiguous${altContext}
 
-The customer's latest message looks like an "${inquiryType}" inquiry.
+${JSON_CONTRACT}`;
 
-${sharedRules}
+    const memberPrompt = `${APPROVED_CONTEXT}
 
-Set needs_human to true and stop responding if:
-- They ask to negotiate price or mention a competitor price
-- They express frustration or complaint
-- They say call me, speak to someone, or manager
-- You cannot confidently answer their question
-- This is the 5th or more exchange in the conversation
-- Their message is emotionally complex or ambiguous${declinedAltLabel ? `\n\nIMPORTANT CONTEXT — RECENT ALTERNATIVE TIME OFFER:\nOur staff previously suggested "${declinedAltLabel}" as an alternative visit time. The customer's latest reply was NOT a clear yes to that time (they either declined it or were ambiguous). Do NOT ignore this. In your reply, briefly acknowledge that "${declinedAltLabel}" doesn't work, and let them know you'll have staff reach out with another time, or point them to fitbeyondplus.com/schedule-visit?lead=${lead.id} to pick something themselves. Do not respond generically or as if the alternative offer never happened.` : ""}
+${rulebook}
 
-CRITICAL OUTPUT FORMAT — READ CAREFULLY:
-Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
+WHO YOU ARE TEXTING
+An EXISTING MEMBER named ${lead.name ?? "there"}. Do NOT sell them a membership — they already have one. Help with class schedules, hours, amenities, guest passes, and general gym info. Their latest message looks like a "${inquiryType}" inquiry.
 
-Use exactly this shape:
-{ "reply": "your text reply here", "needs_human": false }
-or when escalating:
-{ "reply": null, "needs_human": true, "reason": "brief reason" }`;
-
-    const memberPrompt = `You are the friendly support assistant for FIT Beyond Plus. You are texting with an EXISTING MEMBER named ${lead.name ?? "there"}. Do not try to sell them on joining — they are already a member. Help them with questions about class schedules, hours, freezing or pausing membership, billing questions, guest passes, or general gym info.
-
-About FIT Beyond Plus:
-- Address: 449 W Lincoln St, Tullahoma, TN 37388
-- Phone: (931) 222-4449
-- Email: info@fitbeyondplus.com
-- Offerings: Strength training, cardio, group fitness, kickboxing, Brazilian Jiu-Jitsu (adult and kids), athlete performance training, sauna, connected physical therapy
-
-The member's latest message looks like an "${inquiryType}" inquiry.
-
-${sharedRules}
-
-Set needs_human to true and stop responding if:
-- You cannot confidently answer their question, or you would have to say you don't know / don't have real-time information
-- They ask about anything happening at the gym right now: equipment or amenity status, something broken or out of order, whether we're open, a class being canceled, a lost item, or a cleanliness/facility issue
-- They ask to negotiate price or mention a competitor price
-- They express frustration or complaint
-- They say call me, speak to someone, or manager
-- This is the 5th or more exchange in the conversation
+ALSO ESCALATE (needs_human: true) IF
+- Anything involving their account: billing, payment changes, freezes, pauses, cancellations, membership changes
+- They ask to negotiate price, express frustration, make a complaint, or ask for a manager or a call
+- They ask about anything happening at the gym right now (equipment status, closures, canceled class, lost item, cleanliness)
 - Their message is emotionally complex or ambiguous
-- Anything involving account changes, billing disputes, cancellations, or membership changes
 
-CRITICAL OUTPUT FORMAT — READ CAREFULLY:
-Respond with ONLY a raw JSON object. No other text. No markdown formatting. No code fences (no \`\`\`json, no \`\`\`). No prose before or after. Your entire response must be valid JSON that starts with { and ends with }.
+For a member, high_intent means an upgrade, an added family member, personal training, or a program add-on — not a new membership.
 
-Use exactly this shape:
-{ "reply": "your text reply here", "needs_human": false }
-or
-{ "reply": null, "needs_human": true, "reason": "brief reason" }`;
+${JSON_CONTRACT}`;
 
     const systemPrompt = isExistingMember ? memberPrompt : prospectPrompt;
+
 
     if (!anthropicKey) {
       console.error("[twilio-inbound-sms] ANTHROPIC_API_KEY missing");
@@ -726,6 +847,30 @@ or
     let aiReply: string | null = null;
     let needsHuman = true;
     let reason = "ai_error";
+    let highIntent = false;
+    let highIntentNote = "";
+    let highIntentBucket = "none";
+    let objections: string[] = [];
+    let lostReasons: string[] = [];
+    let likelyLost = false;
+
+    const ALLOWED_TAGS = new Set([
+      "competitor",
+      "price",
+      "availability_response_speed",
+      "location",
+      "schedule",
+      "moved_relocating",
+      "health_injury",
+      "not_interested",
+      "other",
+    ]);
+    const cleanTags = (v: unknown): string[] =>
+      Array.isArray(v)
+        ? [...new Set(v.map((x) => String(x).toLowerCase().trim()))].filter((x) =>
+            ALLOWED_TAGS.has(x),
+          )
+        : [];
 
     if (!claudeRes) {
       // both attempts failed; falls through to needs_human staff alert
@@ -748,10 +893,23 @@ or
           reply?: string | null;
           needs_human?: boolean;
           reason?: string;
+          high_intent?: boolean;
+          high_intent_note?: string;
+          high_intent_bucket?: string;
+          objections?: unknown;
+          lost_reasons?: unknown;
+          likely_lost?: boolean;
         };
         aiReply = parsed.reply ?? null;
         needsHuman = Boolean(parsed.needs_human);
         reason = parsed.reason ?? "";
+        highIntent = Boolean(parsed.high_intent);
+        highIntentNote = (parsed.high_intent_note ?? "").trim();
+        highIntentBucket = (parsed.high_intent_bucket ?? "none").trim() || "none";
+        objections = cleanTags(parsed.objections);
+        lostReasons = cleanTags(parsed.lost_reasons);
+        likelyLost = Boolean(parsed.likely_lost);
+
       } catch (e) {
         const preview = text.slice(0, 300).replace(/\s+/g, " ");
         const errMsg = (e as Error).message;
@@ -804,6 +962,52 @@ or
       /(i don't have (real-time|live|current|up-to-date) (info|information|data|status)|i don't know|i'm not sure|i cannot confirm|i can't confirm|call the (front desk|gym|desk)|stop by the (front desk|gym|desk)|check with the (front desk|gym|staff)|i have no way to know|i'm unable to verify|i don't have access)/i;
     const nonAnswer = Boolean(aiReply && NON_ANSWER_PATTERNS.test(aiReply));
 
+    // ---- Intent, objections, and lost reasons ----
+    // Status is NEVER changed automatically here; staff decide that. We only
+    // record what the person told us, and text staff when intent materially
+    // changes (browsing -> ready today, week pass -> monthly, tour -> how do
+    // I pay, pricing question -> wants to buy).
+    const existingObjections: string[] = Array.isArray(lead.objections) ? lead.objections : [];
+    const existingLost: string[] = Array.isArray(lead.lost_reasons) ? lead.lost_reasons : [];
+    const mergedObjections = [...new Set([...existingObjections, ...objections])];
+    const mergedLost = [...new Set([...existingLost, ...lostReasons])];
+
+    const leadUpdates: Record<string, unknown> = {};
+    if (mergedObjections.length !== existingObjections.length) {
+      leadUpdates["objections"] = mergedObjections;
+    }
+    if (mergedLost.length !== existingLost.length) leadUpdates["lost_reasons"] = mergedLost;
+
+    const bucketChanged = highIntent && highIntentBucket !== (lead.high_intent_bucket ?? "none");
+    const newlyHighIntent = highIntent && !lead.high_intent;
+    if (highIntent) {
+      leadUpdates["high_intent"] = true;
+      leadUpdates["high_intent_bucket"] = highIntentBucket;
+      if (highIntentNote) leadUpdates["high_intent_note"] = highIntentNote;
+      if (newlyHighIntent || bucketChanged) leadUpdates["high_intent_at"] = new Date().toISOString();
+    }
+    if (Object.keys(leadUpdates).length > 0) {
+      const { error: intentErr } = await supabase
+        .from("leads")
+        .update(leadUpdates)
+        .eq("id", lead.id);
+      if (intentErr) console.error("[twilio-inbound-sms] intent update failed", intentErr.message);
+    }
+
+    if (newlyHighIntent || bucketChanged) {
+      await sendStaffAlert(
+        `🔥 ${alertPrefix.trim()} ${lead.name ?? "A lead"} (${from}) is ready to buy.\nWhat they want: ${highIntentNote || highIntentBucket}\nThey said: "${body}"\n${leadLink}`,
+        "operations",
+      );
+    }
+
+    if (likelyLost) {
+      await sendStaffAlert(
+        `📉 ${lead.name ?? "A lead"} (${from}) sounds like they went another direction.\nReasons: ${mergedLost.join(", ") || "not stated"}\nThey said: "${body}"\nStatus was NOT changed — review and set it yourself.\n${leadLink}`,
+        "operations",
+      );
+    }
+
     if (needsHuman || promisedHandoff || nonAnswer || !aiReply) {
       await supabase
         .from("leads")
@@ -813,12 +1017,12 @@ or
         })
         .eq("id", lead.id);
 
-      const prefix = isExistingMember ? "⚡ [EXISTING MEMBER] " : "⚡ ";
       let alertReason = reason || "n/a";
       if (promisedHandoff) alertReason = "assistant promised staff follow-up";
       if (nonAnswer) alertReason = "assistant gave a non-answer";
-      const alert = `${prefix}${lead.name ?? "A lead"} needs a real response — they said: "${body}". Reason: ${alertReason}. Check the lead tracker.`;
+      const alert = `${alertPrefix}${lead.name ?? "A lead"} (${from}) needs a real response.\nThey said: "${body}"\nInquiry type: ${inquiryType}\nReason: ${alertReason}\n${leadLink}`;
       await sendStaffAlert(alert, "operations");
+
 
       // Escalation means silence: any draft the AI wrote is NOT texted out.
       // Staff answer from the lead tracker so the person never gets a
