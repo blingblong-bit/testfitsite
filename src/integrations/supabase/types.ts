@@ -342,6 +342,10 @@ export type Database = {
           email: string
           first_touch_at: string | null
           followup_count: number
+          high_intent: boolean
+          high_intent_at: string | null
+          high_intent_bucket: string | null
+          high_intent_note: string | null
           id: string
           initial_referrer: string | null
           interest: string | null
@@ -352,12 +356,14 @@ export type Database = {
           last_sms_at: string | null
           lead_score: number
           lead_type: string
+          lost_reasons: string[] | null
           membership_start_date: string | null
           message: string | null
           name: string
           next_action: string | null
           next_follow_up_date: string | null
           notes: string | null
+          objections: string[] | null
           payment_method: string | null
           payment_status: string | null
           phone: string | null
@@ -389,6 +395,10 @@ export type Database = {
           email: string
           first_touch_at?: string | null
           followup_count?: number
+          high_intent?: boolean
+          high_intent_at?: string | null
+          high_intent_bucket?: string | null
+          high_intent_note?: string | null
           id?: string
           initial_referrer?: string | null
           interest?: string | null
@@ -399,12 +409,14 @@ export type Database = {
           last_sms_at?: string | null
           lead_score?: number
           lead_type?: string
+          lost_reasons?: string[] | null
           membership_start_date?: string | null
           message?: string | null
           name: string
           next_action?: string | null
           next_follow_up_date?: string | null
           notes?: string | null
+          objections?: string[] | null
           payment_method?: string | null
           payment_status?: string | null
           phone?: string | null
@@ -436,6 +448,10 @@ export type Database = {
           email?: string
           first_touch_at?: string | null
           followup_count?: number
+          high_intent?: boolean
+          high_intent_at?: string | null
+          high_intent_bucket?: string | null
+          high_intent_note?: string | null
           id?: string
           initial_referrer?: string | null
           interest?: string | null
@@ -446,12 +462,14 @@ export type Database = {
           last_sms_at?: string | null
           lead_score?: number
           lead_type?: string
+          lost_reasons?: string[] | null
           membership_start_date?: string | null
           message?: string | null
           name?: string
           next_action?: string | null
           next_follow_up_date?: string | null
           notes?: string | null
+          objections?: string[] | null
           payment_method?: string | null
           payment_status?: string | null
           phone?: string | null
