@@ -845,6 +845,30 @@ ${JSON_CONTRACT}`;
     let aiReply: string | null = null;
     let needsHuman = true;
     let reason = "ai_error";
+    let highIntent = false;
+    let highIntentNote = "";
+    let highIntentBucket = "none";
+    let objections: string[] = [];
+    let lostReasons: string[] = [];
+    let likelyLost = false;
+
+    const ALLOWED_TAGS = new Set([
+      "competitor",
+      "price",
+      "availability_response_speed",
+      "location",
+      "schedule",
+      "moved_relocating",
+      "health_injury",
+      "not_interested",
+      "other",
+    ]);
+    const cleanTags = (v: unknown): string[] =>
+      Array.isArray(v)
+        ? [...new Set(v.map((x) => String(x).toLowerCase().trim()))].filter((x) =>
+            ALLOWED_TAGS.has(x),
+          )
+        : [];
 
     if (!claudeRes) {
       // both attempts failed; falls through to needs_human staff alert
@@ -867,10 +891,23 @@ ${JSON_CONTRACT}`;
           reply?: string | null;
           needs_human?: boolean;
           reason?: string;
+          high_intent?: boolean;
+          high_intent_note?: string;
+          high_intent_bucket?: string;
+          objections?: unknown;
+          lost_reasons?: unknown;
+          likely_lost?: boolean;
         };
         aiReply = parsed.reply ?? null;
         needsHuman = Boolean(parsed.needs_human);
         reason = parsed.reason ?? "";
+        highIntent = Boolean(parsed.high_intent);
+        highIntentNote = (parsed.high_intent_note ?? "").trim();
+        highIntentBucket = (parsed.high_intent_bucket ?? "none").trim() || "none";
+        objections = cleanTags(parsed.objections);
+        lostReasons = cleanTags(parsed.lost_reasons);
+        likelyLost = Boolean(parsed.likely_lost);
+
       } catch (e) {
         const preview = text.slice(0, 300).replace(/\s+/g, " ");
         const errMsg = (e as Error).message;
