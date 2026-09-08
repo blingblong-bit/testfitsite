@@ -1701,7 +1701,7 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Day Pass Purchase</p>
               <p className="text-sm">
                 <span className="text-muted-foreground">Purchased:</span>{" "}
-                {chicagoDate(dayPassPurchasedAt(lead))}
+                {chicagoDate(dayPassPurchasedAt(lead) ?? lead.created_at)}
               </p>
               <p className="text-sm">
                 <span className="text-muted-foreground">Paid:</span>{" "}
