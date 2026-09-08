@@ -95,8 +95,11 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today.getTime() + 86_400_000);
-    const activeLeads = customer.filter((l) => l.crm_status !== "Joined" && l.crm_status !== "Lost Lead").length;
-    const highPriority = customer.filter((l) => {
+    // Health + conversion numbers describe the prospect funnel only; paid
+    // day-pass customers are measured in their own funnel below.
+    const prospects = customer.filter((l) => isProspectFunnel(l));
+    const activeLeads = prospects.filter((l) => l.crm_status !== "Joined" && l.crm_status !== "Lost Lead").length;
+    const highPriority = prospects.filter((l) => {
       if (l.crm_status === "Joined" || l.crm_status === "Lost Lead") return false;
       if (!l.last_contacted_at) {
         const days = (Date.now() - new Date(l.created_at).getTime()) / 86_400_000;
