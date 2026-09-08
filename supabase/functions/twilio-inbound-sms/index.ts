@@ -130,16 +130,22 @@ type InquiryType =
   | "general_info"
   | "operational";
 
+// Operational detection is INTENT-based, not keyword-based. An amenity word
+// ALONE is never operational ("Do you have showers?" gets answered); it only
+// becomes operational alongside a problem or a right-now status check.
+const PROBLEM_SIGNAL =
+  /(out of order|out of service|not working|isn'?t working|does\s?n'?t work|no longer works?|broken|broke down|shut off|turned off|unavailable|clogged|leaking|leak\b|no hot water|dirty|filthy|messy|nasty|smells?\b|stinks?\b|gross\b|nobody was|no one was)/i;
+const STATUS_CHECK =
+  /(working|fixed|repaired|up and running|back (on|up)|out of|down\b|usable|in use|occupied)/i;
+const AMENITY_SIGNAL =
+  /(tanning|sauna|shower|locker|bathroom|restroom|towel|machine|treadmill|bike|rower|elliptical|equipment|weights?|door|wifi|ac\b|air condition|heat(er)?\b|parking|keycard|key card|scanner)/i;
+
 function classifyInquiry(body: string): InquiryType {
   const lower = body.toLowerCase();
 
   if (
-    /(out of order|not working|isn'?t working|doesn'?t work|broken|broke down|fixed yet|repaired|shut off|turned off|temporarily)/.test(
-      lower,
-    ) ||
-    /(tanning|sauna|shower|locker|bathroom|restroom|towel|machine|treadmill|bike|rower|equipment|weights?|door|wifi|ac\b|air condition|heat(er)?\b|parking)/.test(
-      lower,
-    ) ||
+    PROBLEM_SIGNAL.test(lower) ||
+    (AMENITY_SIGNAL.test(lower) && STATUS_CHECK.test(lower)) ||
     /(class(es)? (today|tonight|canceled|cancelled)|is (there|the) .*class|who'?s teaching|instructor (there|today))/.test(
       lower,
     ) ||
@@ -147,8 +153,7 @@ function classifyInquiry(body: string): InquiryType {
       lower,
     ) ||
     /(lost|left) (my|a|an) /i.test(lower) ||
-    /found my/i.test(lower) ||
-    /(dirty|filthy|messy|smell|gross|nobody was|no one was)/i.test(lower)
+    /found my/i.test(lower)
   ) {
     return "operational";
   }
@@ -256,7 +261,7 @@ ANNUAL FEE POLICY (explicit — never infer beyond this):
   • Exempt: all paid-in-full memberships (1 week, 1 month, 3 months, 6 months, 1 year, duo/family annual) — no annual fee.
   • Exempt: short-term passes and the single-day pass — no annual fee.
   • Exempt: tanning-only plan — no annual fee.
-  • Monthly memberships have no contract.
+  • Monthly memberships ARE a contract. Never say 'no contract' or 'cancel anytime'. Contract length and terms are NOT defined here — escalate any contract question.
   • Anything else about the annual fee (proration, refunds, waivers, timing exceptions, first-year handling) is NOT defined here — escalate instead of explaining it.
 
 Anything not listed above — other discounts, promotions, payment plans, cancellation terms, contract exceptions, freezes, refunds — is NOT approved information. Never invent it. Say a staff member will confirm, and escalate.`;
@@ -309,6 +314,13 @@ GENERAL RULES
    Example — "I want the week pass. Do y'all have showers?" → "Absolutely — our 1-week pass is $35, and yes, we have locker rooms and showers. What day were you hoping to come in?"
 
 15. Always follow the customer's actual stated goal: week pass → help with the week pass; membership → help with the membership; tour → help schedule the tour; pricing → give approved pricing; facility question → answer it. Do not force every lead through the same script.
+
+16. NEVER send a bulleted or multi-line price list. Give prices inline in one flowing sentence, then one question. This applies even to broad "how much is a membership" questions.
+   Required style — Customer: "How much is a membership?"
+   Reply: "Monthly memberships are $39 single, $59 duo, $69 duo+1, or $82 family. A paid-in-full year is $449. Which option are you looking at?"
+   Never reply with a bullet list of every plan, and never dump the full pricing table.
+
+17. Never say monthly memberships are "no contract", "cancel anytime", or contract-free. Monthly memberships ARE a contract. Do not describe contract terms at all — if someone asks about the contract, its length, or getting out of it, say a staff member will go over the details and escalate.
 
 PRIMARY OBJECTIVE
 Make it as easy as possible for a qualified lead to become a customer while staying inside approved pricing, policies, and gym information. The ideal flow is: customer asks → you answer → you give one clear next step → staff are alerted when needed. Speed, clarity, and low friction are the priorities.
@@ -641,15 +653,15 @@ Deno.serve(async (req) => {
     // Equipment/amenity status, closures, canceled classes, lost items, facility
     // complaints. The AI has no live visibility into any of it, so it never gets
     // to answer — the question goes straight to staff with no reply sent.
-    const OPERATIONAL_PATTERNS =
-      /(out of order|not working|isn'?t working|doesn'?t work|broken|broke down|fixed yet|repaired|shut off|turned off|temporarily)|(tanning|sauna|shower|locker|bathroom|restroom|towel|machine|treadmill|bike|rower|equipment|weights?|door|wifi|ac\b|air condition|heat(er)?\b|parking)|(class(es)? (today|tonight|canceled|cancelled)|is (there|the) .*class|who'?s teaching|instructor (there|today))|(are (you|y'?all|we) open|you open (today|now|right now)|closed (today|now)|what time do you (open|close)|open (today|right now))|(lost|left) (my|a|an) |(found my)|(dirty|filthy|messy|smell|gross|nobody was|no one was) /i;
-
+    // Single source of truth: classifyInquiry() decides this, intent-based, so a
+    // plain "do you have showers?" is answered and only a problem or a right-now
+    // status check ("are the showers broken?") is escalated.
     const inquiryType = classifyInquiry(body);
     const isExistingMember = lead.lead_type === "existing_member";
     const leadLink = `https://fitbeyondplus.com/admin/leads?lead=${lead.id}`;
     const alertPrefix = isExistingMember ? "⚡ [EXISTING MEMBER] " : "⚡ ";
 
-    if (OPERATIONAL_PATTERNS.test(body)) {
+    if (inquiryType === "operational") {
       await sendStaffAlert(
         `${alertPrefix}${lead.name ?? "A lead"} (${from}) needs a real person.\nThey said: "${body}"\nInquiry type: ${inquiryType}\nReason: operational_question — no auto-reply was sent.\n${leadLink}`,
         "operations",
