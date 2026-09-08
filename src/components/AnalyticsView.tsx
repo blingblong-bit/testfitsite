@@ -30,6 +30,7 @@ import {
   topReferrers,
   isOverdue,
 } from "@/lib/analytics";
+import { isProspectFunnel } from "@/lib/customer-stage";
 
 const NOT_TRACKED = "Not Yet Tracked";
 
