@@ -20,18 +20,37 @@ export type InquiryType =
   | "general_info"
   | "operational";
 
-/** Lightweight keyword/regex classifier for inbound SMS inquiries. */
+// ---------------------------------------------------------------------------
+// Operational detection is INTENT-based, not keyword-based.
+//
+// "Do you have showers?" is a normal facility question → the assistant answers.
+// "Are the showers broken?" / "Is the sauna working today?" is a right-now
+// condition the assistant has no visibility into → straight to staff.
+//
+// So an amenity word ALONE is never operational. It only becomes operational
+// when paired with a problem or a status-check ("working", "fixed", "down").
+// ---------------------------------------------------------------------------
+
+/** A problem statement — operational on its own, no amenity word required. */
+const PROBLEM_SIGNAL =
+  /(out of order|out of service|not working|isn'?t working|does\s?n'?t work|no longer works?|broken|broke down|shut off|turned off|unavailable|clogged|leaking|leak\b|no hot water|dirty|filthy|messy|nasty|smells?\b|stinks?\b|gross\b|nobody was|no one was)/i;
+
+/** A right-now status check — only operational when it's about an amenity. */
+const STATUS_CHECK =
+  /(working|fixed|repaired|up and running|back (on|up)|out of|down\b|usable|in use|occupied)/i;
+
+/** Physical things at the gym whose current condition only staff can know. */
+const AMENITY_SIGNAL =
+  /(tanning|sauna|shower|locker|bathroom|restroom|towel|machine|treadmill|bike|rower|elliptical|equipment|weights?|door|wifi|ac\b|air condition|heat(er)?\b|parking|keycard|key card|scanner)/i;
+
+/** Lightweight classifier for inbound SMS inquiries. */
 export function classifyInquiry(body: string): InquiryType {
   const lower = body.toLowerCase();
 
   // Operational / right-now gym conditions are escalated before the AI is called.
   if (
-    /(out of order|not working|isn'?t working|doesn'?t work|broken|broke down|fixed yet|repaired|shut off|turned off|temporarily)/.test(
-      lower,
-    ) ||
-    /(tanning|sauna|shower|locker|bathroom|restroom|towel|machine|treadmill|bike|rower|equipment|weights?|door|wifi|ac\b|air condition|heat(er)?\b|parking)/.test(
-      lower,
-    ) ||
+    PROBLEM_SIGNAL.test(lower) ||
+    (AMENITY_SIGNAL.test(lower) && STATUS_CHECK.test(lower)) ||
     /(class(es)? (today|tonight|canceled|cancelled)|is (there|the) .*class|who'?s teaching|instructor (there|today))/.test(
       lower,
     ) ||
@@ -39,8 +58,7 @@ export function classifyInquiry(body: string): InquiryType {
       lower,
     ) ||
     /(lost|left) (my|a|an) /i.test(lower) ||
-    /found my/i.test(lower) ||
-    /(dirty|filthy|messy|smell|gross|nobody was|no one was)/i.test(lower)
+    /found my/i.test(lower)
   ) {
     return "operational";
   }
