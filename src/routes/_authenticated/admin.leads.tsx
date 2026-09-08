@@ -810,7 +810,7 @@ function LeadsView({
   const freeWeekMap = useMemo(() => buildFreeWeekMap(referrals), [referrals]);
 
   const byType = useMemo(
-    () => leads?.filter((l) => typeFilter === "all" || (l.lead_type ?? "customer_lead") === typeFilter) ?? [],
+    () => leads?.filter((l) => matchesView(l, typeFilter)) ?? [],
     [leads, typeFilter]
   );
 
@@ -880,9 +880,17 @@ function LeadsView({
   const [showClosed, setShowClosed] = useState(false);
   const searching = query.trim().length > 0;
 
-  // Dashboard stats — always computed over customer_lead pool, excluding existing_member
-  const customerLeads = useMemo(
-    () => leads?.filter((l) => (l.lead_type ?? "customer_lead") === "customer_lead") ?? [],
+  // Prospect stats — true prospects only. Anyone who actually paid for a day
+  // pass is a customer, not a prospect, and is measured in its own funnel
+  // below. (A lead who inquired first and bought a pass later still counts as
+  // a prospect, since they genuinely started as one.)
+  const prospectPool = useMemo(
+    () => leads?.filter((l) => isProspectFunnel(l)) ?? [],
+    [leads],
+  );
+  const customerLeads = prospectPool;
+  const dayPassPool = useMemo(
+    () => leads?.filter((l) => isDayPassFunnel(l)) ?? [],
     [leads],
   );
   const existingMembersCount = useMemo(
@@ -900,27 +908,41 @@ function LeadsView({
     const totalJoined = customerLeads.filter((l) => l.became_member || l.crm_status === "Joined").length;
     const conversionRate = totalForConversion === 0 ? 0 : Math.round((totalJoined / totalForConversion) * 100);
 
-    return { newLeads, highPriority, followUpsDueToday, toursScheduled, toursCompleted, joinedThisMonth, conversionRate };
-  }, [customerLeads, monthStart]);
+    // Day-pass funnel, kept completely separate from the prospect numbers.
+    const dayPassCustomers = dayPassPool.length;
+    const dayPassConversions = dayPassPool.filter((l) => isDayPassConversion(l)).length;
+    const dayPassConversionRate =
+      dayPassCustomers === 0 ? 0 : Math.round((dayPassConversions / dayPassCustomers) * 1000) / 10;
+
+    return {
+      prospectLeads: totalForConversion,
+      newLeads, highPriority, followUpsDueToday, toursScheduled, toursCompleted,
+      joinedThisMonth, conversionRate,
+      dayPassCustomers, dayPassConversions, dayPassConversionRate,
+    };
+  }, [customerLeads, dayPassPool, monthStart]);
 
   function toggleQuick(q: QuickFilter) {
     setQuickFilter((prev) => (prev === q ? "none" : q));
   }
 
-  const count = (t: TypeFilter) =>
-    t === "all" ? (leads?.length ?? 0) : (leads?.filter((l) => (l.lead_type ?? "customer_lead") === t).length ?? 0);
+  const count = (t: TypeFilter) => leads?.filter((l) => matchesView(l, t)).length ?? 0;
 
   return (
     <>
       {/* Dashboard stats — click to filter */}
-      <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-3">
+      <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <Stat label="Prospect Leads" value={stats.prospectLeads} onClick={() => { setQuickFilter("none"); setTypeFilter("prospects"); }} active={typeFilter === "prospects" && quickFilter === "none"} />
         <Stat label="New Leads" value={stats.newLeads} active={quickFilter === "new"} onClick={() => toggleQuick("new")} />
         <Stat label="Follow-Ups Due Today" value={stats.followUpsDueToday} accent={stats.followUpsDueToday > 0 ? "destructive" : undefined} active={quickFilter === "due_today"} onClick={() => toggleQuick("due_today")} />
         <Stat label="High Priority" value={stats.highPriority} accent="destructive" active={quickFilter === "high_priority"} onClick={() => toggleQuick("high_priority")} />
         <Stat label="Tours Scheduled" value={stats.toursScheduled} active={quickFilter === "tours_scheduled"} onClick={() => toggleQuick("tours_scheduled")} />
         <Stat label="Tours Completed" value={stats.toursCompleted} active={quickFilter === "tours_completed"} onClick={() => toggleQuick("tours_completed")} />
         <Stat label="Converted This Month" value={stats.joinedThisMonth} accent="primary" active={quickFilter === "joined_this_month"} onClick={() => toggleQuick("joined_this_month")} />
-        <Stat label="Conversion Rate" value={`${stats.conversionRate}%`} accent="primary" />
+        <Stat label="Prospect Conversion Rate" value={`${stats.conversionRate}%`} accent="primary" />
+        <Stat label="Day Pass Customers" value={stats.dayPassCustomers} onClick={() => { setQuickFilter("none"); setTypeFilter("day_pass"); }} active={typeFilter === "day_pass"} />
+        <Stat label="Day Pass → Membership" value={stats.dayPassConversions} accent="primary" />
+        <Stat label="Day Pass Conversion Rate" value={`${stats.dayPassConversionRate}%`} accent="primary" />
         <Stat label="Existing Members Detected" value={existingMembersCount} onClick={() => setTypeFilter("existing_member")} active={typeFilter === "existing_member"} />
       </div>
       {quickFilter !== "none" && (
@@ -934,9 +956,12 @@ function LeadsView({
         </div>
       )}
 
-      {/* Type filter */}
+      {/* Stage / type filter */}
       <div className="mt-6 flex flex-wrap gap-2">
-        <FilterChip active={typeFilter === "customer_lead"} onClick={() => setTypeFilter("customer_lead")}>Customer Leads ({count("customer_lead")})</FilterChip>
+        <FilterChip active={typeFilter === "prospects"} onClick={() => setTypeFilter("prospects")}>Prospects ({count("prospects")})</FilterChip>
+        <FilterChip active={typeFilter === "day_pass"} onClick={() => setTypeFilter("day_pass")}>Day Pass Customers ({count("day_pass")})</FilterChip>
+        <FilterChip active={typeFilter === "members"} onClick={() => setTypeFilter("members")}>Members ({count("members")})</FilterChip>
+        <FilterChip active={typeFilter === "lost"} onClick={() => setTypeFilter("lost")}>Lost ({count("lost")})</FilterChip>
         <FilterChip active={typeFilter === "existing_member"} onClick={() => setTypeFilter("existing_member")}>Existing Members ({count("existing_member")})</FilterChip>
         <FilterChip active={typeFilter === "vendor_solicitation"} onClick={() => setTypeFilter("vendor_solicitation")}>Vendor Solicitations ({count("vendor_solicitation")})</FilterChip>
         <FilterChip active={typeFilter === "spam"} onClick={() => setTypeFilter("spam")}>Spam ({count("spam")})</FilterChip>
