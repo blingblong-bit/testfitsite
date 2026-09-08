@@ -518,7 +518,7 @@ Deno.serve(async (req) => {
     const { data: leadRows, error: leadErr } = await supabase
       .from("leads")
       .select(
-        "id, name, email, phone, interest, sms_opted_out, notes, lead_type, created_at, high_intent, high_intent_bucket, objections, lost_reasons",
+        "id, name, email, phone, interest, sms_opted_out, notes, lead_type, created_at, high_intent, high_intent_bucket, objections, lost_reasons, source, day_pass_purchased_at, day_pass_price, payment_status",
       )
       .ilike("phone", `%${last4}%`)
       .order("created_at", { ascending: false })
