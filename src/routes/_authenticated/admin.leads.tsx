@@ -1389,6 +1389,18 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
         <div className="flex-1 min-w-[240px]">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-semibold">{lead.name}</h2>
+            {isDayPassCustomer(lead) && customerStage(lead) !== "member" && (
+              <span
+                title={
+                  dayPassPurchasedAt(lead)
+                    ? `Paid day pass on ${chicagoDate(dayPassPurchasedAt(lead) as string)}`
+                    : "Paid day pass"
+                }
+                className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/40"
+              >
+                Day Pass Customer
+              </span>
+            )}
             {lead.crm_status === "Joined" ? (
               <span className="inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40">
                 Member
