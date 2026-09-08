@@ -116,9 +116,17 @@ export type MonthMetrics = {
   toursScheduled: number;
   toursCompleted: number;
   membersJoined: number;
-  conversionRate: number; // % of leads in month who became members
-  totalLeads: number;
+  conversionRate: number; // prospect conversion %, rounded
+  totalLeads: number; // prospect leads only — paid day-pass customers excluded
   sourceCounts: Record<SourceKey, number>;
+  // Prospect funnel (people who have not bought anything yet)
+  prospectLeads: number;
+  prospectConversions: number;
+  prospectConversionRate: number;
+  // Day-pass funnel (people who already paid for a visit)
+  dayPassCustomers: number;
+  dayPassConversions: number;
+  dayPassConversionRate: number;
   // Attribution-derived channel counts (each lead counted once)
   socialLeads: number;
   googleBusinessLeads: number;
@@ -128,12 +136,21 @@ export type MonthMetrics = {
   membersFromReferrals: number;
 };
 
+function joinedInRange(l: AnalyticsLead, start: Date, end: Date): boolean {
+  return Boolean(
+    l.became_member &&
+      l.membership_start_date &&
+      inRange(l.membership_start_date + "T00:00:00", start, end),
+  );
+}
+
 export function computeMonth(
   leads: AnalyticsLead[],
   referrals: AnalyticsReferral[],
   start: Date,
   end: Date,
 ): MonthMetrics {
+  // All real customer records created this month — used for source/channel mix.
   const monthLeads = leads.filter(
     (l) => l.lead_type === "customer_lead" && inRange(l.created_at, start, end),
   );
@@ -144,25 +161,35 @@ export function computeMonth(
   };
   for (const l of monthLeads) sourceCounts[classifySource(l.source)] += 1;
 
-  const toursScheduled = monthLeads.filter((l) => l.tour_scheduled).length;
-  const toursCompleted = monthLeads.filter((l) => l.tour_completed).length;
-  const membersJoined = leads.filter(
-    (l) => l.became_member && l.membership_start_date && inRange(l.membership_start_date + "T00:00:00", start, end),
+  // --- Prospect funnel: nobody who has already paid for a day pass ---
+  const monthProspects = monthLeads.filter((l) => isProspectFunnel(l));
+  const toursScheduled = monthProspects.filter((l) => l.tour_scheduled).length;
+  const toursCompleted = monthProspects.filter((l) => l.tour_completed).length;
+  const prospectLeads = monthProspects.length;
+  const prospectConversions = leads.filter(
+    (l) => isProspectFunnel(l) && joinedInRange(l, start, end),
   ).length;
-  const dayPassesSold = monthLeads.filter((l) => classifySource(l.source) === "Day Pass").length;
+  const prospectConversionRate =
+    prospectLeads === 0 ? 0 : Math.round((prospectConversions / prospectLeads) * 1000) / 10;
+
+  // --- Day-pass funnel: measured off real purchases, not lead source text ---
+  const monthDayPass = leads.filter(
+    (l) => isDayPassFunnel(l) && inRange(dayPassPurchasedAt(l), start, end),
+  );
+  const dayPassCustomers = monthDayPass.length;
+  const dayPassConversions = leads.filter(
+    (l) => isDayPassFunnel(l) && joinedInRange(l, start, end),
+  ).length;
+  const dayPassConversionRate =
+    dayPassCustomers === 0 ? 0 : Math.round((dayPassConversions / dayPassCustomers) * 1000) / 10;
+
+  const membersJoined = leads.filter((l) => joinedInRange(l, start, end)).length;
 
   const refsCreated = referrals.filter((r) => inRange(r.created_at, start, end)).length;
   const refsRedeemed = referrals.filter((r) => inRange(r.redeemed_at, start, end)).length;
   const membersFromReferrals = leads.filter(
-    (l) =>
-      l.became_member &&
-      l.membership_start_date &&
-      inRange(l.membership_start_date + "T00:00:00", start, end) &&
-      classifySource(l.source) === "Referral",
+    (l) => joinedInRange(l, start, end) && classifySource(l.source) === "Referral",
   ).length;
-
-  const totalLeads = monthLeads.length;
-  const conversionRate = totalLeads === 0 ? 0 : Math.round((membersJoined / totalLeads) * 100);
 
   // Channel counts from the shared attribution logic; one bucket per lead.
   const monthChannels = monthLeads.map((l) => channelForLead(l));
@@ -176,13 +203,19 @@ export function computeMonth(
     walkInLeads: sourceCounts["Walk-In"],
     phoneLeads: sourceCounts["Phone Call"],
     referralLeads: sourceCounts.Referral,
-    dayPassesSold,
+    dayPassesSold: dayPassCustomers,
     toursScheduled,
     toursCompleted,
     membersJoined,
-    conversionRate,
-    totalLeads,
+    conversionRate: Math.round(prospectConversionRate),
+    totalLeads: prospectLeads,
     sourceCounts,
+    prospectLeads,
+    prospectConversions,
+    prospectConversionRate,
+    dayPassCustomers,
+    dayPassConversions,
+    dayPassConversionRate,
     socialLeads,
     googleBusinessLeads,
     referralCodesGenerated: refsCreated,
