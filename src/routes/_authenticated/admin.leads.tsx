@@ -35,6 +35,14 @@ function chicagoLocalInputToUtcIso(v: string): string | null {
 import { AnalyticsView } from "@/components/AnalyticsView";
 import { channelForLead, hasMeasuredAttribution } from "@/lib/analytics";
 import { computePriority, daysSince, followUpOverdueDays, type Priority } from "@/lib/lead-priority";
+import {
+  customerStage,
+  dayPassPurchasedAt,
+  isDayPassCustomer,
+  isDayPassConversion,
+  isDayPassFunnel,
+  isProspectFunnel,
+} from "@/lib/customer-stage";
 
 type CrmStatus =
   | "New Lead"
@@ -147,6 +155,11 @@ type Lead = {
   high_intent_bucket?: string | null;
   objections?: string[] | null;
   lost_reasons?: string[] | null;
+  // Day-pass purchase evidence
+  day_pass_purchased_at?: string | null;
+  payment_status?: string | null;
+  payment_method?: string | null;
+  day_pass_price?: number | null;
 };
 
 
