@@ -238,9 +238,14 @@ export type Funnel = {
   members: number;
 };
 
+/** Prospect funnel: lead → contacted → visit/tour → joined. Day-pass buyers
+ *  are a separate funnel (see computeDayPassFunnel). */
 export function computeFunnel(leads: AnalyticsLead[], start: Date, end: Date): Funnel {
   const m = leads.filter(
-    (l) => l.lead_type === "customer_lead" && inRange(l.created_at, start, end),
+    (l) =>
+      l.lead_type === "customer_lead" &&
+      isProspectFunnel(l) &&
+      inRange(l.created_at, start, end),
   );
   return {
     leads: m.length,
@@ -248,6 +253,30 @@ export function computeFunnel(leads: AnalyticsLead[], start: Date, end: Date): F
     responded: m.filter((l) => l.last_response_at !== null).length,
     toursScheduled: m.filter((l) => l.tour_scheduled).length,
     toursCompleted: m.filter((l) => l.tour_completed).length,
+    members: m.filter((l) => l.became_member).length,
+  };
+}
+
+export type DayPassFunnel = {
+  purchased: number;
+  visited: number;
+  followedUp: number;
+  members: number;
+};
+
+/** Day-pass funnel: purchase → visit → follow-up → membership. */
+export function computeDayPassFunnel(
+  leads: AnalyticsLead[],
+  start: Date,
+  end: Date,
+): DayPassFunnel {
+  const m = leads.filter(
+    (l) => isDayPassFunnel(l) && inRange(dayPassPurchasedAt(l), start, end),
+  );
+  return {
+    purchased: m.length,
+    visited: m.filter((l) => l.tour_completed || l.crm_status === "Tour Completed").length,
+    followedUp: m.filter((l) => l.last_contacted_at !== null || l.last_response_at !== null).length,
     members: m.filter((l) => l.became_member).length,
   };
 }
