@@ -653,15 +653,15 @@ Deno.serve(async (req) => {
     // Equipment/amenity status, closures, canceled classes, lost items, facility
     // complaints. The AI has no live visibility into any of it, so it never gets
     // to answer — the question goes straight to staff with no reply sent.
-    const OPERATIONAL_PATTERNS =
-      /(out of order|not working|isn'?t working|doesn'?t work|broken|broke down|fixed yet|repaired|shut off|turned off|temporarily)|(tanning|sauna|shower|locker|bathroom|restroom|towel|machine|treadmill|bike|rower|equipment|weights?|door|wifi|ac\b|air condition|heat(er)?\b|parking)|(class(es)? (today|tonight|canceled|cancelled)|is (there|the) .*class|who'?s teaching|instructor (there|today))|(are (you|y'?all|we) open|you open (today|now|right now)|closed (today|now)|what time do you (open|close)|open (today|right now))|(lost|left) (my|a|an) |(found my)|(dirty|filthy|messy|smell|gross|nobody was|no one was) /i;
-
+    // Single source of truth: classifyInquiry() decides this, intent-based, so a
+    // plain "do you have showers?" is answered and only a problem or a right-now
+    // status check ("are the showers broken?") is escalated.
     const inquiryType = classifyInquiry(body);
     const isExistingMember = lead.lead_type === "existing_member";
     const leadLink = `https://fitbeyondplus.com/admin/leads?lead=${lead.id}`;
     const alertPrefix = isExistingMember ? "⚡ [EXISTING MEMBER] " : "⚡ ";
 
-    if (OPERATIONAL_PATTERNS.test(body)) {
+    if (inquiryType === "operational") {
       await sendStaffAlert(
         `${alertPrefix}${lead.name ?? "A lead"} (${from}) needs a real person.\nThey said: "${body}"\nInquiry type: ${inquiryType}\nReason: operational_question — no auto-reply was sent.\n${leadLink}`,
         "operations",
