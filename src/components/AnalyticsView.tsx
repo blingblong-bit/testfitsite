@@ -58,6 +58,7 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
     const current = computeMonth(leads, referrals, thisStart, thisEnd);
     const previous = computeMonth(leads, referrals, lastStart, lastEnd);
     const funnel = computeFunnel(leads, thisStart, thisEnd);
+    const dayPassFunnel = computeDayPassFunnel(leads, thisStart, thisEnd);
 
     const earliest = leads.length || referrals.length
       ? new Date(Math.min(
@@ -129,7 +130,7 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
     const campaigns = computeCampaignBreakdown(leads, thisStart, thisEnd);
 
     return {
-      current, previous, funnel, history, availableMonths, channels, campaigns,
+      current, previous, funnel, dayPassFunnel, history, availableMonths, channels, campaigns,
       avgFirstContactHrs, avgResponseHrs, avgDaysToTour, avgDaysToMember,
       health: {
         activeLeads, highPriority, followUpsDue, toursToday,
