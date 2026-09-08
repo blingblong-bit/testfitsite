@@ -339,6 +339,7 @@ export type Database = {
           created_at: string
           crm_status: string | null
           day_pass_price: number | null
+          day_pass_purchased_at: string | null
           email: string
           first_touch_at: string | null
           followup_count: number
@@ -392,6 +393,7 @@ export type Database = {
           created_at?: string
           crm_status?: string | null
           day_pass_price?: number | null
+          day_pass_purchased_at?: string | null
           email: string
           first_touch_at?: string | null
           followup_count?: number
@@ -445,6 +447,7 @@ export type Database = {
           created_at?: string
           crm_status?: string | null
           day_pass_price?: number | null
+          day_pass_purchased_at?: string | null
           email?: string
           first_touch_at?: string | null
           followup_count?: number

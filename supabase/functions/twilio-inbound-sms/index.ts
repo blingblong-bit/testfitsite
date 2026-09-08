@@ -518,7 +518,7 @@ Deno.serve(async (req) => {
     const { data: leadRows, error: leadErr } = await supabase
       .from("leads")
       .select(
-        "id, name, email, phone, interest, sms_opted_out, notes, lead_type, created_at, high_intent, high_intent_bucket, objections, lost_reasons",
+        "id, name, email, phone, interest, sms_opted_out, notes, lead_type, created_at, high_intent, high_intent_bucket, objections, lost_reasons, source, day_pass_purchased_at, day_pass_price, payment_status",
       )
       .ilike("phone", `%${last4}%`)
       .order("created_at", { ascending: false })
@@ -753,12 +753,19 @@ Deno.serve(async (req) => {
       ? `\n\nIMPORTANT CONTEXT — RECENT ALTERNATIVE TIME OFFER:\nOur staff previously suggested "${declinedAltLabel}" as an alternative visit time. The customer's latest reply was NOT a clear yes to that time (they either declined it or were ambiguous). Briefly acknowledge that "${declinedAltLabel}" doesn't work, and let them know staff will reach out with another time, or point them to fitbeyondplus.com/schedule-visit?lead=${lead.id} to pick something themselves. Do not respond as if the alternative offer never happened.`
       : "";
 
+    // Someone who already paid for a day pass has been inside the gym. Never
+    // pitch them a day pass or a first visit again.
+    const boughtDayPass = Boolean(lead.day_pass_purchased_at);
+    const dayPassContext = boughtDayPass
+      ? `\n\nIMPORTANT CONTEXT — THEY ALREADY BOUGHT A DAY PASS\nThey paid for a $${lead.day_pass_price ?? 10} day pass on ${String(lead.day_pass_purchased_at).slice(0, 10)} and have already worked out here. Do NOT offer them a day pass, a trial, a first visit, or a tour as if they've never been in. Talk to them as someone who has trained here: ask how their visit went and what they'd want out of a membership.`
+      : "";
+
     const prospectPrompt = `${APPROVED_CONTEXT}
 
 ${rulebook}
 
 WHO YOU ARE TEXTING
-A potential member named ${lead.name ?? "there"} who came in interested in ${lead.interest ?? "getting started"}. Their latest message looks like a "${inquiryType}" inquiry.
+A ${boughtDayPass ? "day pass customer" : "potential member"} named ${lead.name ?? "there"} who came in interested in ${lead.interest ?? "getting started"}. Their latest message looks like a "${inquiryType}" inquiry.${dayPassContext}
 
 ALSO ESCALATE (needs_human: true) IF
 - They ask to negotiate price, or want a discount that isn't in the approved list

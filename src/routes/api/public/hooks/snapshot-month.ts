@@ -28,7 +28,7 @@ export const Route = createFileRoute("/api/public/hooks/snapshot-month")({
         // Pull all leads + referrals (small dataset for a single gym; OK)
         const [{ data: leads, error: lerr }, { data: refs, error: rerr }] = await Promise.all([
           supabaseAdmin.from("leads").select(
-            "id, source, created_at, lead_type, crm_status, last_contacted_at, last_response_at, tour_scheduled, tour_completed, tour_date, became_member, membership_start_date, next_follow_up_date",
+            "id, source, created_at, lead_type, crm_status, last_contacted_at, last_response_at, tour_scheduled, tour_completed, tour_date, became_member, membership_start_date, next_follow_up_date, day_pass_purchased_at, payment_status, day_pass_price",
           ),
           supabaseAdmin.from("referrals").select(
             "id, referral_code, normalized_referrer_email, referrer_name, status, redeemed_at, created_at",

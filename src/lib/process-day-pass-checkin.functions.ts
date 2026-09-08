@@ -111,6 +111,9 @@ async function finalizeDayPassLead(data: FinalizeInput): Promise<FinalizeResult>
         payment_status,
         payment_method: data.payment_method,
         day_pass_price: 10,
+        // Hard purchase evidence — this is what makes them a Day Pass
+        // Customer rather than a prospect in the tracker.
+        day_pass_purchased_at: now,
         notes,
       })
       .eq("id", existingLead.id);
@@ -140,6 +143,7 @@ async function finalizeDayPassLead(data: FinalizeInput): Promise<FinalizeResult>
       payment_status,
       payment_method: data.payment_method,
       day_pass_price: 10,
+      day_pass_purchased_at: now,
       ...attributionColumns(data.attribution),
       status: "checked_in",
       notes: noteEntry,

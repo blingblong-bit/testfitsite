@@ -16,6 +16,8 @@ import {
   computeCampaignBreakdown,
   type AcquisitionRow,
   computeFunnel,
+  computeDayPassFunnel,
+  type DayPassFunnel,
   computeMonth,
   avgHoursBetween,
   avgDaysBetween,
@@ -28,6 +30,7 @@ import {
   topReferrers,
   isOverdue,
 } from "@/lib/analytics";
+import { isProspectFunnel } from "@/lib/customer-stage";
 
 const NOT_TRACKED = "Not Yet Tracked";
 
@@ -55,6 +58,7 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
     const current = computeMonth(leads, referrals, thisStart, thisEnd);
     const previous = computeMonth(leads, referrals, lastStart, lastEnd);
     const funnel = computeFunnel(leads, thisStart, thisEnd);
+    const dayPassFunnel = computeDayPassFunnel(leads, thisStart, thisEnd);
 
     const earliest = leads.length || referrals.length
       ? new Date(Math.min(
@@ -95,8 +99,11 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today.getTime() + 86_400_000);
-    const activeLeads = customer.filter((l) => l.crm_status !== "Joined" && l.crm_status !== "Lost Lead").length;
-    const highPriority = customer.filter((l) => {
+    // Health + conversion numbers describe the prospect funnel only; paid
+    // day-pass customers are measured in their own funnel below.
+    const prospects = customer.filter((l) => isProspectFunnel(l));
+    const activeLeads = prospects.filter((l) => l.crm_status !== "Joined" && l.crm_status !== "Lost Lead").length;
+    const highPriority = prospects.filter((l) => {
       if (l.crm_status === "Joined" || l.crm_status === "Lost Lead") return false;
       if (!l.last_contacted_at) {
         const days = (Date.now() - new Date(l.created_at).getTime()) / 86_400_000;
@@ -115,15 +122,15 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
     const leadsThisWeek = customer.filter(
       (l) => classifySource(l.source) === "Website" && new Date(l.created_at).getTime() >= weekStart.getTime(),
     ).length;
-    const allMembers = customer.filter((l) => l.became_member).length;
-    const allLeadsCount = customer.length;
+    const allMembers = prospects.filter((l) => l.became_member).length;
+    const allLeadsCount = prospects.length;
     const overallConversion = allLeadsCount === 0 ? 0 : Math.round((allMembers / allLeadsCount) * 100);
 
     const channels = computeChannelBreakdown(leads, thisStart, thisEnd);
     const campaigns = computeCampaignBreakdown(leads, thisStart, thisEnd);
 
     return {
-      current, previous, funnel, history, availableMonths, channels, campaigns,
+      current, previous, funnel, dayPassFunnel, history, availableMonths, channels, campaigns,
       avgFirstContactHrs, avgResponseHrs, avgDaysToTour, avgDaysToMember,
       health: {
         activeLeads, highPriority, followUpsDue, toursToday,
@@ -171,7 +178,7 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
     return <div className="mt-8 text-sm text-muted-foreground">Loading analytics…</div>;
   }
 
-  const { current, previous, funnel, history, health, topRefs, availableMonths } = data;
+  const { current, previous, funnel, dayPassFunnel, history, health, topRefs, availableMonths } = data;
 
   const canGoNext = !isCurrentMonth;
   function stepMonth(delta: number) {
@@ -266,20 +273,43 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
           <Score label="Google Business Leads" value={current.googleBusinessLeads} change={pctChange(current.googleBusinessLeads, previous.googleBusinessLeads)} />
           <Score label="Social Media Leads" value={current.socialLeads} change={pctChange(current.socialLeads, previous.socialLeads)} />
           <Score label="Referral Leads" value={current.referralLeads} change={pctChange(current.referralLeads, previous.referralLeads)} />
-          <Score label="Day Passes Sold" value={current.dayPassesSold} change={pctChange(current.dayPassesSold, previous.dayPassesSold)} />
           <Score label="Tours Scheduled" value={current.toursScheduled} change={pctChange(current.toursScheduled, previous.toursScheduled)} />
           <Score label="Tours Completed" value={current.toursCompleted} change={pctChange(current.toursCompleted, previous.toursCompleted)} />
           <Score label="New Members Joined" value={current.membersJoined} change={pctChange(current.membersJoined, previous.membersJoined)} />
-          <Score label="Membership Conversion" value={`${current.conversionRate}%`} change={pctChange(current.conversionRate, previous.conversionRate)} />
           <Score label="PT Referrals → Gym" notTracked />
           <Score label="Gym Referrals → PT" notTracked />
           <Score label="Google Reviews Received" notTracked />
         </Grid>
       </Section>
 
-      {/* Conversion Funnel */}
-      <Section title="Conversion Funnel" subtitle="How this month's leads progress through the pipeline">
-        <FunnelView funnel={funnel} />
+      {/* Prospect funnel */}
+      <Section
+        title="Prospect Leads"
+        subtitle="People who haven't bought anything yet — day pass customers are tracked separately"
+      >
+        <Grid cols={3}>
+          <Score label="Prospect Leads" value={current.prospectLeads} change={pctChange(current.prospectLeads, previous.prospectLeads)} />
+          <Score label="Prospects Who Joined" value={current.prospectConversions} change={pctChange(current.prospectConversions, previous.prospectConversions)} />
+          <Score label="Prospect Conversion" value={`${current.prospectConversionRate}%`} change={pctChange(current.prospectConversionRate, previous.prospectConversionRate)} />
+        </Grid>
+        <div className="mt-6">
+          <FunnelView funnel={funnel} />
+        </div>
+      </Section>
+
+      {/* Day pass funnel */}
+      <Section
+        title="Day Pass Customers"
+        subtitle="Paid $10 visitors — counted only in this funnel"
+      >
+        <Grid cols={3}>
+          <Score label="Day Pass Customers" value={current.dayPassCustomers} change={pctChange(current.dayPassCustomers, previous.dayPassCustomers)} />
+          <Score label="Day Pass → Membership" value={current.dayPassConversions} change={pctChange(current.dayPassConversions, previous.dayPassConversions)} />
+          <Score label="Day Pass Conversion" value={`${current.dayPassConversionRate}%`} change={pctChange(current.dayPassConversionRate, previous.dayPassConversionRate)} />
+        </Grid>
+        <div className="mt-6">
+          <DayPassFunnelView funnel={dayPassFunnel} />
+        </div>
       </Section>
 
       {/* MoM Changes */}
@@ -466,15 +496,35 @@ function MoM({ label, curr, prev }: { label: string; curr: number; prev: number 
 }
 
 function FunnelView({ funnel }: { funnel: ReturnType<typeof computeFunnel> }) {
-  const stages: Array<[string, number]> = [
-    ["Website Leads", funnel.leads],
-    ["Contacted", funnel.contacted],
-    ["Responded", funnel.responded],
-    ["Tour Scheduled", funnel.toursScheduled],
-    ["Tour Completed", funnel.toursCompleted],
-    ["Membership Joined", funnel.members],
-  ];
-  const max = Math.max(funnel.leads, 1);
+  return (
+    <StageBars
+      stages={[
+        ["Prospect Leads", funnel.leads],
+        ["Contacted", funnel.contacted],
+        ["Responded", funnel.responded],
+        ["Tour Scheduled", funnel.toursScheduled],
+        ["Tour Completed", funnel.toursCompleted],
+        ["Membership Joined", funnel.members],
+      ]}
+    />
+  );
+}
+
+function DayPassFunnelView({ funnel }: { funnel: DayPassFunnel }) {
+  return (
+    <StageBars
+      stages={[
+        ["Day Pass Purchased", funnel.purchased],
+        ["Day Pass Visit", funnel.visited],
+        ["Follow-Up Made", funnel.followedUp],
+        ["Membership Conversion", funnel.members],
+      ]}
+    />
+  );
+}
+
+function StageBars({ stages }: { stages: Array<[string, number]> }) {
+  const max = Math.max(stages[0]?.[1] ?? 0, 1);
   return (
     <div className="space-y-2">
       {stages.map(([name, count], i) => {

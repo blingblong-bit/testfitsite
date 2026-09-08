@@ -35,6 +35,14 @@ function chicagoLocalInputToUtcIso(v: string): string | null {
 import { AnalyticsView } from "@/components/AnalyticsView";
 import { channelForLead, hasMeasuredAttribution } from "@/lib/analytics";
 import { computePriority, daysSince, followUpOverdueDays, type Priority } from "@/lib/lead-priority";
+import {
+  customerStage,
+  dayPassPurchasedAt,
+  isDayPassCustomer,
+  isDayPassConversion,
+  isDayPassFunnel,
+  isProspectFunnel,
+} from "@/lib/customer-stage";
 
 type CrmStatus =
   | "New Lead"
@@ -147,6 +155,11 @@ type Lead = {
   high_intent_bucket?: string | null;
   objections?: string[] | null;
   lost_reasons?: string[] | null;
+  // Day-pass purchase evidence
+  day_pass_purchased_at?: string | null;
+  payment_status?: string | null;
+  payment_method?: string | null;
+  day_pass_price?: number | null;
 };
 
 
@@ -220,7 +233,32 @@ function buildFreeWeekMap(referrals: Referral[] | null): Record<string, FreeWeek
   return map;
 }
 
-type TypeFilter = "customer_lead" | "existing_member" | "vendor_solicitation" | "spam" | "all";
+// Main tracker views. The first four are customer stages (prospect / day pass
+// customer / member / lost); the rest are the existing lead-type buckets.
+type TypeFilter =
+  | "prospects"
+  | "day_pass"
+  | "members"
+  | "lost"
+  | "existing_member"
+  | "vendor_solicitation"
+  | "spam"
+  | "all";
+
+function matchesView(lead: Lead, view: TypeFilter): boolean {
+  const type = lead.lead_type ?? "customer_lead";
+  if (view === "all") return true;
+  if (view === "existing_member" || view === "vendor_solicitation" || view === "spam") {
+    return type === view;
+  }
+  // Stage views cover real customer records only.
+  if (type !== "customer_lead") return false;
+  const stage = customerStage(lead);
+  if (view === "prospects") return stage === "prospect";
+  if (view === "day_pass") return stage === "day_pass_customer";
+  if (view === "members") return stage === "member";
+  return stage === "lost";
+}
 type Tab = "leads" | "referrals" | "analytics" | "settings";
 type SortKey = "priority" | "newest" | "oldest" | "tour_date" | "last_contact" | "source";
 type QuickFilter = "none" | "new" | "high_priority" | "due_today" | "tours_scheduled" | "tours_completed" | "joined_this_month";
@@ -328,7 +366,7 @@ function AdminLeads() {
   const [leads, setLeads] = useState<Lead[] | null>(null);
   const [referrals, setReferrals] = useState<Referral[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("customer_lead");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("prospects");
   const [statusFilter, setStatusFilter] = useState<CrmStatus | "all">("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortKey>("priority");
@@ -772,7 +810,7 @@ function LeadsView({
   const freeWeekMap = useMemo(() => buildFreeWeekMap(referrals), [referrals]);
 
   const byType = useMemo(
-    () => leads?.filter((l) => typeFilter === "all" || (l.lead_type ?? "customer_lead") === typeFilter) ?? [],
+    () => leads?.filter((l) => matchesView(l, typeFilter)) ?? [],
     [leads, typeFilter]
   );
 
@@ -842,9 +880,17 @@ function LeadsView({
   const [showClosed, setShowClosed] = useState(false);
   const searching = query.trim().length > 0;
 
-  // Dashboard stats — always computed over customer_lead pool, excluding existing_member
-  const customerLeads = useMemo(
-    () => leads?.filter((l) => (l.lead_type ?? "customer_lead") === "customer_lead") ?? [],
+  // Prospect stats — true prospects only. Anyone who actually paid for a day
+  // pass is a customer, not a prospect, and is measured in its own funnel
+  // below. (A lead who inquired first and bought a pass later still counts as
+  // a prospect, since they genuinely started as one.)
+  const prospectPool = useMemo(
+    () => leads?.filter((l) => isProspectFunnel(l)) ?? [],
+    [leads],
+  );
+  const customerLeads = prospectPool;
+  const dayPassPool = useMemo(
+    () => leads?.filter((l) => isDayPassFunnel(l)) ?? [],
     [leads],
   );
   const existingMembersCount = useMemo(
@@ -862,27 +908,41 @@ function LeadsView({
     const totalJoined = customerLeads.filter((l) => l.became_member || l.crm_status === "Joined").length;
     const conversionRate = totalForConversion === 0 ? 0 : Math.round((totalJoined / totalForConversion) * 100);
 
-    return { newLeads, highPriority, followUpsDueToday, toursScheduled, toursCompleted, joinedThisMonth, conversionRate };
-  }, [customerLeads, monthStart]);
+    // Day-pass funnel, kept completely separate from the prospect numbers.
+    const dayPassCustomers = dayPassPool.length;
+    const dayPassConversions = dayPassPool.filter((l) => isDayPassConversion(l)).length;
+    const dayPassConversionRate =
+      dayPassCustomers === 0 ? 0 : Math.round((dayPassConversions / dayPassCustomers) * 1000) / 10;
+
+    return {
+      prospectLeads: totalForConversion,
+      newLeads, highPriority, followUpsDueToday, toursScheduled, toursCompleted,
+      joinedThisMonth, conversionRate,
+      dayPassCustomers, dayPassConversions, dayPassConversionRate,
+    };
+  }, [customerLeads, dayPassPool, monthStart]);
 
   function toggleQuick(q: QuickFilter) {
     setQuickFilter((prev) => (prev === q ? "none" : q));
   }
 
-  const count = (t: TypeFilter) =>
-    t === "all" ? (leads?.length ?? 0) : (leads?.filter((l) => (l.lead_type ?? "customer_lead") === t).length ?? 0);
+  const count = (t: TypeFilter) => leads?.filter((l) => matchesView(l, t)).length ?? 0;
 
   return (
     <>
       {/* Dashboard stats — click to filter */}
-      <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-3">
+      <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <Stat label="Prospect Leads" value={stats.prospectLeads} onClick={() => { setQuickFilter("none"); setTypeFilter("prospects"); }} active={typeFilter === "prospects" && quickFilter === "none"} />
         <Stat label="New Leads" value={stats.newLeads} active={quickFilter === "new"} onClick={() => toggleQuick("new")} />
         <Stat label="Follow-Ups Due Today" value={stats.followUpsDueToday} accent={stats.followUpsDueToday > 0 ? "destructive" : undefined} active={quickFilter === "due_today"} onClick={() => toggleQuick("due_today")} />
         <Stat label="High Priority" value={stats.highPriority} accent="destructive" active={quickFilter === "high_priority"} onClick={() => toggleQuick("high_priority")} />
         <Stat label="Tours Scheduled" value={stats.toursScheduled} active={quickFilter === "tours_scheduled"} onClick={() => toggleQuick("tours_scheduled")} />
         <Stat label="Tours Completed" value={stats.toursCompleted} active={quickFilter === "tours_completed"} onClick={() => toggleQuick("tours_completed")} />
         <Stat label="Converted This Month" value={stats.joinedThisMonth} accent="primary" active={quickFilter === "joined_this_month"} onClick={() => toggleQuick("joined_this_month")} />
-        <Stat label="Conversion Rate" value={`${stats.conversionRate}%`} accent="primary" />
+        <Stat label="Prospect Conversion Rate" value={`${stats.conversionRate}%`} accent="primary" />
+        <Stat label="Day Pass Customers" value={stats.dayPassCustomers} onClick={() => { setQuickFilter("none"); setTypeFilter("day_pass"); }} active={typeFilter === "day_pass"} />
+        <Stat label="Day Pass → Membership" value={stats.dayPassConversions} accent="primary" />
+        <Stat label="Day Pass Conversion Rate" value={`${stats.dayPassConversionRate}%`} accent="primary" />
         <Stat label="Existing Members Detected" value={existingMembersCount} onClick={() => setTypeFilter("existing_member")} active={typeFilter === "existing_member"} />
       </div>
       {quickFilter !== "none" && (
@@ -896,9 +956,12 @@ function LeadsView({
         </div>
       )}
 
-      {/* Type filter */}
+      {/* Stage / type filter */}
       <div className="mt-6 flex flex-wrap gap-2">
-        <FilterChip active={typeFilter === "customer_lead"} onClick={() => setTypeFilter("customer_lead")}>Customer Leads ({count("customer_lead")})</FilterChip>
+        <FilterChip active={typeFilter === "prospects"} onClick={() => setTypeFilter("prospects")}>Prospects ({count("prospects")})</FilterChip>
+        <FilterChip active={typeFilter === "day_pass"} onClick={() => setTypeFilter("day_pass")}>Day Pass Customers ({count("day_pass")})</FilterChip>
+        <FilterChip active={typeFilter === "members"} onClick={() => setTypeFilter("members")}>Members ({count("members")})</FilterChip>
+        <FilterChip active={typeFilter === "lost"} onClick={() => setTypeFilter("lost")}>Lost ({count("lost")})</FilterChip>
         <FilterChip active={typeFilter === "existing_member"} onClick={() => setTypeFilter("existing_member")}>Existing Members ({count("existing_member")})</FilterChip>
         <FilterChip active={typeFilter === "vendor_solicitation"} onClick={() => setTypeFilter("vendor_solicitation")}>Vendor Solicitations ({count("vendor_solicitation")})</FilterChip>
         <FilterChip active={typeFilter === "spam"} onClick={() => setTypeFilter("spam")}>Spam ({count("spam")})</FilterChip>
@@ -959,7 +1022,15 @@ function LeadsView({
         <div className="mt-6 space-y-6">
           {groups.working.length > 0 && (
             <div className="space-y-3">
-              <SectionHeader label={`Working Leads (${groups.working.length})`} />
+              <SectionHeader
+                label={
+                  typeFilter === "day_pass"
+                    ? `Day Pass Customers (${groups.working.length})`
+                    : typeFilter === "prospects"
+                      ? `Prospect Leads (${groups.working.length})`
+                      : `Working Leads (${groups.working.length})`
+                }
+              />
               {groups.working.map((lead) => (
                 <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
               ))}
@@ -1318,6 +1389,18 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
         <div className="flex-1 min-w-[240px]">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-semibold">{lead.name}</h2>
+            {isDayPassCustomer(lead) && customerStage(lead) !== "member" && (
+              <span
+                title={
+                  dayPassPurchasedAt(lead)
+                    ? `Paid day pass on ${chicagoDate(dayPassPurchasedAt(lead) as string)}`
+                    : "Paid day pass"
+                }
+                className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/40"
+              >
+                Day Pass Customer
+              </span>
+            )}
             {lead.crm_status === "Joined" ? (
               <span className="inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40">
                 Member
@@ -1612,6 +1695,26 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
             </div>
           )}
 
+          {/* Day pass purchase */}
+          {isDayPassCustomer(lead) && (
+            <div className="rounded-md border border-teal-500/40 bg-teal-500/5 p-4 space-y-1">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Day Pass Purchase</p>
+              <p className="text-sm">
+                <span className="text-muted-foreground">Purchased:</span>{" "}
+                {chicagoDate(dayPassPurchasedAt(lead) ?? lead.created_at)}
+              </p>
+              <p className="text-sm">
+                <span className="text-muted-foreground">Paid:</span>{" "}
+                ${lead.day_pass_price ?? 10}
+                {lead.payment_status
+                  ? ` · ${lead.payment_status === "venmo" ? "Venmo" : "At the front desk"}`
+                  : ""}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Tracked in the day pass funnel — not counted as a prospect lead.
+              </p>
+            </div>
+          )}
 
 
           {/* Original submission */}
