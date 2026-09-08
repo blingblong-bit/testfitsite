@@ -130,16 +130,22 @@ type InquiryType =
   | "general_info"
   | "operational";
 
+// Operational detection is INTENT-based, not keyword-based. An amenity word
+// ALONE is never operational ("Do you have showers?" gets answered); it only
+// becomes operational alongside a problem or a right-now status check.
+const PROBLEM_SIGNAL =
+  /(out of order|out of service|not working|isn'?t working|does\s?n'?t work|no longer works?|broken|broke down|shut off|turned off|unavailable|clogged|leaking|leak\b|no hot water|dirty|filthy|messy|nasty|smells?\b|stinks?\b|gross\b|nobody was|no one was)/i;
+const STATUS_CHECK =
+  /(working|fixed|repaired|up and running|back (on|up)|out of|down\b|usable|in use|occupied)/i;
+const AMENITY_SIGNAL =
+  /(tanning|sauna|shower|locker|bathroom|restroom|towel|machine|treadmill|bike|rower|elliptical|equipment|weights?|door|wifi|ac\b|air condition|heat(er)?\b|parking|keycard|key card|scanner)/i;
+
 function classifyInquiry(body: string): InquiryType {
   const lower = body.toLowerCase();
 
   if (
-    /(out of order|not working|isn'?t working|doesn'?t work|broken|broke down|fixed yet|repaired|shut off|turned off|temporarily)/.test(
-      lower,
-    ) ||
-    /(tanning|sauna|shower|locker|bathroom|restroom|towel|machine|treadmill|bike|rower|equipment|weights?|door|wifi|ac\b|air condition|heat(er)?\b|parking)/.test(
-      lower,
-    ) ||
+    PROBLEM_SIGNAL.test(lower) ||
+    (AMENITY_SIGNAL.test(lower) && STATUS_CHECK.test(lower)) ||
     /(class(es)? (today|tonight|canceled|cancelled)|is (there|the) .*class|who'?s teaching|instructor (there|today))/.test(
       lower,
     ) ||
@@ -147,8 +153,7 @@ function classifyInquiry(body: string): InquiryType {
       lower,
     ) ||
     /(lost|left) (my|a|an) /i.test(lower) ||
-    /found my/i.test(lower) ||
-    /(dirty|filthy|messy|smell|gross|nobody was|no one was)/i.test(lower)
+    /found my/i.test(lower)
   ) {
     return "operational";
   }
