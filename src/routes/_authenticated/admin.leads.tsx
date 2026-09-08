@@ -366,7 +366,7 @@ function AdminLeads() {
   const [leads, setLeads] = useState<Lead[] | null>(null);
   const [referrals, setReferrals] = useState<Referral[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("customer_lead");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("prospects");
   const [statusFilter, setStatusFilter] = useState<CrmStatus | "all">("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortKey>("priority");
