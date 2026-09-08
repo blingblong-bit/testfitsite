@@ -77,7 +77,7 @@ export const ANNUAL_FEE_POLICY = [
   "Exempt: all paid-in-full memberships (1 week, 1 month, 3 months, 6 months, 1 year, duo/family annual) — no annual fee.",
   "Exempt: short-term passes and the single-day pass — no annual fee.",
   "Exempt: tanning-only plan — no annual fee.",
-  "Monthly memberships have no contract.",
+  "Monthly memberships ARE a contract. Never say 'no contract' or 'cancel anytime'. Contract length and terms are NOT defined here — escalate any contract question.",
   "Anything else about the annual fee (proration, refunds, waivers, timing exceptions, first-year handling) is NOT defined here — escalate instead of explaining it.",
 ] as const;
 
