@@ -1022,7 +1022,15 @@ function LeadsView({
         <div className="mt-6 space-y-6">
           {groups.working.length > 0 && (
             <div className="space-y-3">
-              <SectionHeader label={`Working Leads (${groups.working.length})`} />
+              <SectionHeader
+                label={
+                  typeFilter === "day_pass"
+                    ? `Day Pass Customers (${groups.working.length})`
+                    : typeFilter === "prospects"
+                      ? `Prospect Leads (${groups.working.length})`
+                      : `Working Leads (${groups.working.length})`
+                }
+              />
               {groups.working.map((lead) => (
                 <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
               ))}
