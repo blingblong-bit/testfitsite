@@ -16,6 +16,8 @@ import {
   computeCampaignBreakdown,
   type AcquisitionRow,
   computeFunnel,
+  computeDayPassFunnel,
+  type DayPassFunnel,
   computeMonth,
   avgHoursBetween,
   avgDaysBetween,
@@ -118,8 +120,8 @@ export function AnalyticsView({ leads, referrals, isAdmin }: Props) {
     const leadsThisWeek = customer.filter(
       (l) => classifySource(l.source) === "Website" && new Date(l.created_at).getTime() >= weekStart.getTime(),
     ).length;
-    const allMembers = customer.filter((l) => l.became_member).length;
-    const allLeadsCount = customer.length;
+    const allMembers = prospects.filter((l) => l.became_member).length;
+    const allLeadsCount = prospects.length;
     const overallConversion = allLeadsCount === 0 ? 0 : Math.round((allMembers / allLeadsCount) * 100);
 
     const channels = computeChannelBreakdown(leads, thisStart, thisEnd);
