@@ -254,7 +254,11 @@ function matchesView(lead: Lead, view: TypeFilter): boolean {
   // Stage views cover real customer records only.
   if (type !== "customer_lead") return false;
   const stage = customerStage(lead);
-  if (view === "prospects") return stage === "prospect";
+  // The main prospect view shows the whole prospect funnel — including people
+  // already marked Joined or Lost — so the dashboard tiles that count them can
+  // actually show them. Converted/closed records are tucked into collapsible
+  // sections further down the list.
+  if (view === "prospects") return isProspectFunnel(lead);
   if (view === "day_pass") return stage === "day_pass_customer";
   if (view === "members") return stage === "member";
   return stage === "lost";
