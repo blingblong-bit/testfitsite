@@ -496,15 +496,35 @@ function MoM({ label, curr, prev }: { label: string; curr: number; prev: number 
 }
 
 function FunnelView({ funnel }: { funnel: ReturnType<typeof computeFunnel> }) {
-  const stages: Array<[string, number]> = [
-    ["Website Leads", funnel.leads],
-    ["Contacted", funnel.contacted],
-    ["Responded", funnel.responded],
-    ["Tour Scheduled", funnel.toursScheduled],
-    ["Tour Completed", funnel.toursCompleted],
-    ["Membership Joined", funnel.members],
-  ];
-  const max = Math.max(funnel.leads, 1);
+  return (
+    <StageBars
+      stages={[
+        ["Prospect Leads", funnel.leads],
+        ["Contacted", funnel.contacted],
+        ["Responded", funnel.responded],
+        ["Tour Scheduled", funnel.toursScheduled],
+        ["Tour Completed", funnel.toursCompleted],
+        ["Membership Joined", funnel.members],
+      ]}
+    />
+  );
+}
+
+function DayPassFunnelView({ funnel }: { funnel: DayPassFunnel }) {
+  return (
+    <StageBars
+      stages={[
+        ["Day Pass Purchased", funnel.purchased],
+        ["Day Pass Visit", funnel.visited],
+        ["Follow-Up Made", funnel.followedUp],
+        ["Membership Conversion", funnel.members],
+      ]}
+    />
+  );
+}
+
+function StageBars({ stages }: { stages: Array<[string, number]> }) {
+  const max = Math.max(stages[0]?.[1] ?? 0, 1);
   return (
     <div className="space-y-2">
       {stages.map(([name, count], i) => {
