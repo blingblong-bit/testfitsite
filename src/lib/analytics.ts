@@ -526,7 +526,7 @@ function rollup(
     leads,
     tours: rows.filter((l) => l.tour_completed || l.tour_scheduled).length,
     members,
-    dayPasses: rows.filter((l) => classifySource(l.source) === "Day Pass").length,
+    dayPasses: rows.filter((l) => isDayPassFunnel(l)).length,
     conversionRate: leads === 0 ? 0 : Math.round((members / leads) * 100),
     measured,
   };
