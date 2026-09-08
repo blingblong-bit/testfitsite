@@ -1,6 +1,12 @@
 // Pure analytics helpers — derive business-health metrics from CRM data only.
 // No financial data is tracked here; revenue/membership $$ live in Anteris.
 
+import {
+  dayPassPurchasedAt,
+  isDayPassFunnel,
+  isProspectFunnel,
+} from "./customer-stage";
+
 export type AnalyticsLead = {
   id: string;
   source: string;
@@ -24,6 +30,9 @@ export type AnalyticsLead = {
   initial_referrer?: string | null;
   attribution_channel?: string | null;
   first_touch_at?: string | null;
+  day_pass_purchased_at?: string | null;
+  payment_status?: string | null;
+  day_pass_price?: number | null;
 };
 
 export type AnalyticsReferral = {
