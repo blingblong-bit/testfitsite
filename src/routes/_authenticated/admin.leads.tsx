@@ -233,7 +233,32 @@ function buildFreeWeekMap(referrals: Referral[] | null): Record<string, FreeWeek
   return map;
 }
 
-type TypeFilter = "customer_lead" | "existing_member" | "vendor_solicitation" | "spam" | "all";
+// Main tracker views. The first four are customer stages (prospect / day pass
+// customer / member / lost); the rest are the existing lead-type buckets.
+type TypeFilter =
+  | "prospects"
+  | "day_pass"
+  | "members"
+  | "lost"
+  | "existing_member"
+  | "vendor_solicitation"
+  | "spam"
+  | "all";
+
+function matchesView(lead: Lead, view: TypeFilter): boolean {
+  const type = lead.lead_type ?? "customer_lead";
+  if (view === "all") return true;
+  if (view === "existing_member" || view === "vendor_solicitation" || view === "spam") {
+    return type === view;
+  }
+  // Stage views cover real customer records only.
+  if (type !== "customer_lead") return false;
+  const stage = customerStage(lead);
+  if (view === "prospects") return stage === "prospect";
+  if (view === "day_pass") return stage === "day_pass_customer";
+  if (view === "members") return stage === "member";
+  return stage === "lost";
+}
 type Tab = "leads" | "referrals" | "analytics" | "settings";
 type SortKey = "priority" | "newest" | "oldest" | "tour_date" | "last_contact" | "source";
 type QuickFilter = "none" | "new" | "high_priority" | "due_today" | "tours_scheduled" | "tours_completed" | "joined_this_month";
