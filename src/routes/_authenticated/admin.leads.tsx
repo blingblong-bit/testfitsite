@@ -1695,6 +1695,26 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
             </div>
           )}
 
+          {/* Day pass purchase */}
+          {isDayPassCustomer(lead) && (
+            <div className="rounded-md border border-teal-500/40 bg-teal-500/5 p-4 space-y-1">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">Day Pass Purchase</p>
+              <p className="text-sm">
+                <span className="text-muted-foreground">Purchased:</span>{" "}
+                {chicagoDate(dayPassPurchasedAt(lead))}
+              </p>
+              <p className="text-sm">
+                <span className="text-muted-foreground">Paid:</span>{" "}
+                ${lead.day_pass_price ?? 10}
+                {lead.payment_status
+                  ? ` · ${lead.payment_status === "venmo" ? "Venmo" : "At the front desk"}`
+                  : ""}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Tracked in the day pass funnel — not counted as a prospect lead.
+              </p>
+            </div>
+          )}
 
 
           {/* Original submission */}
