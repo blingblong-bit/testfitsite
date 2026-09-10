@@ -336,7 +336,7 @@ function MonthExportCard() {
         <div>
           <div className="text-sm font-semibold">Export a month</div>
           <div className="text-xs text-muted-foreground">
-            Separated by date and class, with attendance totals.
+            A day-by-day roster of everyone who checked in.
           </div>
         </div>
         <input
