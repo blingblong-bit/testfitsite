@@ -1220,6 +1220,8 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
   const [lostReason, setLostReason] = useState("");
   const [thread, setThread] = useState<SmsMessage[] | null>(null);
   const [threadLoading, setThreadLoading] = useState(false);
+  // Every day pass this person has bought, newest first.
+  const [passDates, setPassDates] = useState<string[] | null>(null);
   const [smsDraft, setSmsDraft] = useState("");
   const [sendingSms, setSendingSms] = useState(false);
   const sendWelcome = useServerFn(sendWelcomeSms);
@@ -1247,6 +1249,27 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
       });
     return () => { cancelled = true; };
   }, [expanded, lead.id]);
+
+  useEffect(() => {
+    if (!expanded) return;
+    let cancelled = false;
+    supabase
+      .from("day_pass_purchases")
+      .select("purchased_at")
+      .eq("lead_id", lead.id)
+      .order("purchased_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.error("[day pass history] load failed", error.message);
+          setPassDates([]);
+        } else {
+          setPassDates((data ?? []).map((r) => r.purchased_at as string));
+        }
+      });
+    return () => { cancelled = true; };
+  }, [expanded, lead.id]);
+
 
   async function sendSms() {
     const text = smsDraft.trim();
@@ -1704,8 +1727,16 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
             <div className="rounded-md border border-teal-500/40 bg-teal-500/5 p-4 space-y-1">
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Day Pass Purchase</p>
               <p className="text-sm">
-                <span className="text-muted-foreground">Purchased:</span>{" "}
-                {chicagoDate(dayPassPurchasedAt(lead) ?? lead.created_at)}
+                <span className="text-muted-foreground">Day passes bought:</span>{" "}
+                {passDates === null ? "…" : passDates.length || 1}
+              </p>
+              <p className="text-sm">
+                <span className="text-muted-foreground">
+                  {passDates && passDates.length > 1 ? "Visits:" : "Purchased:"}
+                </span>{" "}
+                {passDates && passDates.length > 0
+                  ? passDates.map((d) => chicagoDate(d)).join(", ")
+                  : chicagoDate(dayPassPurchasedAt(lead) ?? lead.created_at)}
               </p>
               <p className="text-sm">
                 <span className="text-muted-foreground">Paid:</span>{" "}

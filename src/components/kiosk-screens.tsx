@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { createReferral, redeemReferral, lookupReferral } from "@/lib/referrals";
 import { processDayPassCheckin } from "@/lib/process-day-pass-checkin.functions";
+import {
+  lookupDayPassGuest,
+  type DayPassGuestLookup,
+} from "@/lib/lookup-day-pass-guest.functions";
 import venmoQrAsset from "@/assets/venmo-qr.jpeg.asset.json";
 import { SmsConsentCheckbox } from "@/components/SmsConsent";
 
@@ -97,6 +101,7 @@ export function KioskField({
   required,
   placeholder,
   helper,
+  defaultValue,
 }: {
   label: string;
   name: string;
@@ -104,6 +109,7 @@ export function KioskField({
   required?: boolean;
   placeholder?: string;
   helper?: string;
+  defaultValue?: string;
 }) {
   return (
     <div>
@@ -116,12 +122,14 @@ export function KioskField({
         type={type}
         required={required}
         placeholder={placeholder}
+        defaultValue={defaultValue}
         className="w-full h-14 rounded-md bg-secondary border border-border px-4 text-base focus:outline-none focus:border-primary"
       />
       {helper && <p className="mt-1.5 text-xs text-muted-foreground">{helper}</p>}
     </div>
   );
 }
+
 
 export function FormShell({
   eyebrow,
@@ -162,8 +170,10 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
   const [pending, setPending] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<"info" | "pay">("info");
+  const [step, setStep] = useState<"phone" | "info" | "pay">("phone");
+  const [looking, setLooking] = useState(false);
   const [guest, setGuest] = useState({ name: "", email: "", phone: "" });
+  const [known, setKnown] = useState<DayPassGuestLookup | null>(null);
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [waiverAccepted, setWaiverAccepted] = useState(false);
   const [smsConsent, setSmsConsent] = useState(false);
@@ -171,12 +181,13 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
   // suspiciously fast (bots filling and submitting in under a second).
   const [renderedAt] = useState(() => Date.now());
 
-  function handleInfoSubmit(e: React.FormEvent<HTMLFormElement>) {
+  // Step one is phone only. If we already have this person, they skip
+  // straight to the waiver + payment step with nothing to re-type.
+  async function handlePhoneSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const d = new FormData(e.currentTarget);
     // Honeypot: a field real humans never see or fill. If it's populated,
-    // fake a success screen without ever touching the real submit path —
-    // don't tip the bot off, and don't let it reach processDayPassCheckin.
+    // fake a success screen without ever touching the real submit path.
     const honeypot = String(d.get("company_website") ?? "").trim();
     if (honeypot) {
       setSent(true);
@@ -186,11 +197,36 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
       setError("Please take a moment to fill out the form.");
       return;
     }
+    const phone = String(d.get("phone") ?? "").trim();
+    setGuest((g) => ({ ...g, phone }));
+    setError(null);
+    setLooking(true);
+    try {
+      const result = await lookupDayPassGuest({ data: { phone } });
+      if (result.found) {
+        setKnown(result);
+        setStep("pay");
+        return;
+      }
+    } catch {
+      // A lookup problem should never block a paying guest — fall through
+      // to the normal form.
+    } finally {
+      setLooking(false);
+    }
+    setKnown(null);
+    setStep("info");
+  }
+
+  function handleInfoSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const d = new FormData(e.currentTarget);
     setGuest({
       name: String(d.get("name") ?? ""),
       email: String(d.get("email") ?? ""),
       phone: String(d.get("phone") ?? ""),
     });
+    setError(null);
     setStep("pay");
   }
 
@@ -217,6 +253,7 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
           email: guest.email,
           phone: guest.phone,
           payment_method: method,
+          lead_id: known?.lead_id ?? null,
         },
       });
       if (!result.ok) {
@@ -264,10 +301,14 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
       />
     );
 
-  if (step === "info") {
+  if (step === "phone") {
     return (
-      <FormShell eyebrow="DAY PASS" title="Buy a Day Pass" sub="$10 single-day access.">
-        <form onSubmit={handleInfoSubmit} className="space-y-5">
+      <FormShell
+        eyebrow="DAY PASS"
+        title="Buy a Day Pass"
+        sub="$10 single-day access. Been here before? Just your phone number is enough."
+      >
+        <form onSubmit={handlePhoneSubmit} className="space-y-5">
           {/* Honeypot — hidden from real users, bots often fill every field they find */}
           <div
             aria-hidden="true"
@@ -282,14 +323,45 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
               autoComplete="off"
             />
           </div>
-          <KioskField label="Full name" name="name" required />
-          <KioskField label="Email" name="email" type="email" required />
-          <KioskField label="Phone" name="phone" type="tel" required />
+          <KioskField
+            label="Phone"
+            name="phone"
+            type="tel"
+            required
+            defaultValue={guest.phone}
+            helper="We'll use this to look you up if you've visited before."
+          />
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <SubmitButton submitting={looking} label="Continue" />
+        </form>
+      </FormShell>
+    );
+  }
+
+  if (step === "info") {
+    return (
+      <FormShell
+        eyebrow="DAY PASS"
+        title="Tell Us About You"
+        sub="First time here — we just need your name and email."
+      >
+        <form onSubmit={handleInfoSubmit} className="space-y-5">
+          <KioskField label="Full name" name="name" required defaultValue={guest.name} />
+          <KioskField
+            label="Email"
+            name="email"
+            type="email"
+            required
+            defaultValue={guest.email}
+          />
+          <KioskField label="Phone" name="phone" type="tel" required defaultValue={guest.phone} />
+          {error && <p className="text-sm text-destructive">{error}</p>}
           <SubmitButton submitting={false} label="Continue to Payment" />
         </form>
       </FormShell>
     );
   }
+
 
   const methods: { id: PaymentMethod; label: string }[] = [
     { id: "venmo", label: "Venmo" },
@@ -297,7 +369,15 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
   ];
 
   return (
-    <FormShell eyebrow="PAYMENT" title="Confirm Payment — $10" sub={`Day pass for ${guest.name}`}>
+    <FormShell
+      eyebrow="PAYMENT"
+      title={known?.first_name ? `Welcome back, ${known.first_name}!` : "Confirm Payment — $10"}
+      sub={
+        known
+          ? `$10 day pass. ${known.visit_count > 0 ? `This will be day pass #${known.visit_count + 1}.` : "Just confirm payment and the waiver below."}`
+          : `Day pass for ${guest.name}`
+      }
+    >
       <form onSubmit={handlePaySubmit} className="space-y-6">
         <div className="rounded-2xl border border-border bg-card p-6 text-center">
           <p className="text-xs uppercase tracking-widest text-primary">Venmo</p>
@@ -360,13 +440,15 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
         <button
           type="button"
           onClick={() => {
-            setStep("info");
+            setStep(known ? "phone" : "info");
+            setKnown(null);
             setError(null);
           }}
           className="w-full text-sm text-muted-foreground hover:text-foreground"
         >
-          ← Back to guest info
+          {known ? "← Not you? Start over" : "← Back to guest info"}
         </button>
+
       </form>
     </FormShell>
   );
