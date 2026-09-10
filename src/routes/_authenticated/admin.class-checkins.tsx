@@ -6,7 +6,14 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { submitClassCheckIn } from "@/lib/class-checkin.functions";
 import { getClassesForDay, DAYS, type DayOfWeek } from "@/lib/class-schedule";
-import { chicagoDayRange, currentMonthChicago, todayChicago } from "@/lib/chicago-time";
+import {
+  chicagoDateOf,
+  chicagoDayRange,
+  chicagoMonthRange,
+  chicagoTimeOf,
+  currentMonthChicago,
+  todayChicago,
+} from "@/lib/chicago-time";
 import {
   buildMonthCsv,
   buildMonthWorkbook,
