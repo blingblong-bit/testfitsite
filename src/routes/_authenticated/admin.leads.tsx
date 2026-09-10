@@ -1220,6 +1220,8 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
   const [lostReason, setLostReason] = useState("");
   const [thread, setThread] = useState<SmsMessage[] | null>(null);
   const [threadLoading, setThreadLoading] = useState(false);
+  // Every day pass this person has bought, newest first.
+  const [passDates, setPassDates] = useState<string[] | null>(null);
   const [smsDraft, setSmsDraft] = useState("");
   const [sendingSms, setSendingSms] = useState(false);
   const sendWelcome = useServerFn(sendWelcomeSms);
