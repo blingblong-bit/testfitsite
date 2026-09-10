@@ -97,6 +97,7 @@ export function KioskField({
   required,
   placeholder,
   helper,
+  defaultValue,
 }: {
   label: string;
   name: string;
@@ -104,6 +105,7 @@ export function KioskField({
   required?: boolean;
   placeholder?: string;
   helper?: string;
+  defaultValue?: string;
 }) {
   return (
     <div>
@@ -116,12 +118,14 @@ export function KioskField({
         type={type}
         required={required}
         placeholder={placeholder}
+        defaultValue={defaultValue}
         className="w-full h-14 rounded-md bg-secondary border border-border px-4 text-base focus:outline-none focus:border-primary"
       />
       {helper && <p className="mt-1.5 text-xs text-muted-foreground">{helper}</p>}
     </div>
   );
 }
+
 
 export function FormShell({
   eyebrow,
