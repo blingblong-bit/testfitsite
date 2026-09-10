@@ -23,12 +23,15 @@ type PendingRow = {
   phone: string;
   requested_at: string;
   status: "pending" | "approved" | "rejected";
+  lead_id: string | null;
 };
 
 const POLL_MS = 5000;
 
 function AdminDayPassApprovals() {
   const [rows, setRows] = useState<PendingRow[]>([]);
+  // lead_id -> previous day pass dates, so staff can see repeat guests.
+  const [history, setHistory] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [actingOn, setActingOn] = useState<string | null>(null);
   const approve = useServerFn(approveDayPassPending);
@@ -37,10 +40,29 @@ function AdminDayPassApprovals() {
   const load = useCallback(async () => {
     const { data, error } = await supabase
       .from("day_pass_pending_checkins")
-      .select("id, name, email, phone, requested_at, status")
+      .select("id, name, email, phone, requested_at, status, lead_id")
       .eq("status", "pending")
       .order("requested_at", { ascending: true });
-    if (!error && data) setRows(data as PendingRow[]);
+    if (!error && data) {
+      const pending = data as PendingRow[];
+      setRows(pending);
+      const leadIds = pending.map((r) => r.lead_id).filter((v): v is string => Boolean(v));
+      if (leadIds.length > 0) {
+        const { data: purchases } = await supabase
+          .from("day_pass_purchases")
+          .select("lead_id, purchased_at")
+          .in("lead_id", leadIds)
+          .order("purchased_at", { ascending: false });
+        const map: Record<string, string[]> = {};
+        for (const p of purchases ?? []) {
+          const key = p.lead_id as string;
+          (map[key] ??= []).push(p.purchased_at as string);
+        }
+        setHistory(map);
+      } else {
+        setHistory({});
+      }
+    }
     setLoading(false);
   }, []);
 
@@ -49,6 +71,7 @@ function AdminDayPassApprovals() {
     const interval = setInterval(load, POLL_MS);
     return () => clearInterval(interval);
   }, [load]);
+
 
   async function handleApprove(id: string) {
     setActingOn(id);
