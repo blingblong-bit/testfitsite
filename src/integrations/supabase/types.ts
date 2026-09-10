@@ -244,6 +244,44 @@ export type Database = {
         }
         Relationships: []
       }
+      day_pass_purchases: {
+        Row: {
+          amount: number | null
+          created_at: string
+          id: string
+          lead_id: string
+          payment_method: string | null
+          purchased_at: string
+          recorded_via: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          lead_id: string
+          payment_method?: string | null
+          purchased_at?: string
+          recorded_via?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          lead_id?: string
+          payment_method?: string | null
+          purchased_at?: string
+          recorded_via?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "day_pass_purchases_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
