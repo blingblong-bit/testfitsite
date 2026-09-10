@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { createReferral, redeemReferral, lookupReferral } from "@/lib/referrals";
 import { processDayPassCheckin } from "@/lib/process-day-pass-checkin.functions";
+import {
+  lookupDayPassGuest,
+  type DayPassGuestLookup,
+} from "@/lib/lookup-day-pass-guest.functions";
 import venmoQrAsset from "@/assets/venmo-qr.jpeg.asset.json";
 import { SmsConsentCheckbox } from "@/components/SmsConsent";
 
