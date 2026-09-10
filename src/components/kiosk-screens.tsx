@@ -441,6 +441,7 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
           type="button"
           onClick={() => {
             setStep(known ? "phone" : "info");
+            setKnown(null);
             setError(null);
           }}
           className="w-full text-sm text-muted-foreground hover:text-foreground"
