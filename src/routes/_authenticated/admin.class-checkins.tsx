@@ -429,7 +429,11 @@ function AdminClassCheckins() {
           onClose={() => setManualOpen(false)}
           onDone={() => {
             setManualOpen(false);
-            load();
+            if (viewMode === "monthly") {
+              loadMonth();
+            } else {
+              load();
+            }
           }}
           submit={submit}
         />
