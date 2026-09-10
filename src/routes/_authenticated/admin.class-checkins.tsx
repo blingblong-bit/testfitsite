@@ -62,12 +62,18 @@ function dayFromISO(iso: string): DayOfWeek {
   return DAYS[d.getDay()];
 }
 
+type ViewMode = "daily" | "monthly";
+
 function AdminClassCheckins() {
   const submit = useServerFn(submitClassCheckIn);
+  const [viewMode, setViewMode] = useState<ViewMode>("daily");
   const [date, setDate] = useState<string>(todayISO());
+  const [month, setMonth] = useState<string>(currentMonthChicago());
   const [checkins, setCheckins] = useState<CheckIn[]>([]);
+  const [monthCheckins, setMonthCheckins] = useState<CheckIn[]>([]);
   const [canceled, setCanceled] = useState<CanceledSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [monthLoading, setMonthLoading] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
 
   const day = dayFromISO(date);
@@ -95,16 +101,39 @@ function AdminClassCheckins() {
     setLoading(false);
   }, [date]);
 
+  const loadMonth = useCallback(async () => {
+    setMonthLoading(true);
+    const { start, end } = chicagoMonthRange(month);
+    const { data, error } = await supabase
+      .from("class_checkins")
+      .select("*")
+      .gte("checked_in_at", start)
+      .lte("checked_in_at", end)
+      .order("checked_in_at", { ascending: true });
+
+    if (error) toast.error(error.message);
+    setMonthCheckins((data as CheckIn[]) ?? []);
+    setMonthLoading(false);
+  }, [month]);
+
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (viewMode === "monthly") loadMonth();
+  }, [viewMode, loadMonth]);
 
   async function removeCheckin(id: string) {
     if (!confirm("Remove this check-in?")) return;
     const { error } = await supabase.from("class_checkins").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Removed");
-    load();
+    if (viewMode === "monthly") {
+      loadMonth();
+    } else {
+      load();
+    }
   }
 
   async function cancelClass(className: string) {
