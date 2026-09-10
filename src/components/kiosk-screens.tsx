@@ -369,7 +369,15 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
   ];
 
   return (
-    <FormShell eyebrow="PAYMENT" title="Confirm Payment — $10" sub={`Day pass for ${guest.name}`}>
+    <FormShell
+      eyebrow="PAYMENT"
+      title={known?.first_name ? `Welcome back, ${known.first_name}!` : "Confirm Payment — $10"}
+      sub={
+        known
+          ? `$10 day pass. ${known.visit_count > 0 ? `This will be day pass #${known.visit_count + 1}.` : "Just confirm payment and the waiver below."}`
+          : `Day pass for ${guest.name}`
+      }
+    >
       <form onSubmit={handlePaySubmit} className="space-y-6">
         <div className="rounded-2xl border border-border bg-card p-6 text-center">
           <p className="text-xs uppercase tracking-widest text-primary">Venmo</p>
