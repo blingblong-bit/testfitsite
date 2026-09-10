@@ -440,13 +440,14 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
         <button
           type="button"
           onClick={() => {
-            setStep("info");
+            setStep(known ? "phone" : "info");
             setError(null);
           }}
           className="w-full text-sm text-muted-foreground hover:text-foreground"
         >
-          ← Back to guest info
+          {known ? "← Not you? Start over" : "← Back to guest info"}
         </button>
+
       </form>
     </FormShell>
   );
