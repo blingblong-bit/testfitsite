@@ -210,30 +210,136 @@ function AdminClassCheckins() {
         <div className="mb-6">
           <p className="text-xs tracking-[0.3em] text-primary">ADMIN</p>
           <h1 className="text-3xl font-bold mt-1">Class Check-Ins</h1>
-          <div className="mt-4 flex items-center gap-3">
-            <label className="text-sm text-muted-foreground">Date</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="h-10 rounded-md border border-border bg-background px-3"
-            />
-            <button
-              onClick={() => setDate(todayISO())}
-              className="text-sm text-primary hover:underline"
-            >
-              Today
-            </button>
-            <span className="ml-auto text-sm text-muted-foreground">{day}</span>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <span className="text-sm text-muted-foreground">View check-ins</span>
+            <div className="flex overflow-hidden rounded-md border border-border" role="group" aria-label="Check-in view">
+              <button
+                type="button"
+                aria-pressed={viewMode === "daily"}
+                onClick={() => switchView("daily")}
+                className={`h-10 px-4 text-sm font-bold uppercase tracking-wide ${
+                  viewMode === "daily"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Daily
+              </button>
+              <button
+                type="button"
+                aria-pressed={viewMode === "monthly"}
+                onClick={() => switchView("monthly")}
+                className={`h-10 border-l border-border px-4 text-sm font-bold uppercase tracking-wide ${
+                  viewMode === "monthly"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Monthly
+              </button>
+            </div>
+
+            {viewMode === "daily" ? (
+              <>
+                <label className="text-sm text-muted-foreground">Date</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="h-10 rounded-md border border-border bg-background px-3"
+                />
+                <button
+                  onClick={() => setDate(todayISO())}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Today
+                </button>
+                <span className="ml-auto text-sm text-muted-foreground">{day}</span>
+              </>
+            ) : (
+              <>
+                <label className="text-sm text-muted-foreground">Month</label>
+                <input
+                  type="month"
+                  value={month}
+                  onChange={(e) => setMonth(e.target.value)}
+                  className="h-10 rounded-md border border-border bg-background px-3"
+                />
+                <button
+                  onClick={() => setMonth(currentMonthChicago())}
+                  className="text-sm text-primary hover:underline"
+                >
+                  This Month
+                </button>
+                <span className="ml-auto text-sm text-muted-foreground">{monthLabel(month)}</span>
+              </>
+            )}
           </div>
         </div>
 
         <MonthExportCard />
 
-
-
-        {loading ? (
+        {showingLoading ? (
           <div className="text-muted-foreground">Loading…</div>
+        ) : viewMode === "monthly" ? (
+          monthlyByDate.length === 0 ? (
+            <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
+              No check-ins in {monthLabel(month)}.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {monthlyByDate.map(([checkinDate, rows]) => (
+                <div key={checkinDate} className="rounded-xl border border-border bg-card">
+                  <div className="flex items-center justify-between p-4 border-b border-border">
+                    <div>
+                      <div className="font-semibold">
+                        {new Date(checkinDate + "T12:00:00").toLocaleDateString("en-US", {
+                          weekday: "long",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {rows.length} check-in{rows.length === 1 ? "" : "s"}
+                      </div>
+                    </div>
+                  </div>
+                  <ul className="divide-y divide-border">
+                    {rows.map((r) => (
+                      <li key={r.id} className="flex items-center gap-3 p-4">
+                        {r.verified ? (
+                          <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium">
+                            {r.name}
+                            {r.added_manually && (
+                              <span className="ml-2 text-xs uppercase tracking-wider text-muted-foreground">Manual</span>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {r.class_name} {r.class_time} • checked in {chicagoTimeOf(r.checked_in_at)}
+                            {!r.verified && " • unverified"}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">{r.phone}</div>
+                          {r.notes && <div className="text-xs text-muted-foreground mt-1">{r.notes}</div>}
+                        </div>
+                        <button
+                          onClick={() => removeCheckin(r.id)}
+                          className="text-muted-foreground hover:text-destructive"
+                          aria-label={`Remove ${r.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )
         ) : classes.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
             No classes scheduled for {day}.
@@ -292,7 +398,7 @@ function AdminClassCheckins() {
                               )}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {r.phone} • {new Date(r.checked_in_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                              {r.phone} • {chicagoTimeOf(r.checked_in_at)}
                               {!r.verified && " • unverified"}
                             </div>
                             {r.notes && <div className="text-xs text-muted-foreground mt-1">{r.notes}</div>}
@@ -300,7 +406,7 @@ function AdminClassCheckins() {
                           <button
                             onClick={() => removeCheckin(r.id)}
                             className="text-muted-foreground hover:text-destructive"
-                            aria-label="Remove"
+                            aria-label={`Remove ${r.name}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
