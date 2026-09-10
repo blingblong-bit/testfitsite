@@ -137,6 +137,16 @@ function AdminDayPassApprovals() {
                   <p className="text-sm text-muted-foreground">
                     {r.phone} • {r.email}
                   </p>
+                  {r.lead_id && (history[r.lead_id]?.length ?? 0) > 0 && (
+                    <p className="mt-1 text-xs text-primary">
+                      Returning guest — {history[r.lead_id]!.length} previous day pass
+                      {history[r.lead_id]!.length === 1 ? "" : "es"} (
+                      {history[r.lead_id]!.slice(0, 3)
+                        .map((d) => new Date(d).toLocaleDateString())
+                        .join(", ")}
+                      )
+                    </p>
+                  )}
                   <p className="mt-1 text-xs text-muted-foreground">
                     Requested {minutesAgo(r.requested_at)} min ago
                   </p>
