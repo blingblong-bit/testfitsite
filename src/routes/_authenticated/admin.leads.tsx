@@ -1250,6 +1250,27 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
     return () => { cancelled = true; };
   }, [expanded, lead.id]);
 
+  useEffect(() => {
+    if (!expanded) return;
+    let cancelled = false;
+    supabase
+      .from("day_pass_purchases")
+      .select("purchased_at")
+      .eq("lead_id", lead.id)
+      .order("purchased_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.error("[day pass history] load failed", error.message);
+          setPassDates([]);
+        } else {
+          setPassDates((data ?? []).map((r) => r.purchased_at as string));
+        }
+      });
+    return () => { cancelled = true; };
+  }, [expanded, lead.id]);
+
+
   async function sendSms() {
     const text = smsDraft.trim();
     if (!text || sendingSms) return;
