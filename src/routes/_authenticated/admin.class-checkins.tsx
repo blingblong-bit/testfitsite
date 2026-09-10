@@ -174,6 +174,24 @@ function AdminClassCheckins() {
     return m;
   }, [canceled]);
 
+  const monthlyByDate = useMemo(() => {
+    const map = new Map<string, CheckIn[]>();
+    monthCheckins.forEach((checkin) => {
+      const checkinDate = chicagoDateOf(checkin.checked_in_at);
+      const rows = map.get(checkinDate) ?? [];
+      rows.push(checkin);
+      map.set(checkinDate, rows);
+    });
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [monthCheckins]);
+
+  const showingLoading = viewMode === "daily" ? loading : monthLoading;
+
+  function switchView(next: ViewMode) {
+    if (next === "monthly") setMonth(date.slice(0, 7));
+    setViewMode(next);
+  }
+
   return (
     <main className="min-h-screen bg-background p-6">
       <div className="max-w-5xl mx-auto">
