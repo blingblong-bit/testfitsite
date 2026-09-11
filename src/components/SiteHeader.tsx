@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { PromoBar } from "@/components/PromoBar";
 
 
 const nav = [
@@ -21,7 +20,6 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-      <PromoBar />
       <div className="container-page flex h-16 items-center justify-between">
         <Link to="/" className="flex shrink-0 items-center gap-3" onClick={() => setOpen(false)}>
 
