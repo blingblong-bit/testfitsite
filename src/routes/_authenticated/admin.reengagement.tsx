@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Send, Users } from "lucide-react";
 import {
   previewReengagementCampaign,
+  REENGAGEMENT_CAMPAIGN_ACTIVE,
   sendReengagementCampaign,
 } from "@/lib/reengagement-campaign.functions";
 
@@ -59,11 +60,11 @@ function ReengagementPage() {
         already received this specific campaign is permanently excluded from it.
       </p>
       <p className="mt-2 max-w-2xl text-xs text-muted-foreground">
-        Current campaign: <span className="text-foreground">Free Week</span> (free_week_reactivation) ·
-        7-day contact cooldown applies.
+        Free Week re-engagement is retired. Its campaign history remains saved, and no new messages
+        can be sent.
       </p>
 
-      <div className="mt-8 flex flex-wrap gap-3">
+      {REENGAGEMENT_CAMPAIGN_ACTIVE && <div className="mt-8 flex flex-wrap gap-3">
         <button
           onClick={() => previewMut.mutate()}
           disabled={previewMut.isPending}
@@ -100,7 +101,7 @@ function ReengagementPage() {
             </button>
           </div>
         )}
-      </div>
+      </div>}
 
       {data && (
         <div className="mt-10">

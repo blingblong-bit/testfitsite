@@ -3,6 +3,18 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { advanceFollowUpIfStale } from "./follow-up";
 
 export const CAMPAIGN_KIND = "free_week_reactivation";
+export const REENGAGEMENT_CAMPAIGN_ACTIVE = false;
+
+const EMPTY_SKIPPED = {
+  not_high_priority: 0,
+  tour_scheduled: 0,
+  recently_contacted: 0,
+  duplicate_phone: 0,
+  excluded_number: 0,
+  invalid_phone: 0,
+  already_campaigned: 0,
+  closed_status: 0,
+};
 
 function last10(raw: string | null | undefined): string {
   return (raw ?? "").replace(/\D/g, "").slice(-10);
@@ -14,7 +26,7 @@ function firstName(name: string | null | undefined): string {
 }
 
 export function buildCampaignMessage(name: string | null | undefined): string {
-  return `Hey ${firstName(name)}, it's FIT Beyond Plus! It's been a little while, so we'd love to have you back. Claim a FREE 7-day pass here: https://fitbeyondplus.com/claim-free-week — your 7 days start when you activate it in person at the front desk. Reply STOP to opt out.`;
+  return `Hey ${firstName(name)}, it's FIT Beyond Plus! It's been a little while, so we'd love to have you back. Reply to this message if you'd like to reconnect with our team. Reply STOP to opt out.`;
 }
 
 type Recipient = {
@@ -93,16 +105,7 @@ async function buildAudience() {
 
   const seen = new Set<string>();
   const recipients: Recipient[] = [];
-  const skipped = {
-    not_high_priority: 0,
-    tour_scheduled: 0,
-    recently_contacted: 0,
-    duplicate_phone: 0,
-    excluded_number: 0,
-    invalid_phone: 0,
-    already_campaigned: 0,
-    closed_status: 0,
-  };
+  const skipped = { ...EMPTY_SKIPPED };
 
   for (const l of leads ?? []) {
     const digits = last10(l.phone);
@@ -154,8 +157,17 @@ export const previewReengagementCampaign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context as never);
+    if (!REENGAGEMENT_CAMPAIGN_ACTIVE) {
+      return {
+        ok: true as const,
+        active: false as const,
+        count: 0,
+        recipients: [] as Recipient[],
+        skipped: { ...EMPTY_SKIPPED },
+      };
+    }
     const { recipients, skipped } = await buildAudience();
-    return { ok: true as const, count: recipients.length, recipients, skipped };
+    return { ok: true as const, active: true as const, count: recipients.length, recipients, skipped };
   });
 
 export const sendReengagementCampaign = createServerFn({ method: "POST" })
@@ -167,6 +179,9 @@ export const sendReengagementCampaign = createServerFn({ method: "POST" })
   })
   .handler(async ({ context }) => {
     await assertAdmin(context as never);
+    if (!REENGAGEMENT_CAMPAIGN_ACTIVE) {
+      return { ok: false as const, error: "campaign_retired" };
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { recipients } = await buildAudience();
 
