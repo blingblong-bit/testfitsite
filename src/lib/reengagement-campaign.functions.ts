@@ -109,24 +109,48 @@ async function buildAudience() {
 
   for (const l of leads ?? []) {
     const digits = last10(l.phone);
-    if (digits.length !== 10) { skipped.invalid_phone++; continue; }
-    if (l.crm_status === "Joined" || l.crm_status === "Lost Lead") { skipped.closed_status++; continue; }
-    if (alreadyCampaigned.has(digits) || campaignedLeadIds.has(l.id)) { skipped.already_campaigned++; continue; }
-    if (l.tour_scheduled && !l.tour_completed) { skipped.tour_scheduled++; continue; }
+    if (digits.length !== 10) {
+      skipped.invalid_phone++;
+      continue;
+    }
+    if (l.crm_status === "Joined" || l.crm_status === "Lost Lead") {
+      skipped.closed_status++;
+      continue;
+    }
+    if (alreadyCampaigned.has(digits) || campaignedLeadIds.has(l.id)) {
+      skipped.already_campaigned++;
+      continue;
+    }
+    if (l.tour_scheduled && !l.tour_completed) {
+      skipped.tour_scheduled++;
+      continue;
+    }
 
     const lastContact = l.last_contacted_at ?? l.last_sms_at ?? null;
     const since = daysSince(lastContact);
-    if (since !== null && since < COOLDOWN_DAYS) { skipped.recently_contacted++; continue; }
+    if (since !== null && since < COOLDOWN_DAYS) {
+      skipped.recently_contacted++;
+      continue;
+    }
 
     const priority = computePriority({
       crm_status: l.crm_status,
       last_contacted_at: l.last_contacted_at,
       next_follow_up_date: l.next_follow_up_date,
     });
-    if (priority !== "high") { skipped.not_high_priority++; continue; }
+    if (priority !== "high") {
+      skipped.not_high_priority++;
+      continue;
+    }
 
-    if (excluded.has(digits)) { skipped.excluded_number++; continue; }
-    if (seen.has(digits)) { skipped.duplicate_phone++; continue; }
+    if (excluded.has(digits)) {
+      skipped.excluded_number++;
+      continue;
+    }
+    if (seen.has(digits)) {
+      skipped.duplicate_phone++;
+      continue;
+    }
     seen.add(digits);
     recipients.push({
       id: l.id,
@@ -152,7 +176,6 @@ async function buildAudience() {
   return { recipients, skipped };
 }
 
-
 export const previewReengagementCampaign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -167,7 +190,13 @@ export const previewReengagementCampaign = createServerFn({ method: "POST" })
       };
     }
     const { recipients, skipped } = await buildAudience();
-    return { ok: true as const, active: true as const, count: recipients.length, recipients, skipped };
+    return {
+      ok: true as const,
+      active: true as const,
+      count: recipients.length,
+      recipients,
+      skipped,
+    };
   });
 
 export const sendReengagementCampaign = createServerFn({ method: "POST" })
@@ -208,32 +237,33 @@ export const sendReengagementCampaign = createServerFn({ method: "POST" })
           row.status !== "failed",
       );
       if (gotCampaign) {
-        results.push({ name: r.name, phone: r.phone, ok: false, error: "already_received_campaign" });
+        results.push({
+          name: r.name,
+          phone: r.phone,
+          ok: false,
+          error: "already_received_campaign",
+        });
         continue;
       }
-
 
       let sendOk = false;
       let providerId: string | null = null;
       let error: string | undefined;
       try {
-        const res = await fetch(
-          `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Basic ${auth}`,
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: new URLSearchParams({
-              To: r.phone,
-              From: from,
-              Body: r.message,
-              StatusCallback:
-                "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
-            }),
+        const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${auth}`,
+            "Content-Type": "application/x-www-form-urlencoded",
           },
-        );
+          body: new URLSearchParams({
+            To: r.phone,
+            From: from,
+            Body: r.message,
+            StatusCallback:
+              "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
+          }),
+        });
         if (!res.ok) {
           error = `twilio_${res.status}`;
           console.error("[reengagement] twilio error", res.status, await res.text());
