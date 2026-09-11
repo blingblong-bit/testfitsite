@@ -1,10 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageHero } from "@/components/PageHero";
 import { createReferral } from "@/lib/referrals";
 import { attributionForSubmission } from "@/lib/attribution";
 
 export const Route = createFileRoute("/claim-free-week")({
+  beforeLoad: () => {
+    throw redirect({ to: "/", replace: true });
+  },
   head: () => ({
     meta: [
       { title: "Free Week — End of Summer | FIT Beyond Plus" },
