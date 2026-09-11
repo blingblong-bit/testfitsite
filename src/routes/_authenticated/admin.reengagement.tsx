@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Send, Users } from "lucide-react";
 import {
   previewReengagementCampaign,
+  REENGAGEMENT_CAMPAIGN_ACTIVE,
   sendReengagementCampaign,
 } from "@/lib/reengagement-campaign.functions";
 
@@ -48,69 +49,75 @@ function ReengagementPage() {
 
   return (
     <section className="container-page py-12">
-      <Link to="/staff-home" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+      <Link
+        to="/staff-home"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-4 w-4" /> Staff Portal
       </Link>
 
       <h1 className="mt-6 text-3xl">Re-Engagement Campaigns</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        Reconnect with high-priority leads who haven't converted, don't have a tour scheduled,
-        and are still eligible for SMS. Nothing sends until you press "Send Campaign". Anyone who
+        Reconnect with high-priority leads who haven't converted, don't have a tour scheduled, and
+        are still eligible for SMS. Nothing sends until you press "Send Campaign". Anyone who
         already received this specific campaign is permanently excluded from it.
       </p>
       <p className="mt-2 max-w-2xl text-xs text-muted-foreground">
-        Current campaign: <span className="text-foreground">Free Week</span> (free_week_reactivation) ·
-        7-day contact cooldown applies.
+        Free Week re-engagement is retired. Its campaign history remains saved, and no new messages
+        can be sent.
       </p>
 
-      <div className="mt-8 flex flex-wrap gap-3">
-        <button
-          onClick={() => previewMut.mutate()}
-          disabled={previewMut.isPending}
-          className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-5 text-sm hover:bg-secondary"
-        >
-          <Users className="h-4 w-4" />
-          {previewMut.isPending ? "Loading…" : "Preview recipients"}
-        </button>
-
-        {data && data.count > 0 && !armed && (
+      {REENGAGEMENT_CAMPAIGN_ACTIVE && (
+        <div className="mt-8 flex flex-wrap gap-3">
           <button
-            onClick={() => setArmed(true)}
-            className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-5 text-sm text-primary-foreground"
+            onClick={() => previewMut.mutate()}
+            disabled={previewMut.isPending}
+            className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-5 text-sm hover:bg-secondary"
           >
-            <Send className="h-4 w-4" /> Send Campaign ({data.count})
+            <Users className="h-4 w-4" />
+            {previewMut.isPending ? "Loading…" : "Preview recipients"}
           </button>
-        )}
 
-        {armed && (
-          <div className="flex items-center gap-3 rounded-md border border-primary/50 bg-primary/5 px-4 py-2">
-            <span className="text-sm">Send to {data?.count} people now?</span>
+          {data && data.count > 0 && !armed && (
             <button
-              onClick={() => sendMut.mutate()}
-              disabled={sendMut.isPending}
-              className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm text-primary-foreground"
+              onClick={() => setArmed(true)}
+              className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-5 text-sm text-primary-foreground"
             >
-              {sendMut.isPending ? "Sending…" : "Yes, send"}
+              <Send className="h-4 w-4" /> Send Campaign ({data.count})
             </button>
-            <button
-              onClick={() => setArmed(false)}
-              className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-      </div>
+          )}
+
+          {armed && (
+            <div className="flex items-center gap-3 rounded-md border border-primary/50 bg-primary/5 px-4 py-2">
+              <span className="text-sm">Send to {data?.count} people now?</span>
+              <button
+                onClick={() => sendMut.mutate()}
+                disabled={sendMut.isPending}
+                className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm text-primary-foreground"
+              >
+                {sendMut.isPending ? "Sending…" : "Yes, send"}
+              </button>
+              <button
+                onClick={() => setArmed(false)}
+                className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {data && (
         <div className="mt-10">
           <p className="text-sm">
-            <span className="text-2xl">{data.count}</span> lead{data.count === 1 ? "" : "s"} qualify.
+            <span className="text-2xl">{data.count}</span> lead{data.count === 1 ? "" : "s"}{" "}
+            qualify.
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
-            Skipped — not high priority: {data.skipped.not_high_priority} · contacted in last 7 days:{" "}
-            {data.skipped.recently_contacted} · tour scheduled: {data.skipped.tour_scheduled} ·
-            already in this campaign: {data.skipped.already_campaigned} · duplicate phone:{" "}
+            Skipped — not high priority: {data.skipped.not_high_priority} · contacted in last 7
+            days: {data.skipped.recently_contacted} · tour scheduled: {data.skipped.tour_scheduled}{" "}
+            · already in this campaign: {data.skipped.already_campaigned} · duplicate phone:{" "}
             {data.skipped.duplicate_phone} · test/staff numbers: {data.skipped.excluded_number} ·
             invalid phone: {data.skipped.invalid_phone} · joined/lost: {data.skipped.closed_status}
           </p>
@@ -164,8 +171,6 @@ function ReengagementPage() {
           )}
         </div>
       )}
-
-
 
       {sendMut.data && sendMut.data.ok && (
         <div className="mt-10 rounded-xl border border-border bg-card p-5">

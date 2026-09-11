@@ -3,6 +3,18 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { advanceFollowUpIfStale } from "./follow-up";
 
 export const CAMPAIGN_KIND = "free_week_reactivation";
+export const REENGAGEMENT_CAMPAIGN_ACTIVE = false;
+
+const EMPTY_SKIPPED = {
+  not_high_priority: 0,
+  tour_scheduled: 0,
+  recently_contacted: 0,
+  duplicate_phone: 0,
+  excluded_number: 0,
+  invalid_phone: 0,
+  already_campaigned: 0,
+  closed_status: 0,
+};
 
 function last10(raw: string | null | undefined): string {
   return (raw ?? "").replace(/\D/g, "").slice(-10);
@@ -14,7 +26,7 @@ function firstName(name: string | null | undefined): string {
 }
 
 export function buildCampaignMessage(name: string | null | undefined): string {
-  return `Hey ${firstName(name)}, it's FIT Beyond Plus! It's been a little while, so we'd love to have you back. Claim a FREE 7-day pass here: https://fitbeyondplus.com/claim-free-week — your 7 days start when you activate it in person at the front desk. Reply STOP to opt out.`;
+  return `Hey ${firstName(name)}, it's FIT Beyond Plus! It's been a little while, so we'd love to have you back. Reply to this message if you'd like to reconnect with our team. Reply STOP to opt out.`;
 }
 
 type Recipient = {
@@ -93,37 +105,52 @@ async function buildAudience() {
 
   const seen = new Set<string>();
   const recipients: Recipient[] = [];
-  const skipped = {
-    not_high_priority: 0,
-    tour_scheduled: 0,
-    recently_contacted: 0,
-    duplicate_phone: 0,
-    excluded_number: 0,
-    invalid_phone: 0,
-    already_campaigned: 0,
-    closed_status: 0,
-  };
+  const skipped = { ...EMPTY_SKIPPED };
 
   for (const l of leads ?? []) {
     const digits = last10(l.phone);
-    if (digits.length !== 10) { skipped.invalid_phone++; continue; }
-    if (l.crm_status === "Joined" || l.crm_status === "Lost Lead") { skipped.closed_status++; continue; }
-    if (alreadyCampaigned.has(digits) || campaignedLeadIds.has(l.id)) { skipped.already_campaigned++; continue; }
-    if (l.tour_scheduled && !l.tour_completed) { skipped.tour_scheduled++; continue; }
+    if (digits.length !== 10) {
+      skipped.invalid_phone++;
+      continue;
+    }
+    if (l.crm_status === "Joined" || l.crm_status === "Lost Lead") {
+      skipped.closed_status++;
+      continue;
+    }
+    if (alreadyCampaigned.has(digits) || campaignedLeadIds.has(l.id)) {
+      skipped.already_campaigned++;
+      continue;
+    }
+    if (l.tour_scheduled && !l.tour_completed) {
+      skipped.tour_scheduled++;
+      continue;
+    }
 
     const lastContact = l.last_contacted_at ?? l.last_sms_at ?? null;
     const since = daysSince(lastContact);
-    if (since !== null && since < COOLDOWN_DAYS) { skipped.recently_contacted++; continue; }
+    if (since !== null && since < COOLDOWN_DAYS) {
+      skipped.recently_contacted++;
+      continue;
+    }
 
     const priority = computePriority({
       crm_status: l.crm_status,
       last_contacted_at: l.last_contacted_at,
       next_follow_up_date: l.next_follow_up_date,
     });
-    if (priority !== "high") { skipped.not_high_priority++; continue; }
+    if (priority !== "high") {
+      skipped.not_high_priority++;
+      continue;
+    }
 
-    if (excluded.has(digits)) { skipped.excluded_number++; continue; }
-    if (seen.has(digits)) { skipped.duplicate_phone++; continue; }
+    if (excluded.has(digits)) {
+      skipped.excluded_number++;
+      continue;
+    }
+    if (seen.has(digits)) {
+      skipped.duplicate_phone++;
+      continue;
+    }
     seen.add(digits);
     recipients.push({
       id: l.id,
@@ -149,13 +176,27 @@ async function buildAudience() {
   return { recipients, skipped };
 }
 
-
 export const previewReengagementCampaign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context as never);
+    if (!REENGAGEMENT_CAMPAIGN_ACTIVE) {
+      return {
+        ok: true as const,
+        active: false as const,
+        count: 0,
+        recipients: [] as Recipient[],
+        skipped: { ...EMPTY_SKIPPED },
+      };
+    }
     const { recipients, skipped } = await buildAudience();
-    return { ok: true as const, count: recipients.length, recipients, skipped };
+    return {
+      ok: true as const,
+      active: true as const,
+      count: recipients.length,
+      recipients,
+      skipped,
+    };
   });
 
 export const sendReengagementCampaign = createServerFn({ method: "POST" })
@@ -167,6 +208,9 @@ export const sendReengagementCampaign = createServerFn({ method: "POST" })
   })
   .handler(async ({ context }) => {
     await assertAdmin(context as never);
+    if (!REENGAGEMENT_CAMPAIGN_ACTIVE) {
+      return { ok: false as const, error: "campaign_retired" };
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { recipients } = await buildAudience();
 
@@ -193,32 +237,33 @@ export const sendReengagementCampaign = createServerFn({ method: "POST" })
           row.status !== "failed",
       );
       if (gotCampaign) {
-        results.push({ name: r.name, phone: r.phone, ok: false, error: "already_received_campaign" });
+        results.push({
+          name: r.name,
+          phone: r.phone,
+          ok: false,
+          error: "already_received_campaign",
+        });
         continue;
       }
-
 
       let sendOk = false;
       let providerId: string | null = null;
       let error: string | undefined;
       try {
-        const res = await fetch(
-          `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Basic ${auth}`,
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: new URLSearchParams({
-              To: r.phone,
-              From: from,
-              Body: r.message,
-              StatusCallback:
-                "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
-            }),
+        const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${auth}`,
+            "Content-Type": "application/x-www-form-urlencoded",
           },
-        );
+          body: new URLSearchParams({
+            To: r.phone,
+            From: from,
+            Body: r.message,
+            StatusCallback:
+              "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
+          }),
+        });
         if (!res.ok) {
           error = `twilio_${res.status}`;
           console.error("[reengagement] twilio error", res.status, await res.text());
