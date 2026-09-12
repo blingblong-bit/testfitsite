@@ -205,7 +205,8 @@ const STRONG_BUYING = [
 
 const WEAK_BUYING = [
   "membership", "memberships", "how much", "pricing", "price", "prices",
-  "cost", "monthly rate", "rates",
+  "cost", "monthly rate", "rates", "paid in full", "paid-in-full", "yearly",
+  "year membership", "annual membership",
 ];
 
 const EXPLORATORY = [
