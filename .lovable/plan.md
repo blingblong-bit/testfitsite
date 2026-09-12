@@ -8,7 +8,8 @@ Right now the very first automated text offers a free day pass to almost everyon
    Triggers: wants a membership, interested in a specific plan (single/duo/family), asking how to sign up, wanting to join, or asking membership pricing.
    Reply pattern:
    "Hey Robert! This is FIT Beyond Plus — thanks for reaching out about a membership. Single memberships are $39/month. Would you like to come by and get set up?"
-   - Pricing quoted only from the approved list already used by the texting assistant ($39 single, $59 duo, $69 duo+1, $82 family, $449 paid-in-full year). When they named a specific plan, quote that one; when they only said "membership", quote the single rate.
+   - Pricing quoted only from the approved list already used by the texting assistant ($39 single, $59 duo, $69 duo+1, $82 family, $449 paid-in-full year). When they named a specific plan, quote that one; when they only said "membership" without naming a plan, say "Monthly memberships start at $39" rather than assuming Single.
+   - Buying intent always wins over secondary topics. "I want a membership for BJJ" or "I want to join, do you have showers?" stays a buying lead; classes or amenities never downgrade them to exploratory.
    - No free-pass offer, no "come try it first", no extra step before signing up.
 
 2. **Free visit stays for exploratory leads only**
