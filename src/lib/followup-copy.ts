@@ -142,6 +142,11 @@ const WEAK_BUYING = [
   "prices",
   "cost",
   "monthly rate",
+  "paid in full",
+  "paid-in-full",
+  "yearly",
+  "year membership",
+  "annual membership",
   "rates",
 ];
 
