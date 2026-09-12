@@ -95,13 +95,7 @@ export type CopyLead = {
 // ---------------------------------------------------------------------------
 
 export type LeadIntent = "buying" | "exploratory";
-export type MembershipPlan =
-  | "single"
-  | "duo"
-  | "duo_plus_one"
-  | "family"
-  | "annual"
-  | null;
+export type MembershipPlan = "single" | "duo" | "duo_plus_one" | "family" | "annual" | null;
 
 // Unambiguous "I want to buy" language.
 const STRONG_BUYING = [
@@ -145,15 +139,7 @@ const WEAK_BUYING = [
 
 // Generic money words. Only mean "membership" when the lead didn't ask about a
 // specific non-membership program (training, classes, combat sports, tanning).
-const PRICE_ONLY = [
-  "how much",
-  "pricing",
-  "price",
-  "prices",
-  "cost",
-  "monthly rate",
-  "rates",
-];
+const PRICE_ONLY = ["how much", "pricing", "price", "prices", "cost", "monthly rate", "rates"];
 
 const NON_MEMBERSHIP_TOPIC = [
   "personal train",
@@ -214,7 +200,6 @@ export function detectIntent(
   if (has(PRICE_ONLY) && !has(NON_MEMBERSHIP_TOPIC)) return "buying";
   return "exploratory";
 }
-
 
 /** Which plan they named, if any. */
 export function detectPlan(

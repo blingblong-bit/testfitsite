@@ -27,23 +27,20 @@ async function sendTwilioSms(
   if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
 
   const auth = btoa(`${sid}:${token}`);
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        To: to,
-        From: from,
-        Body: body,
-        StatusCallback:
-          "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
-      }),
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-  );
+    body: new URLSearchParams({
+      To: to,
+      From: from,
+      Body: body,
+      StatusCallback:
+        "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
+    }),
+  });
   if (!res.ok) {
     const t = await res.text();
     return { ok: false, error: `twilio_${res.status}: ${t}` };
@@ -111,7 +108,6 @@ async function lastAutomatedOutboundForPhone(
   }
   return null;
 }
-
 
 // ---------------------------------------------------------------------------
 // Personalized copy — mirrored from src/lib/followup-copy.ts (separate Deno
@@ -193,36 +189,86 @@ type CopyLead = {
 type MembershipPlan = "single" | "duo" | "duo_plus_one" | "family" | "annual" | null;
 
 const STRONG_BUYING = [
-  "want a membership", "want to get a membership", "get a membership",
-  "buy a membership", "start a membership", "need a membership",
-  "looking for a membership", "interested in a membership",
-  "interested in a single", "interested in membership", "membership for",
-  "want to join", "ready to join", "like to join", "interested in joining",
-  "how do i join", "want to sign up", "how do i sign up", "how to sign up",
-  "ready to sign up", "sign me up", "sign up", "become a member",
+  "want a membership",
+  "want to get a membership",
+  "get a membership",
+  "buy a membership",
+  "start a membership",
+  "need a membership",
+  "looking for a membership",
+  "interested in a membership",
+  "interested in a single",
+  "interested in membership",
+  "membership for",
+  "want to join",
+  "ready to join",
+  "like to join",
+  "interested in joining",
+  "how do i join",
+  "want to sign up",
+  "how do i sign up",
+  "how to sign up",
+  "ready to sign up",
+  "sign me up",
+  "sign up",
+  "become a member",
   "ready to start",
 ];
 
 const WEAK_BUYING = [
-  "membership", "memberships", "paid in full", "paid-in-full", "yearly",
-  "year membership", "annual membership",
+  "membership",
+  "memberships",
+  "paid in full",
+  "paid-in-full",
+  "yearly",
+  "year membership",
+  "annual membership",
 ];
 
-const PRICE_ONLY = [
-  "how much", "pricing", "price", "prices", "cost", "monthly rate", "rates",
-];
+const PRICE_ONLY = ["how much", "pricing", "price", "prices", "cost", "monthly rate", "rates"];
 
 const NON_MEMBERSHIP_TOPIC = [
-  "personal train", "personal trainer", "training", "trainer", "kickbox",
-  "kick boxing", "muay thai", "bjj", "jiu", "jujitsu", "grappl", "class",
-  "classes", "yoga", "barre", "hiit", "sauna", "tanning",
+  "personal train",
+  "personal trainer",
+  "training",
+  "trainer",
+  "kickbox",
+  "kick boxing",
+  "muay thai",
+  "bjj",
+  "jiu",
+  "jujitsu",
+  "grappl",
+  "class",
+  "classes",
+  "yoga",
+  "barre",
+  "hiit",
+  "sauna",
+  "tanning",
 ];
 
 const EXPLORATORY = [
-  "just looking", "just curious", "just wondering", "not sure", "browsing",
-  "checking out", "check it out", "check the gym out", "see the gym",
-  "look around", "tour", "day pass", "drop in", "drop-in", "try a",
-  "try out", "try the gym", "free visit", "comparing", "shopping around",
+  "just looking",
+  "just curious",
+  "just wondering",
+  "not sure",
+  "browsing",
+  "checking out",
+  "check it out",
+  "check the gym out",
+  "see the gym",
+  "look around",
+  "tour",
+  "day pass",
+  "drop in",
+  "drop-in",
+  "try a",
+  "try out",
+  "try the gym",
+  "free visit",
+  "comparing",
+  "shopping around",
 ];
 
 function detectIntent(
@@ -237,7 +283,6 @@ function detectIntent(
   if (has(PRICE_ONLY) && !has(NON_MEMBERSHIP_TOPIC)) return "buying";
   return "exploratory";
 }
-
 
 function detectPlan(
   interest: string | null | undefined,
@@ -338,7 +383,6 @@ const FOLLOWUPS: Array<{ minDays: number }> = [
 // completed tour. Anchored on tour_date (hours since). Completes after step 2.
 const POSTVISIT: Array<{ minHours: number }> = [{ minHours: 3 }, { minHours: 24 }];
 
-
 function isDayPassSource(source: string | null): boolean {
   const s = (source ?? "").toLowerCase();
   return s === "day_pass_walkin" || s === "referral_day_pass";
@@ -436,7 +480,6 @@ Deno.serve(async (_req) => {
           }
         }
 
-
         if (usePostVisit) {
           if (idx < 0 || idx >= POSTVISIT.length) continue;
           const step = POSTVISIT[idx];
@@ -460,7 +503,6 @@ Deno.serve(async (_req) => {
           stepLabel = `followup_${newCount}`;
         }
 
-
         const to = normalizePhone(lead.phone);
         const update: Record<string, unknown> = {
           last_sms_at: new Date().toISOString(),
@@ -480,7 +522,11 @@ Deno.serve(async (_req) => {
             from_ai: false,
             provider_message_id: null,
             status: "test_mode",
-            metadata: { kind: usePostVisit ? "postvisit" : "drip", step: stepLabel, test_mode: true },
+            metadata: {
+              kind: usePostVisit ? "postvisit" : "drip",
+              step: stepLabel,
+              test_mode: true,
+            },
           });
           sent++;
           results.push({ lead_id: lead.id, step: stepLabel, ok: true, test_mode: true });
@@ -514,7 +560,6 @@ Deno.serve(async (_req) => {
           results.push({ lead_id: lead.id, step: stepLabel, ok: false, error: send.error });
           continue;
         }
-
 
         await supabase.from("leads").update(update).eq("id", lead.id);
         await supabase.from("sms_conversation_log").insert({
