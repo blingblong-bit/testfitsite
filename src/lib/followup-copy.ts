@@ -95,13 +95,7 @@ export type CopyLead = {
 // ---------------------------------------------------------------------------
 
 export type LeadIntent = "buying" | "exploratory";
-export type MembershipPlan =
-  | "single"
-  | "duo"
-  | "duo_plus_one"
-  | "family"
-  | "annual"
-  | null;
+export type MembershipPlan = "single" | "duo" | "duo_plus_one" | "family" | "annual" | null;
 
 // Unambiguous "I want to buy" language.
 const STRONG_BUYING = [
@@ -131,23 +125,41 @@ const STRONG_BUYING = [
   "ready to start",
 ];
 
-// Membership/pricing language that means buying unless they also said they
-// just want to look around first.
+// Membership language that means buying unless they also said they just want
+// to look around first.
 const WEAK_BUYING = [
   "membership",
   "memberships",
-  "how much",
-  "pricing",
-  "price",
-  "prices",
-  "cost",
-  "monthly rate",
   "paid in full",
   "paid-in-full",
   "yearly",
   "year membership",
   "annual membership",
-  "rates",
+];
+
+// Generic money words. Only mean "membership" when the lead didn't ask about a
+// specific non-membership program (training, classes, combat sports, tanning).
+const PRICE_ONLY = ["how much", "pricing", "price", "prices", "cost", "monthly rate", "rates"];
+
+const NON_MEMBERSHIP_TOPIC = [
+  "personal train",
+  "personal trainer",
+  "training",
+  "trainer",
+  "kickbox",
+  "kick boxing",
+  "muay thai",
+  "bjj",
+  "jiu",
+  "jujitsu",
+  "grappl",
+  "class",
+  "classes",
+  "yoga",
+  "barre",
+  "hiit",
+  "sauna",
+  "tanning",
 ];
 
 // Explicitly exploratory: wants to see the place before deciding.
@@ -185,6 +197,7 @@ export function detectIntent(
   if (has(STRONG_BUYING)) return "buying";
   if (has(EXPLORATORY)) return "exploratory";
   if (has(WEAK_BUYING)) return "buying";
+  if (has(PRICE_ONLY) && !has(NON_MEMBERSHIP_TOPIC)) return "buying";
   return "exploratory";
 }
 

@@ -43,38 +43,95 @@ function normalizePhone(raw: string): string {
 type MembershipPlan = "single" | "duo" | "duo_plus_one" | "family" | "annual" | null;
 
 const STRONG_BUYING = [
-  "want a membership", "want to get a membership", "get a membership",
-  "buy a membership", "start a membership", "need a membership",
-  "looking for a membership", "interested in a membership",
-  "interested in a single", "interested in membership", "membership for",
-  "want to join", "ready to join", "like to join", "interested in joining",
-  "how do i join", "want to sign up", "how do i sign up", "how to sign up",
-  "ready to sign up", "sign me up", "sign up", "become a member",
+  "want a membership",
+  "want to get a membership",
+  "get a membership",
+  "buy a membership",
+  "start a membership",
+  "need a membership",
+  "looking for a membership",
+  "interested in a membership",
+  "interested in a single",
+  "interested in membership",
+  "membership for",
+  "want to join",
+  "ready to join",
+  "like to join",
+  "interested in joining",
+  "how do i join",
+  "want to sign up",
+  "how do i sign up",
+  "how to sign up",
+  "ready to sign up",
+  "sign me up",
+  "sign up",
+  "become a member",
   "ready to start",
 ];
 
 const WEAK_BUYING = [
-  "membership", "memberships", "how much", "pricing", "price", "prices",
-  "cost", "monthly rate", "rates", "paid in full", "paid-in-full", "yearly",
-  "year membership", "annual membership",
+  "membership",
+  "memberships",
+  "paid in full",
+  "paid-in-full",
+  "yearly",
+  "year membership",
+  "annual membership",
+];
+
+const PRICE_ONLY = ["how much", "pricing", "price", "prices", "cost", "monthly rate", "rates"];
+
+const NON_MEMBERSHIP_TOPIC = [
+  "personal train",
+  "personal trainer",
+  "training",
+  "trainer",
+  "kickbox",
+  "kick boxing",
+  "muay thai",
+  "bjj",
+  "jiu",
+  "jujitsu",
+  "grappl",
+  "class",
+  "classes",
+  "yoga",
+  "barre",
+  "hiit",
+  "sauna",
+  "tanning",
 ];
 
 const EXPLORATORY = [
-  "just looking", "just curious", "just wondering", "not sure", "browsing",
-  "checking out", "check it out", "check the gym out", "see the gym",
-  "look around", "tour", "day pass", "drop in", "drop-in", "try a",
-  "try out", "try the gym", "free visit", "comparing", "shopping around",
+  "just looking",
+  "just curious",
+  "just wondering",
+  "not sure",
+  "browsing",
+  "checking out",
+  "check it out",
+  "check the gym out",
+  "see the gym",
+  "look around",
+  "tour",
+  "day pass",
+  "drop in",
+  "drop-in",
+  "try a",
+  "try out",
+  "try the gym",
+  "free visit",
+  "comparing",
+  "shopping around",
 ];
 
-function detectIntent(
-  interest: string | null,
-  message: string | null,
-): "buying" | "exploratory" {
+function detectIntent(interest: string | null, message: string | null): "buying" | "exploratory" {
   const t = `${interest ?? ""} ${message ?? ""}`.toLowerCase();
   const has = (words: string[]) => words.some((w) => t.includes(w));
   if (has(STRONG_BUYING)) return "buying";
   if (has(EXPLORATORY)) return "exploratory";
   if (has(WEAK_BUYING)) return "buying";
+  if (has(PRICE_ONLY) && !has(NON_MEMBERSHIP_TOPIC)) return "buying";
   return "exploratory";
 }
 
@@ -157,23 +214,20 @@ async function sendTwilioSms(
   const from = Deno.env.get("TWILIO_FROM_NUMBER");
   if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
   const auth = btoa(`${sid}:${token}`);
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        To: to,
-        From: from,
-        Body: body,
-        StatusCallback:
-          "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
-      }),
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-  );
+    body: new URLSearchParams({
+      To: to,
+      From: from,
+      Body: body,
+      StatusCallback:
+        "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
+    }),
+  });
   if (!res.ok) {
     const t = await res.text();
     return { ok: false, error: `twilio_${res.status}: ${t}` };
@@ -185,9 +239,10 @@ async function sendTwilioSms(
 Deno.serve(async (req) => {
   try {
     // Supabase DB webhook payload: { type, table, record, old_record, schema }
-    const payload = (await req.json().catch(() => null)) as
-      | { type?: string; record?: LeadRow }
-      | null;
+    const payload = (await req.json().catch(() => null)) as {
+      type?: string;
+      record?: LeadRow;
+    } | null;
 
     if (!payload || payload.type !== "INSERT" || !payload.record) {
       return new Response(JSON.stringify({ ok: false, error: "bad_payload" }), {
@@ -250,10 +305,9 @@ Deno.serve(async (req) => {
         status: "test_mode",
         metadata: { kind: "initial", test_mode: true },
       });
-      return new Response(
-        JSON.stringify({ ok: true, test_mode: true, message: body }),
-        { headers: { "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ ok: true, test_mode: true, message: body }), {
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const send = await sendTwilioSms(to, body);
