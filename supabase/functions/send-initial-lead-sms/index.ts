@@ -10,6 +10,7 @@ type LeadRow = {
   email: string | null;
   phone: string | null;
   interest: string | null;
+  message: string | null;
   source: string | null;
   lead_type: string | null;
   should_notify: boolean | null;
@@ -33,17 +34,98 @@ function normalizePhone(raw: string): string {
   return `+${digits}`;
 }
 
+// ---------------------------------------------------------------------------
+// ⚠️ MIRRORED COPY — keep in sync with src/lib/followup-copy.ts (Deno cannot
+// import from src/). Purchase intent always wins over topic branches, and
+// prices come only from APPROVED_PRICING in src/lib/gym-facts.ts.
+// ---------------------------------------------------------------------------
+
+type MembershipPlan = "single" | "duo" | "duo_plus_one" | "family" | "annual" | null;
+
+const STRONG_BUYING = [
+  "want a membership", "want to get a membership", "get a membership",
+  "buy a membership", "start a membership", "need a membership",
+  "looking for a membership", "interested in a membership",
+  "interested in a single", "interested in membership", "membership for",
+  "want to join", "ready to join", "like to join", "interested in joining",
+  "how do i join", "want to sign up", "how do i sign up", "how to sign up",
+  "ready to sign up", "sign me up", "sign up", "become a member",
+  "ready to start",
+];
+
+const WEAK_BUYING = [
+  "membership", "memberships", "how much", "pricing", "price", "prices",
+  "cost", "monthly rate", "rates", "paid in full", "paid-in-full", "yearly",
+  "year membership", "annual membership",
+];
+
+const EXPLORATORY = [
+  "just looking", "just curious", "just wondering", "not sure", "browsing",
+  "checking out", "check it out", "check the gym out", "see the gym",
+  "look around", "tour", "day pass", "drop in", "drop-in", "try a",
+  "try out", "try the gym", "free visit", "comparing", "shopping around",
+];
+
+function detectIntent(
+  interest: string | null,
+  message: string | null,
+): "buying" | "exploratory" {
+  const t = `${interest ?? ""} ${message ?? ""}`.toLowerCase();
+  const has = (words: string[]) => words.some((w) => t.includes(w));
+  if (has(STRONG_BUYING)) return "buying";
+  if (has(EXPLORATORY)) return "exploratory";
+  if (has(WEAK_BUYING)) return "buying";
+  return "exploratory";
+}
+
+function detectPlan(interest: string | null, message: string | null): MembershipPlan {
+  const t = `${interest ?? ""} ${message ?? ""}`.toLowerCase();
+  const has = (...w: string[]) => w.some((x) => t.includes(x));
+  if (has("paid in full", "paid-in-full", "annual", "for a year", "1 year", "one year", "yearly")) {
+    return "annual";
+  }
+  if (has("family")) return "family";
+  if (has("duo +1", "duo+1", "duo plus", "three adult", "3 adult")) return "duo_plus_one";
+  if (has("duo", "couple", "two adult", "2 adult", "my wife", "my husband", "my spouse")) {
+    return "duo";
+  }
+  if (has("single", "just me", "myself only", "individual")) return "single";
+  return null;
+}
+
+function membershipPriceSentence(plan: MembershipPlan): string {
+  switch (plan) {
+    case "single":
+      return "Single memberships are $39/month.";
+    case "duo":
+      return "Duo memberships (2 adults) are $59/month.";
+    case "duo_plus_one":
+      return "Duo +1 (3 adults) is $69/month.";
+    case "family":
+      return "Family memberships are $82/month for up to 5 in the same household.";
+    case "annual":
+      return "A paid-in-full year is $449 for a single membership.";
+    default:
+      return "Monthly memberships start at $39.";
+  }
+}
+
 function buildFirstMessage(
   name: string | null,
   interest: string | null,
   source: string | null,
+  message: string | null,
 ): string {
   const fn = firstName(name);
-  const topic = (interest ?? "").toLowerCase();
+  const topic = `${interest ?? ""} ${message ?? ""}`.toLowerCase();
   const src = (source ?? "").toLowerCase();
 
   if (src === "day_pass_walkin") {
     return `Hey ${fn}! Thanks for coming in to FIT Beyond Plus today 🎟️ Hope you're loving the gym so far. Let us know if you have any questions — we're happy to help you get set up with a membership whenever you're ready!`;
+  }
+  if (detectIntent(interest, message) === "buying") {
+    const price = membershipPriceSentence(detectPlan(interest, message));
+    return `Hey ${fn}! This is FIT Beyond Plus — thanks for reaching out about a membership. ${price} Would you like to come by and get set up?`;
   }
   if (src.includes("referral") || src.includes("day_pass") || src.includes("day pass")) {
     return `Hey ${fn}! FIT Beyond Plus here — heard you got referred to us, awesome! Want to swing by on a free day pass so we can show you around? 💪`;
@@ -143,7 +225,7 @@ Deno.serve(async (req) => {
     );
 
     const to = normalizePhone(lead.phone);
-    const body = buildFirstMessage(lead.name, lead.interest, lead.source);
+    const body = buildFirstMessage(lead.name, lead.interest, lead.source, lead.message);
 
     const isTest = (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL;
     const nowIso = new Date().toISOString();

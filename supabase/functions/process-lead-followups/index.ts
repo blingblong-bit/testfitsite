@@ -181,13 +181,107 @@ const INVITE: Record<LeadCategory, string> = {
   general: "come by for a free visit",
 };
 
-type CopyLead = { name?: string | null; interest?: string | null; source?: string | null };
+type CopyLead = {
+  name?: string | null;
+  interest?: string | null;
+  source?: string | null;
+  message?: string | null;
+};
+
+// Purchase intent — mirrored from src/lib/followup-copy.ts. Buying intent
+// always wins over secondary topics; prices come only from APPROVED_PRICING.
+type MembershipPlan = "single" | "duo" | "duo_plus_one" | "family" | "annual" | null;
+
+const STRONG_BUYING = [
+  "want a membership", "want to get a membership", "get a membership",
+  "buy a membership", "start a membership", "need a membership",
+  "looking for a membership", "interested in a membership",
+  "interested in a single", "interested in membership", "membership for",
+  "want to join", "ready to join", "like to join", "interested in joining",
+  "how do i join", "want to sign up", "how do i sign up", "how to sign up",
+  "ready to sign up", "sign me up", "sign up", "become a member",
+  "ready to start",
+];
+
+const WEAK_BUYING = [
+  "membership", "memberships", "how much", "pricing", "price", "prices",
+  "cost", "monthly rate", "rates", "paid in full", "paid-in-full", "yearly",
+  "year membership", "annual membership",
+];
+
+const EXPLORATORY = [
+  "just looking", "just curious", "just wondering", "not sure", "browsing",
+  "checking out", "check it out", "check the gym out", "see the gym",
+  "look around", "tour", "day pass", "drop in", "drop-in", "try a",
+  "try out", "try the gym", "free visit", "comparing", "shopping around",
+];
+
+function detectIntent(
+  interest: string | null | undefined,
+  message: string | null | undefined,
+): "buying" | "exploratory" {
+  const t = `${interest ?? ""} ${message ?? ""}`.toLowerCase();
+  const has = (words: string[]) => words.some((w) => t.includes(w));
+  if (has(STRONG_BUYING)) return "buying";
+  if (has(EXPLORATORY)) return "exploratory";
+  if (has(WEAK_BUYING)) return "buying";
+  return "exploratory";
+}
+
+function detectPlan(
+  interest: string | null | undefined,
+  message: string | null | undefined,
+): MembershipPlan {
+  const t = `${interest ?? ""} ${message ?? ""}`.toLowerCase();
+  const has = (...w: string[]) => w.some((x) => t.includes(x));
+  if (has("paid in full", "paid-in-full", "annual", "for a year", "1 year", "one year", "yearly")) {
+    return "annual";
+  }
+  if (has("family")) return "family";
+  if (has("duo +1", "duo+1", "duo plus", "three adult", "3 adult")) return "duo_plus_one";
+  if (has("duo", "couple", "two adult", "2 adult", "my wife", "my husband", "my spouse")) {
+    return "duo";
+  }
+  if (has("single", "just me", "myself only", "individual")) return "single";
+  return null;
+}
+
+function membershipPriceSentence(plan: MembershipPlan): string {
+  switch (plan) {
+    case "single":
+      return "Single memberships are $39/month.";
+    case "duo":
+      return "Duo memberships (2 adults) are $59/month.";
+    case "duo_plus_one":
+      return "Duo +1 (3 adults) is $69/month.";
+    case "family":
+      return "Family memberships are $82/month for up to 5 in the same household.";
+    case "annual":
+      return "A paid-in-full year is $449 for a single membership.";
+    default:
+      return "Monthly memberships start at $39.";
+  }
+}
 
 function buildFollowupMessage(step: number, lead: CopyLead): string {
   const fn = firstName(lead.name ?? null);
   const cat = categorizeLead(lead.interest, lead.source);
   const hook = HOOK[cat];
   const invite = INVITE[cat];
+
+  if (detectIntent(lead.interest, lead.message) === "buying") {
+    const price = membershipPriceSentence(detectPlan(lead.interest, lead.message));
+    switch (step) {
+      case 1:
+        return `Hey ${fn}, following up on getting you set up at FIT Beyond Plus. ${price} Want me to have everything ready when you come in?`;
+      case 2:
+        return `${fn}, whenever you're ready we can get your membership going — it only takes a few minutes at the front desk. What day works for you to come in?`;
+      case 3:
+        return `${fn}, still glad to get you signed up at FIT Beyond Plus. Just tell me a day and time and we'll have it ready for you.`;
+      default:
+        return `${fn}, last check-in from me — if you still want to get started at FIT Beyond Plus, just reply here. ${price}`;
+    }
+  }
 
   switch (step) {
     case 1:
@@ -197,7 +291,7 @@ function buildFollowupMessage(step: number, lead: CopyLead): string {
     case 3:
       return `${fn}, ${hook}. That's kind of our thing at FIT Beyond Plus. Whenever you're ready, we've got you.`;
     default:
-      return `${fn}, let's make this easy — try FIT Beyond Plus free for 7 days. Full access, no strings, and you can ${invite} while you're at it. Just reply YES and I'll get you set up.`;
+      return `${fn}, let's make this easy — ${invite} and see how it feels for yourself. No pressure either way. Just reply and I'll get you set up.`;
   }
 }
 
@@ -258,7 +352,7 @@ Deno.serve(async (_req) => {
     const { data: leads, error } = await supabase
       .from("leads")
       .select(
-        "id, name, email, phone, interest, source, created_at, tour_completed, tour_date, followup_count, sequence_status, crm_status, last_response_at, last_sms_at",
+        "id, name, email, phone, interest, message, source, created_at, tour_completed, tour_date, followup_count, sequence_status, crm_status, last_response_at, last_sms_at",
       )
       .eq("lead_type", "customer_lead")
       .eq("should_notify", true)
