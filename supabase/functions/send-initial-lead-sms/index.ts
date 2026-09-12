@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
     );
 
     const to = normalizePhone(lead.phone);
-    const body = buildFirstMessage(lead.name, lead.interest, lead.source);
+    const body = buildFirstMessage(lead.name, lead.interest, lead.source, lead.message);
 
     const isTest = (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL;
     const nowIso = new Date().toISOString();
