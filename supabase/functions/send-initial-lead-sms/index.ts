@@ -10,6 +10,7 @@ type LeadRow = {
   email: string | null;
   phone: string | null;
   interest: string | null;
+  message: string | null;
   source: string | null;
   lead_type: string | null;
   should_notify: boolean | null;
