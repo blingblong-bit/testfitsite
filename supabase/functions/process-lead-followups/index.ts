@@ -351,7 +351,7 @@ Deno.serve(async (_req) => {
     const { data: leads, error } = await supabase
       .from("leads")
       .select(
-        "id, name, email, phone, interest, source, created_at, tour_completed, tour_date, followup_count, sequence_status, crm_status, last_response_at, last_sms_at",
+        "id, name, email, phone, interest, message, source, created_at, tour_completed, tour_date, followup_count, sequence_status, crm_status, last_response_at, last_sms_at",
       )
       .eq("lead_type", "customer_lead")
       .eq("should_notify", true)
