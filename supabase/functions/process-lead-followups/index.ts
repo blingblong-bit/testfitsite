@@ -204,9 +204,18 @@ const STRONG_BUYING = [
 ];
 
 const WEAK_BUYING = [
-  "membership", "memberships", "how much", "pricing", "price", "prices",
-  "cost", "monthly rate", "rates", "paid in full", "paid-in-full", "yearly",
+  "membership", "memberships", "paid in full", "paid-in-full", "yearly",
   "year membership", "annual membership",
+];
+
+const PRICE_ONLY = [
+  "how much", "pricing", "price", "prices", "cost", "monthly rate", "rates",
+];
+
+const NON_MEMBERSHIP_TOPIC = [
+  "personal train", "personal trainer", "training", "trainer", "kickbox",
+  "kick boxing", "muay thai", "bjj", "jiu", "jujitsu", "grappl", "class",
+  "classes", "yoga", "barre", "hiit", "sauna", "tanning",
 ];
 
 const EXPLORATORY = [
@@ -225,8 +234,10 @@ function detectIntent(
   if (has(STRONG_BUYING)) return "buying";
   if (has(EXPLORATORY)) return "exploratory";
   if (has(WEAK_BUYING)) return "buying";
+  if (has(PRICE_ONLY) && !has(NON_MEMBERSHIP_TOPIC)) return "buying";
   return "exploratory";
 }
+
 
 function detectPlan(
   interest: string | null | undefined,
