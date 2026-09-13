@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { sendWelcomeSms } from "@/lib/send-welcome-sms.functions";
 import { sendManualSms } from "@/lib/send-manual-sms.functions";
+import { syncStaffTourAppointment } from "@/lib/appointments.functions";
 import { chicagoWallToUTC } from "@/lib/appointment-availability";
 
 // Format a UTC ISO timestamp into the "YYYY-MM-DDTHH:mm" value expected by
@@ -1227,6 +1228,7 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
   const [sendingSms, setSendingSms] = useState(false);
   const sendWelcome = useServerFn(sendWelcomeSms);
   const sendManual = useServerFn(sendManualSms);
+  const syncTour = useServerFn(syncStaffTourAppointment);
   const priority = computePriority(lead);
 
   useEffect(() => {
