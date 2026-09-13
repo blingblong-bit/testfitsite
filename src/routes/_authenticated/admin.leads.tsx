@@ -1385,18 +1385,33 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
     toast.success("Notes saved");
   }
 
+  // Keeps reminder texts in sync with whatever staff set here. Errors are
+  // surfaced so a tour never looks armed when it isn't.
+  async function syncTourReminders() {
+    const res = await syncTour({ data: { lead_id: lead.id } });
+    if (!res.ok) {
+      toast.error("Couldn't set up reminder texts");
+      return;
+    }
+    if (res.state === "armed") toast.success("Reminder texts scheduled");
+    if (res.state === "needs_time") toast.message("We'll text them to ask what time works");
+    if (res.state === "no_phone") toast.message("No phone on file — no reminders possible");
+  }
+
   async function toggleTourScheduled(v: boolean) {
     const patch: Partial<Lead> = { tour_scheduled: v };
     if (v && (lead.crm_status === "New Lead" || lead.crm_status === "Contacted" || lead.crm_status === "Waiting on Response")) {
       patch.crm_status = "Tour Scheduled";
     }
     await updateLead(lead.id, patch);
+    await syncTourReminders();
   }
 
   async function toggleTourCompleted(v: boolean) {
     const patch: Partial<Lead> = { tour_completed: v };
     if (v) patch.crm_status = "Tour Completed";
     await updateLead(lead.id, patch);
+    await syncTourReminders();
   }
 
   async function toggleMember(v: boolean) {
