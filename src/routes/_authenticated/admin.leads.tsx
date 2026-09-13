@@ -652,6 +652,7 @@ function AdminLeads() {
         />
       )}
       {tab === "referrals" && <ReferralsView referrals={referrals} />}
+      {tab === "missed-calls" && <MissedCallsView />}
       {tab === "analytics" && (
         <AnalyticsView leads={leads} referrals={referrals} isAdmin={isAdmin === true} />
       )}
