@@ -292,7 +292,7 @@ function matchesView(lead: Lead, view: TypeFilter): boolean {
   if (view === "members") return stage === "member";
   return stage === "lost";
 }
-type Tab = "leads" | "referrals" | "analytics" | "settings";
+type Tab = "leads" | "referrals" | "missed-calls" | "analytics" | "settings";
 type SortKey = "priority" | "newest" | "oldest" | "tour_date" | "last_contact" | "source";
 type QuickFilter =
   | "none"
