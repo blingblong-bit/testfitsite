@@ -1643,15 +1643,27 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                   <input
                     type="datetime-local"
                     defaultValue={utcIsoToChicagoLocalInput(lead.tour_date)}
-                    onBlur={(e) => {
+                    onBlur={async (e) => {
                       const nextIso = chicagoLocalInputToUtcIso(e.target.value);
                       if (nextIso !== (lead.tour_date ?? null)) {
-                        updateLead(lead.id, { tour_date: nextIso });
+                        await updateLead(lead.id, { tour_date: nextIso });
+                        await syncTourReminders();
                       }
                     }}
                     className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
                   />
                 </Field>
+                {lead.tour_scheduled && !lead.tour_completed && (
+                  <p className="text-xs text-muted-foreground">
+                    {!lead.phone
+                      ? "No phone — can't remind. Call or email instead."
+                      : !lead.tour_date
+                        ? "Needs a time — set a date and time to start reminder texts."
+                        : tourDateIsDateOnly(lead.tour_date)
+                          ? "Needs a time — we'll text them to ask what time works."
+                          : "Reminders on: day before, 8am morning of, and an hour before."}
+                  </p>
+                )}
               </div>
             </div>
 
