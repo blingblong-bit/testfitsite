@@ -617,6 +617,9 @@ function AdminLeads() {
         <TabBtn active={tab === "referrals"} onClick={() => setTab("referrals")}>
           Referral Tracker
         </TabBtn>
+        <TabBtn active={tab === "missed-calls"} onClick={() => setTab("missed-calls")}>
+          Missed Calls
+        </TabBtn>
         <TabBtn active={tab === "analytics"} onClick={() => setTab("analytics")}>
           Business Analytics
         </TabBtn>
