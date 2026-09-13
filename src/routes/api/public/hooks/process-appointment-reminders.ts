@@ -108,6 +108,65 @@ export const Route = createFileRoute("/api/public/hooks/process-appointment-remi
         const nowMs = now.getTime();
         const results: Array<Record<string, unknown>> = [];
 
+        // ---- Staff-set tours with a day but no time yet ----
+        // These are pending rows created from the Lead Tracker. We ask the person
+        // once what time works, only inside 9am-7pm Chicago, then wait for staff
+        // to put a real time on the record before any reminders go out.
+        {
+          const { hour } = chicagoHourMinute(now);
+          if (hour >= 9 && hour < 19) {
+            const { data: pending } = await supabase
+              .from("appointments")
+              .select("id, lead_id, name, phone, requested_time, reminders_sent")
+              .eq("status", "pending")
+              .eq("type", "tour")
+              .gte("requested_time", new Date(nowMs - 12 * 60 * 60 * 1000).toISOString())
+              .lte("requested_time", new Date(nowMs + 30 * 24 * 60 * 60 * 1000).toISOString());
+
+            for (const row of pending ?? []) {
+              const flags = (row.reminders_sent ?? {}) as Record<string, unknown>;
+              if (!flags.staff_created || flags.time_ask_sent) continue;
+              if (!row.phone || !row.requested_time) continue;
+              const to = normalizePhoneE164(row.phone);
+              const fn = firstName(row.name);
+              const dayStr = formatChicagoDate(row.requested_time);
+              const body = `Hey ${fn}! Looking forward to having you at FIT Beyond Plus on ${dayStr}. What time works best for you?`;
+              const send = await sendTwilioSms(to, body);
+              if (!send.ok) {
+                console.error(
+                  `[process-appointment-reminders] time-ask failed appt=${row.id}`,
+                  send.error,
+                );
+                results.push({ id: row.id, kind: "time_ask", ok: false, error: send.error });
+                continue;
+              }
+              await supabase
+                .from("appointments")
+                .update({
+                  reminders_sent: {
+                    ...flags,
+                    time_ask_sent: true,
+                  } as unknown as Database["public"]["Tables"]["appointments"]["Update"]["reminders_sent"],
+                })
+                .eq("id", row.id);
+              if (row.lead_id) {
+                await supabase.from("sms_conversation_log").insert({
+                  lead_id: row.lead_id,
+                  phone: to,
+                  direction: "outbound",
+                  body,
+                  from_ai: false,
+                  provider_message_id: send.sid ?? null,
+                  status: "sent",
+                  metadata: { kind: "appt_time_ask", appointment_id: row.id },
+                });
+              }
+              results.push({ id: row.id, kind: "time_ask", ok: true, sid: send.sid });
+            }
+          }
+        }
+
+
         for (const appt of appts ?? []) {
           try {
             if (!appt.confirmed_time || !appt.phone) continue;
