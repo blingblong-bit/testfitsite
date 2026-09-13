@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { formatChicagoTime, formatChicagoDateTime } from "@/lib/appointment-availability";
+import {
+  formatChicagoTime,
+  formatChicagoDateTime,
+  formatChicagoDate,
+} from "@/lib/appointment-availability";
 
 // Runs every 15 minutes via pg_cron. Sends day-before / morning-of / hour-before
 // reminders for confirmed appointments. Same pattern as process-lead-followups.
