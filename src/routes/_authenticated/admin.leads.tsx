@@ -1472,6 +1472,17 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                 Text Undelivered — Call Instead
               </span>
             )}
+            {lead.tour_scheduled && !lead.tour_completed && !lead.phone && (
+              <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-destructive/15 text-destructive border-destructive/40">
+                No Phone — Can't Remind
+              </span>
+            )}
+            {lead.tour_scheduled && !lead.tour_completed && Boolean(lead.phone) &&
+              (!lead.tour_date || tourDateIsDateOnly(lead.tour_date)) && (
+                <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/40">
+                  Tour Needs A Time
+                </span>
+              )}
             {freeWeek?.active && (
               <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/40">
                 Free Week — {freeWeek.daysLeft} {freeWeek.daysLeft === 1 ? "day" : "days"} left
