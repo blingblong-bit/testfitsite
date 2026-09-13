@@ -1,11 +1,24 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Bell, BellOff, Home, ChevronDown, ChevronUp, Phone, Mail, Calendar, Search, Plus, X } from "lucide-react";
+import {
+  Bell,
+  BellOff,
+  Home,
+  ChevronDown,
+  ChevronUp,
+  Phone,
+  Mail,
+  Calendar,
+  Search,
+  Plus,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { sendWelcomeSms } from "@/lib/send-welcome-sms.functions";
 import { sendManualSms } from "@/lib/send-manual-sms.functions";
+import { syncStaffTourAppointment } from "@/lib/appointments.functions";
 import { chicagoWallToUTC } from "@/lib/appointment-availability";
 
 // Format a UTC ISO timestamp into the "YYYY-MM-DDTHH:mm" value expected by
@@ -14,13 +27,24 @@ function utcIsoToChicagoLocalInput(iso: string | null | undefined): string {
   if (!iso) return "";
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Chicago",
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
   }).formatToParts(new Date(iso));
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
   let hh = get("hour");
   if (hh === "24") hh = "00";
   return `${get("year")}-${get("month")}-${get("day")}T${hh}:${get("minute")}`;
+}
+
+// A tour date stored at exactly midnight Chicago means the day is set but the
+// time isn't — reminders can't be timed until someone picks a time.
+function tourDateIsDateOnly(iso: string | null | undefined): boolean {
+  if (!iso) return false;
+  return utcIsoToChicagoLocalInput(iso).endsWith("T00:00");
 }
 
 // Parse a datetime-local input's value ("YYYY-MM-DDTHH:mm") as America/Chicago
@@ -34,7 +58,12 @@ function chicagoLocalInputToUtcIso(v: string): string | null {
 }
 import { AnalyticsView } from "@/components/AnalyticsView";
 import { channelForLead, hasMeasuredAttribution } from "@/lib/analytics";
-import { computePriority, daysSince, followUpOverdueDays, type Priority } from "@/lib/lead-priority";
+import {
+  computePriority,
+  daysSince,
+  followUpOverdueDays,
+  type Priority,
+} from "@/lib/lead-priority";
 import {
   customerStage,
   dayPassPurchasedAt,
@@ -162,7 +191,6 @@ type Lead = {
   day_pass_price?: number | null;
 };
 
-
 type Referral = {
   id: string;
   referral_code: string;
@@ -228,7 +256,8 @@ function buildFreeWeekMap(referrals: Referral[] | null): Record<string, FreeWeek
       extended: extendedLeads.has(r.lead_id),
     };
     // Keep the record with the latest end date.
-    if (!prev || (info.endsAt && (!prev.endsAt || info.endsAt > prev.endsAt))) map[r.lead_id] = info;
+    if (!prev || (info.endsAt && (!prev.endsAt || info.endsAt > prev.endsAt)))
+      map[r.lead_id] = info;
   }
   return map;
 }
@@ -265,17 +294,27 @@ function matchesView(lead: Lead, view: TypeFilter): boolean {
 }
 type Tab = "leads" | "referrals" | "analytics" | "settings";
 type SortKey = "priority" | "newest" | "oldest" | "tour_date" | "last_contact" | "source";
-type QuickFilter = "none" | "new" | "high_priority" | "due_today" | "tours_scheduled" | "tours_completed" | "joined_this_month";
-
+type QuickFilter =
+  | "none"
+  | "new"
+  | "high_priority"
+  | "due_today"
+  | "tours_scheduled"
+  | "tours_completed"
+  | "joined_this_month";
 
 function notificationForLead(lead: Lead): { title: string; body: string } {
   const src = (lead.source ?? "").toLowerCase();
   let kind = "New Website Lead";
   if (src.includes("referral")) kind = "New Referral Redemption";
-  else if (src.includes("day pass") || src.includes("day_pass") || src.includes("paid_day_pass")) kind = "New Day Pass Submission";
+  else if (src.includes("day pass") || src.includes("day_pass") || src.includes("paid_day_pass"))
+    kind = "New Day Pass Submission";
   else if (src.includes("walk")) kind = "New Walk-In Lead";
   const interest = lead.interest ? `\nInterested in:\n${lead.interest}` : "";
-  return { title: `${kind}\n${lead.name}`, body: interest.trim() || (lead.message ?? lead.email ?? "") };
+  return {
+    title: `${kind}\n${lead.name}`,
+    body: interest.trim() || (lead.message ?? lead.email ?? ""),
+  };
 }
 
 export const Route = createFileRoute("/_authenticated/admin/leads")({
@@ -288,12 +327,12 @@ export const Route = createFileRoute("/_authenticated/admin/leads")({
   component: AdminLeads,
 });
 
-
 function isFollowUpDueToday(lead: Lead): boolean {
   if (!lead.next_follow_up_date) return false;
   if (lead.crm_status === "Joined" || lead.crm_status === "Lost Lead") return false;
   const due = new Date(lead.next_follow_up_date + "T00:00:00").getTime();
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   return due <= today.getTime();
 }
 
@@ -317,7 +356,6 @@ function needsFirstTouch(lead: Lead): boolean {
   return true;
 }
 
-
 // Pipeline stage ordering for the default list order:
 // open leads (by priority) → tour scheduled → tour completed → member → lost.
 function stageRank(lead: Lead): number {
@@ -334,12 +372,10 @@ type ListGroup = "working" | "converted" | "closed";
 function listGroup(lead: Lead): ListGroup {
   const type = lead.lead_type ?? "customer_lead";
   if (lead.became_member || lead.crm_status === "Joined") return "converted";
-  if (lead.crm_status === "Lost Lead" || type === "spam" || type === "vendor_solicitation") return "closed";
+  if (lead.crm_status === "Lost Lead" || type === "spam" || type === "vendor_solicitation")
+    return "closed";
   return "working";
 }
-
-
-
 
 // Effective join date for a converted lead: prefer the real membership start
 // date from Antaris, otherwise fall back to when we detected the conversion.
@@ -357,8 +393,6 @@ function joinedInMonth(lead: Lead, monthStart: Date): boolean {
   const d = joinDateOf(lead);
   return !!d && d >= monthStart;
 }
-
-
 
 function priorityRank(p: Priority): number {
   return p === "high" ? 0 : p === "medium" ? 1 : 2;
@@ -380,21 +414,29 @@ function AdminLeads() {
 
   async function load() {
     setError(null);
-    const [{ data: leadsData, error: leadsErr }, { data: refsData, error: refsErr }] = await Promise.all([
-      supabase.from("leads").select("*").order("created_at", { ascending: false }),
-      supabase.from("referrals").select("*").order("created_at", { ascending: false }),
-    ]);
-    if (leadsErr) { setError(leadsErr.message); setLeads([]); }
-    else setLeads(leadsData as Lead[]);
-    if (refsErr) { if (!leadsErr) setError(refsErr.message); setReferrals([]); }
-    else setReferrals(refsData as Referral[]);
+    const [{ data: leadsData, error: leadsErr }, { data: refsData, error: refsErr }] =
+      await Promise.all([
+        supabase.from("leads").select("*").order("created_at", { ascending: false }),
+        supabase.from("referrals").select("*").order("created_at", { ascending: false }),
+      ]);
+    if (leadsErr) {
+      setError(leadsErr.message);
+      setLeads([]);
+    } else setLeads(leadsData as Lead[]);
+    if (refsErr) {
+      if (!leadsErr) setError(refsErr.message);
+      setReferrals([]);
+    } else setReferrals(refsData as Referral[]);
   }
 
   useEffect(() => {
     (async () => {
       const { data: userRes } = await supabase.auth.getUser();
       const uid = userRes.user?.id;
-      if (!uid) { setIsAdmin(false); return; }
+      if (!uid) {
+        setIsAdmin(false);
+        return;
+      }
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", uid);
       const admin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
       setIsAdmin(admin);
@@ -410,37 +452,43 @@ function AdminLeads() {
   }, []);
 
   const [browserNotify, setBrowserNotify] = useState<NotificationPermission | "unsupported">(
-    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported"
+    typeof window !== "undefined" && "Notification" in window
+      ? Notification.permission
+      : "unsupported",
   );
 
   useEffect(() => {
     if (!isAdmin) return;
     const channel = supabase
       .channel("admin-leads-feed")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "leads" },
-        (payload) => {
-          const lead = payload.new as Lead;
-          setLeads((prev) => (prev ? [lead, ...prev] : [lead]));
-          const { title, body } = notificationForLead(lead);
-          toast.success(title.replace("\n", " — "), { description: body, duration: 8000 });
-          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-            try {
-              const n = new Notification(title, { body, tag: lead.id, requireInteraction: true });
-              n.onclick = () => {
-                window.focus();
-                if (window.location.pathname !== "/admin/leads") {
-                  window.location.href = "/admin/leads";
-                }
-                n.close();
-              };
-            } catch { /* noop */ }
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads" }, (payload) => {
+        const lead = payload.new as Lead;
+        setLeads((prev) => (prev ? [lead, ...prev] : [lead]));
+        const { title, body } = notificationForLead(lead);
+        toast.success(title.replace("\n", " — "), { description: body, duration: 8000 });
+        if (
+          typeof window !== "undefined" &&
+          "Notification" in window &&
+          Notification.permission === "granted"
+        ) {
+          try {
+            const n = new Notification(title, { body, tag: lead.id, requireInteraction: true });
+            n.onclick = () => {
+              window.focus();
+              if (window.location.pathname !== "/admin/leads") {
+                window.location.href = "/admin/leads";
+              }
+              n.close();
+            };
+          } catch {
+            /* noop */
           }
         }
-      )
+      })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [isAdmin]);
 
   async function enableBrowserNotifications() {
@@ -461,7 +509,9 @@ function AdminLeads() {
 
   async function updateLead(id: string, patch: Partial<Lead>) {
     // Optimistic UI
-    setLeads((prev) => prev ? prev.map((l) => l.id === id ? { ...l, ...patch } as Lead : l) : prev);
+    setLeads((prev) =>
+      prev ? prev.map((l) => (l.id === id ? ({ ...l, ...patch } as Lead) : l)) : prev,
+    );
     const { error } = await supabase.from("leads").update(patch).eq("id", id);
     if (error) {
       toast.error("Save failed: " + error.message);
@@ -475,18 +525,33 @@ function AdminLeads() {
         <p className="text-xs tracking-[0.3em] text-primary">ADMIN</p>
         <h1 className="mt-2 text-3xl">Access denied</h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Your account is not approved for admin access. Contact an administrator if you believe this is a mistake.
+          Your account is not approved for admin access. Contact an administrator if you believe
+          this is a mistake.
         </p>
         <div className="mt-6 flex gap-3">
-          <button onClick={signOut} className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary">Sign out</button>
-          <button onClick={() => navigate({ to: "/" })} className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground">Back to homepage</button>
+          <button
+            onClick={signOut}
+            className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary"
+          >
+            Sign out
+          </button>
+          <button
+            onClick={() => navigate({ to: "/" })}
+            className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground"
+          >
+            Back to homepage
+          </button>
         </div>
       </section>
     );
   }
 
   if (isAdmin === null) {
-    return <section className="container-page py-20"><p className="text-muted-foreground">Checking access…</p></section>;
+    return (
+      <section className="container-page py-20">
+        <p className="text-muted-foreground">Checking access…</p>
+      </section>
+    );
   }
 
   return (
@@ -495,7 +560,9 @@ function AdminLeads() {
         <div>
           <p className="text-xs tracking-[0.3em] text-primary">ADMIN</p>
           <h1 className="mt-2 text-3xl md:text-4xl">Lead Tracker</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Submissions, follow-ups, and referrals.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Submissions, follow-ups, and referrals.
+          </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <button
@@ -510,7 +577,12 @@ function AdminLeads() {
           >
             <Plus className="h-4 w-4" /> Add Lead
           </button>
-          <button onClick={load} className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary">Refresh</button>
+          <button
+            onClick={load}
+            className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary"
+          >
+            Refresh
+          </button>
           {browserNotify !== "granted" && browserNotify !== "unsupported" && (
             <button
               onClick={enableBrowserNotifications}
@@ -529,15 +601,28 @@ function AdminLeads() {
               <BellOff className="h-4 w-4" /> No alerts
             </span>
           )}
-          <button onClick={signOut} className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary">Sign out</button>
+          <button
+            onClick={signOut}
+            className="h-10 rounded-md border border-border px-4 text-sm hover:bg-secondary"
+          >
+            Sign out
+          </button>
         </div>
       </div>
 
       <div className="mt-6 flex gap-2 border-b border-border overflow-x-auto">
-        <TabBtn active={tab === "leads"} onClick={() => setTab("leads")}>Lead Tracker</TabBtn>
-        <TabBtn active={tab === "referrals"} onClick={() => setTab("referrals")}>Referral Tracker</TabBtn>
-        <TabBtn active={tab === "analytics"} onClick={() => setTab("analytics")}>Business Analytics</TabBtn>
-        <TabBtn active={tab === "settings"} onClick={() => setTab("settings")}>Settings</TabBtn>
+        <TabBtn active={tab === "leads"} onClick={() => setTab("leads")}>
+          Lead Tracker
+        </TabBtn>
+        <TabBtn active={tab === "referrals"} onClick={() => setTab("referrals")}>
+          Referral Tracker
+        </TabBtn>
+        <TabBtn active={tab === "analytics"} onClick={() => setTab("analytics")}>
+          Business Analytics
+        </TabBtn>
+        <TabBtn active={tab === "settings"} onClick={() => setTab("settings")}>
+          Settings
+        </TabBtn>
       </div>
 
       {error && (
@@ -587,7 +672,13 @@ function AdminLeads() {
   );
 }
 
-function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: (lead: Lead) => void }) {
+function AddLeadModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: (lead: Lead) => void;
+}) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -598,14 +689,27 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
   const [saving, setSaving] = useState(false);
 
   const sourceOptions = [
-    "Website", "Walk-In", "Phone Call", "Google Business",
-    "Facebook", "Instagram", "Referral", "Day Pass", "Other",
+    "Website",
+    "Walk-In",
+    "Phone Call",
+    "Google Business",
+    "Facebook",
+    "Instagram",
+    "Referral",
+    "Day Pass",
+    "Other",
   ];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) { toast.error("Name is required"); return; }
-    if (!source) { toast.error("Lead source is required"); return; }
+    if (!name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    if (!source) {
+      toast.error("Lead source is required");
+      return;
+    }
     setSaving(true);
     const { data, error } = await supabase
       .from("leads")
@@ -625,7 +729,10 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
       .select()
       .single();
     setSaving(false);
-    if (error) { toast.error("Save failed: " + error.message); return; }
+    if (error) {
+      toast.error("Save failed: " + error.message);
+      return;
+    }
     onCreated(data as Lead);
   }
 
@@ -646,7 +753,9 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
           <X className="h-5 w-5" />
         </button>
         <h2 className="text-xl font-semibold">Add Lead</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Manually log a phone call, walk-in, referral, or social media inquiry.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Manually log a phone call, walk-in, referral, or social media inquiry.
+        </p>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <AddLeadField label="Name" required>
@@ -684,7 +793,11 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
             >
               <option value="">Select a source…</option>
-              {sourceOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+              {sourceOptions.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
             </select>
           </AddLeadField>
 
@@ -695,7 +808,11 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
             >
               <option value="">— None —</option>
-              {PRIMARY_GOALS.map((g) => <option key={g} value={g}>{g}</option>)}
+              {PRIMARY_GOALS.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
             </select>
           </AddLeadField>
 
@@ -714,7 +831,11 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
               onChange={(e) => setCrmStatus(e.target.value as CrmStatus)}
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
             >
-              {CRM_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+              {CRM_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
             </select>
           </AddLeadField>
 
@@ -740,11 +861,20 @@ function AddLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
   );
 }
 
-function AddLeadField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function AddLeadField({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block">
       <span className="mb-1 block text-xs uppercase tracking-widest text-muted-foreground">
-        {label}{required && <span className="text-destructive"> *</span>}
+        {label}
+        {required && <span className="text-destructive"> *</span>}
       </span>
       {children}
     </label>
@@ -766,13 +896,23 @@ function SettingsView() {
   );
 }
 
-function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function TabBtn({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <button
       onClick={onClick}
       className={
         "px-5 py-3 text-sm uppercase tracking-widest border-b-2 -mb-px transition " +
-        (active ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground")
+        (active
+          ? "border-primary text-primary"
+          : "border-transparent text-muted-foreground hover:text-foreground")
       }
     >
       {children}
@@ -780,13 +920,23 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
   );
 }
 
-function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <button
       onClick={onClick}
       className={
         "h-9 rounded-full border px-4 text-xs uppercase tracking-widest transition " +
-        (active ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground hover:bg-secondary")
+        (active
+          ? "border-primary bg-primary/15 text-primary"
+          : "border-border text-muted-foreground hover:bg-secondary")
       }
     >
       {children}
@@ -795,27 +945,44 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
 }
 
 function LeadsView({
-  leads, referrals, typeFilter, setTypeFilter, statusFilter, setStatusFilter,
-  sourceFilter, setSourceFilter, sortBy, setSortBy, query, setQuery, updateLead,
+  leads,
+  referrals,
+  typeFilter,
+  setTypeFilter,
+  statusFilter,
+  setStatusFilter,
+  sourceFilter,
+  setSourceFilter,
+  sortBy,
+  setSortBy,
+  query,
+  setQuery,
+  updateLead,
 }: {
   leads: Lead[] | null;
   referrals: Referral[] | null;
-  typeFilter: TypeFilter; setTypeFilter: (t: TypeFilter) => void;
-  statusFilter: CrmStatus | "all"; setStatusFilter: (s: CrmStatus | "all") => void;
-  sourceFilter: string; setSourceFilter: (s: string) => void;
-  sortBy: SortKey; setSortBy: (s: SortKey) => void;
-  query: string; setQuery: (q: string) => void;
+  typeFilter: TypeFilter;
+  setTypeFilter: (t: TypeFilter) => void;
+  statusFilter: CrmStatus | "all";
+  setStatusFilter: (s: CrmStatus | "all") => void;
+  sourceFilter: string;
+  setSourceFilter: (s: string) => void;
+  sortBy: SortKey;
+  setSortBy: (s: SortKey) => void;
+  query: string;
+  setQuery: (q: string) => void;
   updateLead: (id: string, patch: Partial<Lead>) => Promise<void>;
 }) {
   const monthStart = useMemo(() => {
-    const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1);
+    const n = new Date();
+    return new Date(n.getFullYear(), n.getMonth(), 1);
   }, []);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("none");
   const freeWeekMap = useMemo(() => buildFreeWeekMap(referrals), [referrals]);
 
   const byType = useMemo(
     () => leads?.filter((l) => matchesView(l, typeFilter)) ?? [],
-    [leads, typeFilter]
+    [leads, typeFilter],
   );
 
   const sources = useMemo(() => Array.from(new Set(byType.map((l) => l.source))), [byType]);
@@ -827,9 +994,14 @@ function LeadsView({
       if (statusFilter !== "all" && (l.crm_status ?? "New Lead") !== statusFilter) return false;
       if (sourceFilter !== "all" && l.source !== sourceFilter) return false;
       if (quickFilter === "new" && !needsFirstTouch(l)) return false;
-      if (quickFilter === "high_priority" && (computePriority(l) !== "high" || l.crm_status === "Joined" || l.crm_status === "Lost Lead")) return false;
+      if (
+        quickFilter === "high_priority" &&
+        (computePriority(l) !== "high" || l.crm_status === "Joined" || l.crm_status === "Lost Lead")
+      )
+        return false;
       if (quickFilter === "due_today" && !isFollowUpDueToday(l)) return false;
-      if (quickFilter === "tours_scheduled" && !(l.tour_scheduled && !l.tour_completed)) return false;
+      if (quickFilter === "tours_scheduled" && !(l.tour_scheduled && !l.tour_completed))
+        return false;
       if (quickFilter === "tours_completed" && !l.tour_completed) return false;
       if (quickFilter === "joined_this_month" && !joinedInMonth(l, monthStart)) return false;
       if (q) {
@@ -854,8 +1026,10 @@ function LeadsView({
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         }
 
-        case "newest": return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case "oldest": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "newest":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         case "tour_date": {
           const ta = a.tour_date ? new Date(a.tour_date).getTime() : Infinity;
           const tb = b.tour_date ? new Date(b.tour_date).getTime() : Infinity;
@@ -866,7 +1040,8 @@ function LeadsView({
           const tb = b.last_contacted_at ? new Date(b.last_contacted_at).getTime() : 0;
           return tb - ta;
         }
-        case "source": return a.source.localeCompare(b.source);
+        case "source":
+          return a.source.localeCompare(b.source);
       }
     });
     return arr;
@@ -888,29 +1063,31 @@ function LeadsView({
   // pass is a customer, not a prospect, and is measured in its own funnel
   // below. (A lead who inquired first and bought a pass later still counts as
   // a prospect, since they genuinely started as one.)
-  const prospectPool = useMemo(
-    () => leads?.filter((l) => isProspectFunnel(l)) ?? [],
-    [leads],
-  );
+  const prospectPool = useMemo(() => leads?.filter((l) => isProspectFunnel(l)) ?? [], [leads]);
   const customerLeads = prospectPool;
-  const dayPassPool = useMemo(
-    () => leads?.filter((l) => isDayPassFunnel(l)) ?? [],
-    [leads],
-  );
+  const dayPassPool = useMemo(() => leads?.filter((l) => isDayPassFunnel(l)) ?? [], [leads]);
   const existingMembersCount = useMemo(
     () => leads?.filter((l) => l.lead_type === "existing_member").length ?? 0,
     [leads],
   );
   const stats = useMemo(() => {
     const newLeads = customerLeads.filter((l) => needsFirstTouch(l)).length;
-    const highPriority = customerLeads.filter((l) => computePriority(l) === "high" && l.crm_status !== "Joined" && l.crm_status !== "Lost Lead").length;
+    const highPriority = customerLeads.filter(
+      (l) =>
+        computePriority(l) === "high" && l.crm_status !== "Joined" && l.crm_status !== "Lost Lead",
+    ).length;
     const followUpsDueToday = customerLeads.filter((l) => isFollowUpDueToday(l)).length;
-    const toursScheduled = customerLeads.filter((l) => l.tour_scheduled && !l.tour_completed).length;
+    const toursScheduled = customerLeads.filter(
+      (l) => l.tour_scheduled && !l.tour_completed,
+    ).length;
     const toursCompleted = customerLeads.filter((l) => l.tour_completed).length;
     const joinedThisMonth = customerLeads.filter((l) => joinedInMonth(l, monthStart)).length;
     const totalForConversion = customerLeads.length;
-    const totalJoined = customerLeads.filter((l) => l.became_member || l.crm_status === "Joined").length;
-    const conversionRate = totalForConversion === 0 ? 0 : Math.round((totalJoined / totalForConversion) * 100);
+    const totalJoined = customerLeads.filter(
+      (l) => l.became_member || l.crm_status === "Joined",
+    ).length;
+    const conversionRate =
+      totalForConversion === 0 ? 0 : Math.round((totalJoined / totalForConversion) * 100);
 
     // Day-pass funnel, kept completely separate from the prospect numbers.
     const dayPassCustomers = dayPassPool.length;
@@ -920,9 +1097,16 @@ function LeadsView({
 
     return {
       prospectLeads: totalForConversion,
-      newLeads, highPriority, followUpsDueToday, toursScheduled, toursCompleted,
-      joinedThisMonth, conversionRate,
-      dayPassCustomers, dayPassConversions, dayPassConversionRate,
+      newLeads,
+      highPriority,
+      followUpsDueToday,
+      toursScheduled,
+      toursCompleted,
+      joinedThisMonth,
+      conversionRate,
+      dayPassCustomers,
+      dayPassConversions,
+      dayPassConversionRate,
     };
   }, [customerLeads, dayPassPool, monthStart]);
 
@@ -936,18 +1120,80 @@ function LeadsView({
     <>
       {/* Dashboard stats — click to filter */}
       <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Stat label="Prospect Leads" value={stats.prospectLeads} onClick={() => { setQuickFilter("none"); setTypeFilter("prospects"); }} active={typeFilter === "prospects" && quickFilter === "none"} />
-        <Stat label="New Leads" value={stats.newLeads} active={quickFilter === "new"} onClick={() => toggleQuick("new")} />
-        <Stat label="Follow-Ups Due Today" value={stats.followUpsDueToday} accent={stats.followUpsDueToday > 0 ? "destructive" : undefined} active={quickFilter === "due_today"} onClick={() => toggleQuick("due_today")} />
-        <Stat label="High Priority" value={stats.highPriority} accent="destructive" active={quickFilter === "high_priority"} onClick={() => toggleQuick("high_priority")} />
-        <Stat label="Tours Scheduled" value={stats.toursScheduled} active={quickFilter === "tours_scheduled"} onClick={() => toggleQuick("tours_scheduled")} />
-        <Stat label="Tours Completed" value={stats.toursCompleted} active={quickFilter === "tours_completed"} onClick={() => toggleQuick("tours_completed")} />
-        <Stat label="Converted This Month" value={stats.joinedThisMonth} accent="primary" active={quickFilter === "joined_this_month"} onClick={() => toggleQuick("joined_this_month")} />
-        <Stat label="Prospect Conversion Rate" value={`${stats.conversionRate}%`} accent="primary" />
-        <Stat label="Day Pass Customers" value={stats.dayPassCustomers} onClick={() => { setQuickFilter("none"); setTypeFilter("day_pass"); }} active={typeFilter === "day_pass"} />
+        <Stat
+          label="Prospect Leads"
+          value={stats.prospectLeads}
+          onClick={() => {
+            setQuickFilter("none");
+            setTypeFilter("prospects");
+          }}
+          active={typeFilter === "prospects" && quickFilter === "none"}
+        />
+        <Stat
+          label="New Leads"
+          value={stats.newLeads}
+          active={quickFilter === "new"}
+          onClick={() => toggleQuick("new")}
+        />
+        <Stat
+          label="Follow-Ups Due Today"
+          value={stats.followUpsDueToday}
+          accent={stats.followUpsDueToday > 0 ? "destructive" : undefined}
+          active={quickFilter === "due_today"}
+          onClick={() => toggleQuick("due_today")}
+        />
+        <Stat
+          label="High Priority"
+          value={stats.highPriority}
+          accent="destructive"
+          active={quickFilter === "high_priority"}
+          onClick={() => toggleQuick("high_priority")}
+        />
+        <Stat
+          label="Tours Scheduled"
+          value={stats.toursScheduled}
+          active={quickFilter === "tours_scheduled"}
+          onClick={() => toggleQuick("tours_scheduled")}
+        />
+        <Stat
+          label="Tours Completed"
+          value={stats.toursCompleted}
+          active={quickFilter === "tours_completed"}
+          onClick={() => toggleQuick("tours_completed")}
+        />
+        <Stat
+          label="Converted This Month"
+          value={stats.joinedThisMonth}
+          accent="primary"
+          active={quickFilter === "joined_this_month"}
+          onClick={() => toggleQuick("joined_this_month")}
+        />
+        <Stat
+          label="Prospect Conversion Rate"
+          value={`${stats.conversionRate}%`}
+          accent="primary"
+        />
+        <Stat
+          label="Day Pass Customers"
+          value={stats.dayPassCustomers}
+          onClick={() => {
+            setQuickFilter("none");
+            setTypeFilter("day_pass");
+          }}
+          active={typeFilter === "day_pass"}
+        />
         <Stat label="Day Pass → Membership" value={stats.dayPassConversions} accent="primary" />
-        <Stat label="Day Pass Conversion Rate" value={`${stats.dayPassConversionRate}%`} accent="primary" />
-        <Stat label="Existing Members Detected" value={existingMembersCount} onClick={() => setTypeFilter("existing_member")} active={typeFilter === "existing_member"} />
+        <Stat
+          label="Day Pass Conversion Rate"
+          value={`${stats.dayPassConversionRate}%`}
+          accent="primary"
+        />
+        <Stat
+          label="Existing Members Detected"
+          value={existingMembersCount}
+          onClick={() => setTypeFilter("existing_member")}
+          active={typeFilter === "existing_member"}
+        />
       </div>
       {quickFilter !== "none" && (
         <div className="mt-3">
@@ -962,14 +1208,36 @@ function LeadsView({
 
       {/* Stage / type filter */}
       <div className="mt-6 flex flex-wrap gap-2">
-        <FilterChip active={typeFilter === "prospects"} onClick={() => setTypeFilter("prospects")}>Prospects ({count("prospects")})</FilterChip>
-        <FilterChip active={typeFilter === "day_pass"} onClick={() => setTypeFilter("day_pass")}>Day Pass Customers ({count("day_pass")})</FilterChip>
-        <FilterChip active={typeFilter === "members"} onClick={() => setTypeFilter("members")}>Members ({count("members")})</FilterChip>
-        <FilterChip active={typeFilter === "lost"} onClick={() => setTypeFilter("lost")}>Lost ({count("lost")})</FilterChip>
-        <FilterChip active={typeFilter === "existing_member"} onClick={() => setTypeFilter("existing_member")}>Existing Members ({count("existing_member")})</FilterChip>
-        <FilterChip active={typeFilter === "vendor_solicitation"} onClick={() => setTypeFilter("vendor_solicitation")}>Vendor Solicitations ({count("vendor_solicitation")})</FilterChip>
-        <FilterChip active={typeFilter === "spam"} onClick={() => setTypeFilter("spam")}>Spam ({count("spam")})</FilterChip>
-        <FilterChip active={typeFilter === "all"} onClick={() => setTypeFilter("all")}>All ({count("all")})</FilterChip>
+        <FilterChip active={typeFilter === "prospects"} onClick={() => setTypeFilter("prospects")}>
+          Prospects ({count("prospects")})
+        </FilterChip>
+        <FilterChip active={typeFilter === "day_pass"} onClick={() => setTypeFilter("day_pass")}>
+          Day Pass Customers ({count("day_pass")})
+        </FilterChip>
+        <FilterChip active={typeFilter === "members"} onClick={() => setTypeFilter("members")}>
+          Members ({count("members")})
+        </FilterChip>
+        <FilterChip active={typeFilter === "lost"} onClick={() => setTypeFilter("lost")}>
+          Lost ({count("lost")})
+        </FilterChip>
+        <FilterChip
+          active={typeFilter === "existing_member"}
+          onClick={() => setTypeFilter("existing_member")}
+        >
+          Existing Members ({count("existing_member")})
+        </FilterChip>
+        <FilterChip
+          active={typeFilter === "vendor_solicitation"}
+          onClick={() => setTypeFilter("vendor_solicitation")}
+        >
+          Vendor Solicitations ({count("vendor_solicitation")})
+        </FilterChip>
+        <FilterChip active={typeFilter === "spam"} onClick={() => setTypeFilter("spam")}>
+          Spam ({count("spam")})
+        </FilterChip>
+        <FilterChip active={typeFilter === "all"} onClick={() => setTypeFilter("all")}>
+          All ({count("all")})
+        </FilterChip>
       </div>
 
       {/* Search + sort + filters */}
@@ -1001,7 +1269,11 @@ function LeadsView({
           className="h-10 rounded-md border border-border bg-background px-3 text-sm"
         >
           <option value="all">All Statuses</option>
-          {CRM_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+          {CRM_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
         </select>
         <select
           value={sourceFilter}
@@ -1009,17 +1281,29 @@ function LeadsView({
           className="h-10 rounded-md border border-border bg-background px-3 text-sm"
         >
           <option value="all">All Sources</option>
-          {sources.map((s) => <option key={s} value={s}>{s}</option>)}
+          {sources.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
         </select>
       </div>
 
       {leads === null && <p className="mt-10 text-muted-foreground">Loading leads…</p>}
-      {leads !== null && sorted.length === 0 && <p className="mt-10 text-muted-foreground">No leads match your filters.</p>}
+      {leads !== null && sorted.length === 0 && (
+        <p className="mt-10 text-muted-foreground">No leads match your filters.</p>
+      )}
 
       {quickFilter !== "none" ? (
         <div className="mt-6 space-y-3">
           {sorted.map((lead) => (
-            <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
+            <LeadCard
+              key={lead.id}
+              lead={lead}
+              updateLead={updateLead}
+              freeWeek={freeWeekMap[lead.id] ?? null}
+              onConverted={() => setQuickFilter("joined_this_month")}
+            />
           ))}
         </div>
       ) : (
@@ -1036,7 +1320,13 @@ function LeadsView({
                 }
               />
               {groups.working.map((lead) => (
-                <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
+                <LeadCard
+                  key={lead.id}
+                  lead={lead}
+                  updateLead={updateLead}
+                  freeWeek={freeWeekMap[lead.id] ?? null}
+                  onConverted={() => setQuickFilter("joined_this_month")}
+                />
               ))}
             </div>
           )}
@@ -1050,7 +1340,13 @@ function LeadsView({
               />
               {(searching || showConverted) &&
                 groups.converted.map((lead) => (
-                  <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
+                  <LeadCard
+                    key={lead.id}
+                    lead={lead}
+                    updateLead={updateLead}
+                    freeWeek={freeWeekMap[lead.id] ?? null}
+                    onConverted={() => setQuickFilter("joined_this_month")}
+                  />
                 ))}
             </div>
           )}
@@ -1064,7 +1360,13 @@ function LeadsView({
               />
               {(searching || showClosed) &&
                 groups.closed.map((lead) => (
-                  <LeadCard key={lead.id} lead={lead} updateLead={updateLead} freeWeek={freeWeekMap[lead.id] ?? null} onConverted={() => setQuickFilter("joined_this_month")} />
+                  <LeadCard
+                    key={lead.id}
+                    lead={lead}
+                    updateLead={updateLead}
+                    freeWeek={freeWeekMap[lead.id] ?? null}
+                    onConverted={() => setQuickFilter("joined_this_month")}
+                  />
                 ))}
             </div>
           )}
@@ -1074,10 +1376,20 @@ function LeadsView({
   );
 }
 
-function SectionHeader({ label, open, onToggle }: { label: string; open?: boolean; onToggle?: () => void }) {
+function SectionHeader({
+  label,
+  open,
+  onToggle,
+}: {
+  label: string;
+  open?: boolean;
+  onToggle?: () => void;
+}) {
   if (!onToggle) {
     return (
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </p>
     );
   }
   return (
@@ -1093,12 +1405,32 @@ function SectionHeader({ label, open, onToggle }: { label: string; open?: boolea
   );
 }
 
-function Stat({ label, value, accent, active, onClick }: { label: string; value: number | string; accent?: "primary" | "destructive"; active?: boolean; onClick?: () => void }) {
+function Stat({
+  label,
+  value,
+  accent,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: number | string;
+  accent?: "primary" | "destructive";
+  active?: boolean;
+  onClick?: () => void;
+}) {
   const color =
-    accent === "destructive" ? "text-destructive" : accent === "primary" ? "text-primary" : "text-foreground";
+    accent === "destructive"
+      ? "text-destructive"
+      : accent === "primary"
+        ? "text-primary"
+        : "text-foreground";
   const base = "text-left w-full rounded-lg border p-4 transition";
-  const interactive = onClick ? " cursor-pointer hover:border-primary/60 hover:bg-secondary/40" : "";
-  const activeCls = active ? " border-primary ring-2 ring-primary/30 bg-primary/5" : " border-border bg-card";
+  const interactive = onClick
+    ? " cursor-pointer hover:border-primary/60 hover:bg-secondary/40"
+    : "";
+  const activeCls = active
+    ? " border-primary ring-2 ring-primary/30 bg-primary/5"
+    : " border-border bg-card";
   const cls = base + interactive + activeCls;
   if (onClick) {
     return (
@@ -1118,26 +1450,69 @@ function Stat({ label, value, accent, active, onClick }: { label: string; value:
 
 function PriorityBadge({ p }: { p: Priority }) {
   const map: Record<Priority, { label: string; cls: string }> = {
-    high: { label: "🔴 High Priority", cls: "bg-destructive/15 text-destructive border-destructive/40" },
-    medium: { label: "🟡 Medium Priority", cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40" },
-    low: { label: "🟢 Up To Date", cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40" },
+    high: {
+      label: "🔴 High Priority",
+      cls: "bg-destructive/15 text-destructive border-destructive/40",
+    },
+    medium: {
+      label: "🟡 Medium Priority",
+      cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40",
+    },
+    low: {
+      label: "🟢 Up To Date",
+      cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40",
+    },
   };
   const { label, cls } = map[p];
-  return <span className={"inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest " + cls}>{label}</span>;
+  return (
+    <span
+      className={
+        "inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest " + cls
+      }
+    >
+      {label}
+    </span>
+  );
 }
 
 function CrmStatusBadge({ status }: { status: CrmStatus }) {
   const map: Record<CrmStatus, { label: string; cls: string }> = {
-    "New Lead":           { label: "🔴 New Lead",            cls: "bg-destructive/15 text-destructive border-destructive/40" },
-    "Contacted":          { label: "🟡 Contacted",           cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40" },
-    "Waiting on Response":{ label: "🟡 Waiting on Response", cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40" },
-    "Tour Scheduled":     { label: "🔵 Tour Scheduled",      cls: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40" },
-    "Tour Completed":     { label: "🔵 Tour Completed",      cls: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40" },
-    "Joined":             { label: "🟢 Joined",              cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40" },
-    "Lost Lead":          { label: "⚪ Lost Lead",           cls: "bg-muted text-muted-foreground border-border" },
+    "New Lead": {
+      label: "🔴 New Lead",
+      cls: "bg-destructive/15 text-destructive border-destructive/40",
+    },
+    Contacted: {
+      label: "🟡 Contacted",
+      cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40",
+    },
+    "Waiting on Response": {
+      label: "🟡 Waiting on Response",
+      cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40",
+    },
+    "Tour Scheduled": {
+      label: "🔵 Tour Scheduled",
+      cls: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40",
+    },
+    "Tour Completed": {
+      label: "🔵 Tour Completed",
+      cls: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40",
+    },
+    Joined: {
+      label: "🟢 Joined",
+      cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40",
+    },
+    "Lost Lead": { label: "⚪ Lost Lead", cls: "bg-muted text-muted-foreground border-border" },
   };
   const { label, cls } = map[status];
-  return <span className={"inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest " + cls}>{label}</span>;
+  return (
+    <span
+      className={
+        "inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest " + cls
+      }
+    >
+      {label}
+    </span>
+  );
 }
 
 function useDailyTick() {
@@ -1146,37 +1521,90 @@ function useDailyTick() {
     const id = setInterval(() => setTick((t) => t + 1), 60 * 60 * 1000); // hourly
     const onVis = () => setTick((t) => t + 1);
     document.addEventListener("visibilitychange", onVis);
-    return () => { clearInterval(id); document.removeEventListener("visibilitychange", onVis); };
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, []);
 }
 
 function LastContactBadge({ iso }: { iso: string | null }) {
   useDailyTick();
   const d = daysSince(iso);
-  let label: string; let cls: string;
+  let label: string;
+  let cls: string;
   const green = "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40";
   const yellow = "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40";
   const orange = "bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/40";
   const red = "bg-destructive/15 text-destructive border-destructive/40";
-  if (d === null)      { label = "🔴 Never Contacted"; cls = red; }
-  else if (d === 0)    { label = "🟢 Last Contact: Today"; cls = green; }
-  else if (d === 1)    { label = "🟢 Last Contact: Yesterday"; cls = green; }
-  else if (d <= 3)     { label = `🟡 Last Contact: ${d} Days Ago`; cls = yellow; }
-  else if (d <= 6)     { label = `🟠 Last Contact: ${d} Days Ago`; cls = orange; }
-  else                 { label = `🔴 Last Contact: 7+ Days Ago`; cls = red; }
-  return <span className={"inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest " + cls}>{label}</span>;
+  if (d === null) {
+    label = "🔴 Never Contacted";
+    cls = red;
+  } else if (d === 0) {
+    label = "🟢 Last Contact: Today";
+    cls = green;
+  } else if (d === 1) {
+    label = "🟢 Last Contact: Yesterday";
+    cls = green;
+  } else if (d <= 3) {
+    label = `🟡 Last Contact: ${d} Days Ago`;
+    cls = yellow;
+  } else if (d <= 6) {
+    label = `🟠 Last Contact: ${d} Days Ago`;
+    cls = orange;
+  } else {
+    label = `🔴 Last Contact: 7+ Days Ago`;
+    cls = red;
+  }
+  return (
+    <span
+      className={
+        "inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest " +
+        cls
+      }
+    >
+      {label}
+    </span>
+  );
 }
 
 function SequenceStatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    active: { label: "Sequence: Active", cls: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40" },
-    paused: { label: "Sequence: Paused", cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40" },
-    completed: { label: "Sequence: Completed", cls: "bg-gray-500/15 text-gray-700 dark:text-gray-400 border-gray-500/40" },
-    opted_out: { label: "Sequence: Opted Out", cls: "bg-destructive/15 text-destructive border-destructive/40" },
-    undeliverable: { label: "Sequence: Undeliverable", cls: "bg-destructive/15 text-destructive border-destructive/40" },
+    active: {
+      label: "Sequence: Active",
+      cls: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40",
+    },
+    paused: {
+      label: "Sequence: Paused",
+      cls: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/40",
+    },
+    completed: {
+      label: "Sequence: Completed",
+      cls: "bg-gray-500/15 text-gray-700 dark:text-gray-400 border-gray-500/40",
+    },
+    opted_out: {
+      label: "Sequence: Opted Out",
+      cls: "bg-destructive/15 text-destructive border-destructive/40",
+    },
+    undeliverable: {
+      label: "Sequence: Undeliverable",
+      cls: "bg-destructive/15 text-destructive border-destructive/40",
+    },
   };
-  const { label, cls } = map[status] ?? { label: status, cls: "bg-secondary text-muted-foreground border-border" };
-  return <span className={"inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest " + cls}>{label}</span>;
+  const { label, cls } = map[status] ?? {
+    label: status,
+    cls: "bg-secondary text-muted-foreground border-border",
+  };
+  return (
+    <span
+      className={
+        "inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest " +
+        cls
+      }
+    >
+      {label}
+    </span>
+  );
 }
 
 function relativeDays(iso: string | null): string {
@@ -1212,7 +1640,17 @@ type SmsMessage = {
   metadata: { sent_by?: string; kind?: string; test_mode?: boolean } | null;
 };
 
-function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; updateLead: (id: string, patch: Partial<Lead>) => Promise<void>; freeWeek?: FreeWeekInfo | null; onConverted?: () => void }) {
+function LeadCard({
+  lead,
+  updateLead,
+  freeWeek,
+  onConverted,
+}: {
+  lead: Lead;
+  updateLead: (id: string, patch: Partial<Lead>) => Promise<void>;
+  freeWeek?: FreeWeekInfo | null;
+  onConverted?: () => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
   const [savingNotes, setSavingNotes] = useState(false);
@@ -1227,6 +1665,7 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
   const [sendingSms, setSendingSms] = useState(false);
   const sendWelcome = useServerFn(sendWelcomeSms);
   const sendManual = useServerFn(sendManualSms);
+  const syncTour = useServerFn(syncStaffTourAppointment);
   const priority = computePriority(lead);
 
   useEffect(() => {
@@ -1235,7 +1674,9 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
     setThreadLoading(true);
     supabase
       .from("sms_conversation_log")
-      .select("id, direction, body, status, delivery_status, error_code, from_ai, created_at, metadata")
+      .select(
+        "id, direction, body, status, delivery_status, error_code, from_ai, created_at, metadata",
+      )
       .eq("lead_id", lead.id)
       .order("created_at", { ascending: true })
       .then(({ data, error }) => {
@@ -1248,7 +1689,9 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
         }
         setThreadLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [expanded, lead.id]);
 
   useEffect(() => {
@@ -1268,9 +1711,10 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
           setPassDates((data ?? []).map((r) => r.purchased_at as string));
         }
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [expanded, lead.id]);
-
 
   async function sendSms() {
     const text = smsDraft.trim();
@@ -1290,7 +1734,9 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
         // Optimistically append; realistic timestamp from server via reload
         const { data } = await supabase
           .from("sms_conversation_log")
-          .select("id, direction, body, status, delivery_status, error_code, from_ai, created_at, metadata")
+          .select(
+            "id, direction, body, status, delivery_status, error_code, from_ai, created_at, metadata",
+          )
           .eq("lead_id", lead.id)
           .order("created_at", { ascending: true });
         setThread((data ?? []) as SmsMessage[]);
@@ -1308,7 +1754,6 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
       setSendingSms(false);
     }
   }
-
 
   const canConvert =
     lead.lead_type === "customer_lead" &&
@@ -1354,7 +1799,6 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
     onConverted?.();
   }
 
-
   async function markNotConverted(reason: string) {
     if (convertBusy) return;
     setConvertBusy(true);
@@ -1373,11 +1817,6 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
     setConvertBusy(false);
   }
 
-
-
-
-
-
   async function saveNotes() {
     setSavingNotes(true);
     await updateLead(lead.id, { notes: notesDraft });
@@ -1385,25 +1824,46 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
     toast.success("Notes saved");
   }
 
+  // Keeps reminder texts in sync with whatever staff set here. Errors are
+  // surfaced so a tour never looks armed when it isn't.
+  async function syncTourReminders() {
+    const res = await syncTour({ data: { lead_id: lead.id } });
+    if (!res.ok) {
+      toast.error("Couldn't set up reminder texts");
+      return;
+    }
+    if (res.state === "armed") toast.success("Reminder texts scheduled");
+    if (res.state === "needs_time") toast.message("We'll text them to ask what time works");
+    if (res.state === "no_phone") toast.message("No phone on file — no reminders possible");
+  }
+
   async function toggleTourScheduled(v: boolean) {
     const patch: Partial<Lead> = { tour_scheduled: v };
-    if (v && (lead.crm_status === "New Lead" || lead.crm_status === "Contacted" || lead.crm_status === "Waiting on Response")) {
+    if (
+      v &&
+      (lead.crm_status === "New Lead" ||
+        lead.crm_status === "Contacted" ||
+        lead.crm_status === "Waiting on Response")
+    ) {
       patch.crm_status = "Tour Scheduled";
     }
     await updateLead(lead.id, patch);
+    await syncTourReminders();
   }
 
   async function toggleTourCompleted(v: boolean) {
     const patch: Partial<Lead> = { tour_completed: v };
     if (v) patch.crm_status = "Tour Completed";
     await updateLead(lead.id, patch);
+    await syncTourReminders();
   }
 
   async function toggleMember(v: boolean) {
     const patch: Partial<Lead> = { became_member: v };
     if (v) {
       patch.crm_status = "Joined";
-      if (!lead.membership_start_date) patch.membership_start_date = new Date().toISOString().slice(0, 10);
+      if (!lead.membership_start_date)
+        patch.membership_start_date = new Date().toISOString().slice(0, 10);
     } else {
       patch.membership_start_date = null;
     }
@@ -1448,6 +1908,19 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                 Text Undelivered — Call Instead
               </span>
             )}
+            {lead.tour_scheduled && !lead.tour_completed && !lead.phone && (
+              <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-destructive/15 text-destructive border-destructive/40">
+                No Phone — Can't Remind
+              </span>
+            )}
+            {lead.tour_scheduled &&
+              !lead.tour_completed &&
+              Boolean(lead.phone) &&
+              (!lead.tour_date || tourDateIsDateOnly(lead.tour_date)) && (
+                <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/40">
+                  Tour Needs A Time
+                </span>
+              )}
             {freeWeek?.active && (
               <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/40">
                 Free Week — {freeWeek.daysLeft} {freeWeek.daysLeft === 1 ? "day" : "days"} left
@@ -1487,11 +1960,17 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
             </p>
           )}
           <p className="mt-2 text-sm text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
-            <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 hover:text-primary">
+            <a
+              href={`mailto:${lead.email}`}
+              className="inline-flex items-center gap-1.5 hover:text-primary"
+            >
               <Mail className="h-3.5 w-3.5" /> {lead.email}
             </a>
             {lead.phone && (
-              <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1.5 hover:text-primary">
+              <a
+                href={`tel:${lead.phone}`}
+                className="inline-flex items-center gap-1.5 hover:text-primary"
+              >
                 <Phone className="h-3.5 w-3.5" /> {lead.phone}
               </a>
             )}
@@ -1501,21 +1980,65 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
             <span className="text-xs uppercase tracking-widest text-primary">{lead.source}</span>
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
-            {lead.last_contact_method && <>Method: <span className="text-foreground">{lead.last_contact_method}</span></>}
-            {lead.last_response_at && <>{lead.last_contact_method ? " · " : ""}Last response: <span className="text-foreground">{relativeDays(lead.last_response_at)}</span></>}
-            {lead.next_follow_up_date && <>{(lead.last_contact_method || lead.last_response_at) ? " · " : ""}Follow up: <span className="text-foreground">{new Date(lead.next_follow_up_date + "T00:00:00").toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span></>}
-            {lead.next_action && <>{(lead.last_contact_method || lead.last_response_at || lead.next_follow_up_date) ? " · " : ""}Next: <span className="text-foreground">{lead.next_action}</span></>}
-            {lead.last_sms_at && <>{(lead.last_contact_method || lead.last_response_at || lead.next_follow_up_date || lead.next_action) ? " · " : ""}Last text: <span className="text-foreground">{formatLastSmsAt(lead.last_sms_at)}</span></>}
+            {lead.last_contact_method && (
+              <>
+                Method: <span className="text-foreground">{lead.last_contact_method}</span>
+              </>
+            )}
+            {lead.last_response_at && (
+              <>
+                {lead.last_contact_method ? " · " : ""}Last response:{" "}
+                <span className="text-foreground">{relativeDays(lead.last_response_at)}</span>
+              </>
+            )}
+            {lead.next_follow_up_date && (
+              <>
+                {lead.last_contact_method || lead.last_response_at ? " · " : ""}Follow up:{" "}
+                <span className="text-foreground">
+                  {new Date(lead.next_follow_up_date + "T00:00:00").toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>
+              </>
+            )}
+            {lead.next_action && (
+              <>
+                {lead.last_contact_method || lead.last_response_at || lead.next_follow_up_date
+                  ? " · "
+                  : ""}
+                Next: <span className="text-foreground">{lead.next_action}</span>
+              </>
+            )}
+            {lead.last_sms_at && (
+              <>
+                {lead.last_contact_method ||
+                lead.last_response_at ||
+                lead.next_follow_up_date ||
+                lead.next_action
+                  ? " · "
+                  : ""}
+                Last text:{" "}
+                <span className="text-foreground">{formatLastSmsAt(lead.last_sms_at)}</span>
+              </>
+            )}
           </p>
-
-
         </div>
         <div className="flex flex-col items-end gap-2">
           <button
             onClick={() => setExpanded((v) => !v)}
             className="inline-flex items-center gap-1 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
           >
-            {expanded ? <>Collapse <ChevronUp className="h-3.5 w-3.5" /></> : <>Details <ChevronDown className="h-3.5 w-3.5" /></>}
+            {expanded ? (
+              <>
+                Collapse <ChevronUp className="h-3.5 w-3.5" />
+              </>
+            ) : (
+              <>
+                Details <ChevronDown className="h-3.5 w-3.5" />
+              </>
+            )}
           </button>
         </div>
       </header>
@@ -1530,7 +2053,11 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                 onChange={(e) => updateLead(lead.id, { crm_status: e.target.value as CrmStatus })}
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               >
-                {CRM_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                {CRM_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
               </select>
             </Field>
             <Field label="Lead Source">
@@ -1539,42 +2066,67 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                 onChange={(e) => updateLead(lead.id, { source: e.target.value })}
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               >
-                {LEAD_SOURCE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                {!LEAD_SOURCE_OPTIONS.includes(lead.source) && <option value={lead.source}>{lead.source}</option>}
+                {LEAD_SOURCE_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+                {!LEAD_SOURCE_OPTIONS.includes(lead.source) && (
+                  <option value={lead.source}>{lead.source}</option>
+                )}
               </select>
             </Field>
             <Field label="Phone">
               <input
                 defaultValue={lead.phone ?? ""}
-                onBlur={(e) => { if (e.target.value !== (lead.phone ?? "")) updateLead(lead.id, { phone: e.target.value || null }); }}
+                onBlur={(e) => {
+                  if (e.target.value !== (lead.phone ?? ""))
+                    updateLead(lead.id, { phone: e.target.value || null });
+                }}
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               />
             </Field>
             <Field label="Email">
               <input
                 defaultValue={lead.email}
-                onBlur={(e) => { if (e.target.value !== lead.email && e.target.value) updateLead(lead.id, { email: e.target.value }); }}
+                onBlur={(e) => {
+                  if (e.target.value !== lead.email && e.target.value)
+                    updateLead(lead.id, { email: e.target.value });
+                }}
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               />
             </Field>
             <Field label="Name">
               <input
                 defaultValue={lead.name}
-                onBlur={(e) => { if (e.target.value !== lead.name && e.target.value) updateLead(lead.id, { name: e.target.value }); }}
+                onBlur={(e) => {
+                  if (e.target.value !== lead.name && e.target.value)
+                    updateLead(lead.id, { name: e.target.value });
+                }}
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               />
             </Field>
             <Field label="Date Submitted">
-              <div className="h-10 flex items-center text-sm text-muted-foreground">{new Date(lead.created_at).toLocaleString()}</div>
+              <div className="h-10 flex items-center text-sm text-muted-foreground">
+                {new Date(lead.created_at).toLocaleString()}
+              </div>
             </Field>
             <Field label="Last Contact Method">
               <select
                 value={lead.last_contact_method ?? ""}
-                onChange={(e) => updateLead(lead.id, { last_contact_method: (e.target.value || null) as ContactMethod | null })}
+                onChange={(e) =>
+                  updateLead(lead.id, {
+                    last_contact_method: (e.target.value || null) as ContactMethod | null,
+                  })
+                }
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               >
                 <option value="">— Not set —</option>
-                {CONTACT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                {CONTACT_METHODS.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
               </select>
             </Field>
             <Field label="Primary Goal">
@@ -1584,17 +2136,29 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               >
                 <option value="">— Not set —</option>
-                {PRIMARY_GOALS.map((g) => <option key={g} value={g}>{g}</option>)}
+                {PRIMARY_GOALS.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
               </select>
             </Field>
             <Field label="Next Action">
               <select
                 value={lead.next_action ?? ""}
-                onChange={(e) => updateLead(lead.id, { next_action: (e.target.value || null) as NextAction | null })}
+                onChange={(e) =>
+                  updateLead(lead.id, {
+                    next_action: (e.target.value || null) as NextAction | null,
+                  })
+                }
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               >
                 <option value="">— Not set —</option>
-                {NEXT_ACTIONS.map((a) => <option key={a} value={a}>{a}</option>)}
+                {NEXT_ACTIONS.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
               </select>
             </Field>
             <Field label="Next Follow-Up Date">
@@ -1602,12 +2166,15 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                 key={lead.next_follow_up_date ?? "empty"}
                 type="date"
                 defaultValue={lead.next_follow_up_date ?? ""}
-                onBlur={(e) => { const v = e.target.value || null; if (v !== (lead.next_follow_up_date ?? null)) updateLead(lead.id, { next_follow_up_date: v }); }}
+                onBlur={(e) => {
+                  const v = e.target.value || null;
+                  if (v !== (lead.next_follow_up_date ?? null))
+                    updateLead(lead.id, { next_follow_up_date: v });
+                }}
                 className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               />
             </Field>
           </div>
-
 
           {/* Tour + Membership */}
           <div className="grid md:grid-cols-2 gap-4">
@@ -1615,33 +2182,59 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Tour</p>
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={lead.tour_scheduled} onChange={(e) => toggleTourScheduled(e.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={lead.tour_scheduled}
+                    onChange={(e) => toggleTourScheduled(e.target.checked)}
+                  />
                   Tour Scheduled
                 </label>
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={lead.tour_completed} onChange={(e) => toggleTourCompleted(e.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={lead.tour_completed}
+                    onChange={(e) => toggleTourCompleted(e.target.checked)}
+                  />
                   Tour Completed
                 </label>
                 <Field label="Tour Date (optional)">
                   <input
                     type="datetime-local"
                     defaultValue={utcIsoToChicagoLocalInput(lead.tour_date)}
-                    onBlur={(e) => {
+                    onBlur={async (e) => {
                       const nextIso = chicagoLocalInputToUtcIso(e.target.value);
                       if (nextIso !== (lead.tour_date ?? null)) {
-                        updateLead(lead.id, { tour_date: nextIso });
+                        await updateLead(lead.id, { tour_date: nextIso });
+                        await syncTourReminders();
                       }
                     }}
                     className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
                   />
                 </Field>
+                {lead.tour_scheduled && !lead.tour_completed && (
+                  <p className="text-xs text-muted-foreground">
+                    {!lead.phone
+                      ? "No phone — can't remind. Call or email instead."
+                      : !lead.tour_date
+                        ? "Needs a time — set a date and time to start reminder texts."
+                        : tourDateIsDateOnly(lead.tour_date)
+                          ? "Needs a time — we'll text them to ask what time works."
+                          : "Reminders on: day before, 8am morning of, and an hour before."}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="rounded-md border border-border p-4">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Membership</p>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3">
+                Membership
+              </p>
               <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={lead.became_member} onChange={(e) => toggleMember(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={lead.became_member}
+                  onChange={(e) => toggleMember(e.target.checked)}
+                />
                 Became Member
               </label>
               {lead.became_member && (
@@ -1649,7 +2242,9 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                   <input
                     type="date"
                     defaultValue={lead.membership_start_date ?? ""}
-                    onBlur={(e) => updateLead(lead.id, { membership_start_date: e.target.value || null })}
+                    onBlur={(e) =>
+                      updateLead(lead.id, { membership_start_date: e.target.value || null })
+                    }
                     className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
                   />
                 </Field>
@@ -1660,7 +2255,9 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
           {/* Free week status (read-only) */}
           {freeWeek && (
             <div className="rounded-md border border-purple-500/40 bg-purple-500/5 p-4">
-              <p className="text-xs uppercase tracking-widest text-purple-700 dark:text-purple-400">Free Week Promo</p>
+              <p className="text-xs uppercase tracking-widest text-purple-700 dark:text-purple-400">
+                Free Week Promo
+              </p>
               <p className="mt-1 text-sm">
                 {freeWeek.active
                   ? `Free Week Active — runs through ${freeWeek.endsAt ? chicagoDate(freeWeek.endsAt) : "unknown"}`
@@ -1670,7 +2267,9 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                 )}
               </p>
               {freeWeek.startsAt && (
-                <p className="mt-1 text-xs text-muted-foreground">Started {chicagoDate(freeWeek.startsAt)}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Started {chicagoDate(freeWeek.startsAt)}
+                </p>
               )}
             </div>
           )}
@@ -1681,7 +2280,9 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
             <p className="text-sm">
               <span className="text-muted-foreground">Channel:</span> {channelForLead(lead)}
               {!hasMeasuredAttribution(lead) && (
-                <span className="ml-2 text-xs text-muted-foreground">(from lead source — no campaign tags)</span>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  (from lead source — no campaign tags)
+                </span>
               )}
             </p>
             {lead.utm_campaign && (
@@ -1734,7 +2335,9 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
           {/* Day pass purchase */}
           {isDayPassCustomer(lead) && (
             <div className="rounded-md border border-teal-500/40 bg-teal-500/5 p-4 space-y-1">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">Day Pass Purchase</p>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                Day Pass Purchase
+              </p>
               <p className="text-sm">
                 <span className="text-muted-foreground">Day passes bought:</span>{" "}
                 {passDates === null ? "…" : passDates.length || 1}
@@ -1748,8 +2351,7 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                   : chicagoDate(dayPassPurchasedAt(lead) ?? lead.created_at)}
               </p>
               <p className="text-sm">
-                <span className="text-muted-foreground">Paid:</span>{" "}
-                ${lead.day_pass_price ?? 10}
+                <span className="text-muted-foreground">Paid:</span> ${lead.day_pass_price ?? 10}
                 {lead.payment_status
                   ? ` · ${lead.payment_status === "venmo" ? "Venmo" : "At the front desk"}`
                   : ""}
@@ -1760,20 +2362,29 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
             </div>
           )}
 
-
           {/* Original submission */}
           {(lead.interest || lead.message) && (
             <div className="rounded-md border border-border p-4 space-y-2">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">Original Submission</p>
-              {lead.interest && <p className="text-sm"><span className="text-muted-foreground">Interested in:</span> {lead.interest}</p>}
-              {lead.message && <p className="text-sm whitespace-pre-wrap text-muted-foreground">{lead.message}</p>}
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                Original Submission
+              </p>
+              {lead.interest && (
+                <p className="text-sm">
+                  <span className="text-muted-foreground">Interested in:</span> {lead.interest}
+                </p>
+              )}
+              {lead.message && (
+                <p className="text-sm whitespace-pre-wrap text-muted-foreground">{lead.message}</p>
+              )}
             </div>
           )}
 
           {/* SMS Conversation */}
           <div className="rounded-md border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">SMS Conversation</p>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                SMS Conversation
+              </p>
               {lead.sequence_status && (
                 <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   Sequence: <span className="text-foreground">{lead.sequence_status}</span>
@@ -1788,7 +2399,10 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
               {thread?.map((m) => {
                 const outbound = m.direction === "outbound";
                 return (
-                  <div key={m.id} className={"flex " + (outbound ? "justify-end" : "justify-start")}>
+                  <div
+                    key={m.id}
+                    className={"flex " + (outbound ? "justify-end" : "justify-start")}
+                  >
                     <div
                       className={
                         "max-w-[75%] rounded-2xl px-3 py-2 text-sm " +
@@ -1798,22 +2412,45 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                       }
                     >
                       <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                      <p className={"mt-1 text-[10px] " + (outbound ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                      <p
+                        className={
+                          "mt-1 text-[10px] " +
+                          (outbound ? "text-primary-foreground/70" : "text-muted-foreground")
+                        }
+                      >
                         {new Date(m.created_at).toLocaleString("en-US", {
-                          month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true,
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
                         })}
                         {m.from_ai && " · AI"}
                         {m.metadata?.sent_by === "staff" && " · Staff"}
                         {m.status === "test_mode" && " · TEST"}
-                        {outbound && m.status !== "test_mode" && (() => {
-                          const ds = m.delivery_status;
-                          if (ds === "delivered") return <span title="Delivered"> · ✓ Delivered</span>;
-                          if (ds === "sent") return <span title="Sent to carrier"> · ✓ Sent</span>;
-                          if (ds === "undelivered" || ds === "failed")
-                            return <span title={`Error ${m.error_code ?? ""}`} className="font-semibold text-red-300"> · ✗ {ds === "failed" ? "Failed" : "Undelivered"}{m.error_code ? ` (${m.error_code})` : ""}</span>;
-                          if (ds === "queued" || ds === "accepted" || ds === "sending" || !ds) return <span title="Pending"> · ⏳ Pending</span>;
-                          return <span> · {ds}</span>;
-                        })()}
+                        {outbound &&
+                          m.status !== "test_mode" &&
+                          (() => {
+                            const ds = m.delivery_status;
+                            if (ds === "delivered")
+                              return <span title="Delivered"> · ✓ Delivered</span>;
+                            if (ds === "sent")
+                              return <span title="Sent to carrier"> · ✓ Sent</span>;
+                            if (ds === "undelivered" || ds === "failed")
+                              return (
+                                <span
+                                  title={`Error ${m.error_code ?? ""}`}
+                                  className="font-semibold text-red-300"
+                                >
+                                  {" "}
+                                  · ✗ {ds === "failed" ? "Failed" : "Undelivered"}
+                                  {m.error_code ? ` (${m.error_code})` : ""}
+                                </span>
+                              );
+                            if (ds === "queued" || ds === "accepted" || ds === "sending" || !ds)
+                              return <span title="Pending"> · ⏳ Pending</span>;
+                            return <span> · {ds}</span>;
+                          })()}
                       </p>
                     </div>
                   </div>
@@ -1829,7 +2466,12 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                 <input
                   value={smsDraft}
                   onChange={(e) => setSmsDraft(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendSms(); } }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      sendSms();
+                    }
+                  }}
                   placeholder="Type a reply…"
                   maxLength={1600}
                   className="h-10 flex-1 rounded-md border border-border bg-background px-3 text-sm"
@@ -1843,14 +2485,16 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                 </button>
               </div>
             )}
-            <p className="text-[10px] text-muted-foreground">Sending a manual reply pauses the automated sequence.</p>
+            <p className="text-[10px] text-muted-foreground">
+              Sending a manual reply pauses the automated sequence.
+            </p>
           </div>
-
-
 
           {/* Notes */}
           <div>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Staff Notes</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+              Staff Notes
+            </p>
             <textarea
               value={notesDraft}
               onChange={(e) => setNotesDraft(e.target.value)}
@@ -1910,7 +2554,10 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
                   Confirm
                 </button>
                 <button
-                  onClick={() => { setShowLostReason(false); setLostReason(""); }}
+                  onClick={() => {
+                    setShowLostReason(false);
+                    setLostReason("");
+                  }}
                   className="h-9 rounded-md border border-border px-4 text-xs font-semibold uppercase tracking-widest hover:bg-secondary"
                 >
                   Cancel
@@ -1927,7 +2574,9 @@ function LeadCard({ lead, updateLead, freeWeek, onConverted }: { lead: Lead; upd
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-widest text-muted-foreground mb-1">{label}</span>
+      <span className="block text-xs uppercase tracking-widest text-muted-foreground mb-1">
+        {label}
+      </span>
       {children}
     </label>
   );
@@ -2017,15 +2666,23 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
                 {referrals.map((r) => (
                   <tr key={r.id} className="border-t border-border align-top">
                     <td className="px-4 py-3 font-semibold">{r.referrer_name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{r.referrer_email ?? r.referrer_contact ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {r.referrer_email ?? r.referrer_contact ?? "—"}
+                    </td>
                     <td className="px-4 py-3 font-semibold">{r.friend_name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{r.friend_email ?? r.friend_contact ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {r.friend_email ?? r.friend_contact ?? "—"}
+                    </td>
                     <td className="px-4 py-3 font-mono">{r.referral_code}</td>
                     <td className="px-4 py-3">
-                      <span className={
-                        "inline-block rounded-full px-3 py-1 text-xs uppercase tracking-widest " +
-                        (r.status === "redeemed" ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground")
-                      }>
+                      <span
+                        className={
+                          "inline-block rounded-full px-3 py-1 text-xs uppercase tracking-widest " +
+                          (r.status === "redeemed"
+                            ? "bg-primary/15 text-primary"
+                            : "bg-secondary text-muted-foreground")
+                        }
+                      >
                         {r.status}
                       </span>
                     </td>
@@ -2033,10 +2690,18 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
                       <EmailStatusBadge status={r.email_status ?? "pending"} />
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {r.email_sent ? (r.email_sent_at ? new Date(r.email_sent_at).toLocaleString() : "Yes") : "No"}
+                      {r.email_sent
+                        ? r.email_sent_at
+                          ? new Date(r.email_sent_at).toLocaleString()
+                          : "Yes"
+                        : "No"}
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{r.redeemed_at ? new Date(r.redeemed_at).toLocaleString() : "—"}</td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {new Date(r.created_at).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {r.redeemed_at ? new Date(r.redeemed_at).toLocaleString() : "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -2050,11 +2715,15 @@ function ReferralsView({ referrals }: { referrals: Referral[] | null }) {
 
 function EmailStatusBadge({ status }: { status: "pending" | "sent" | "failed" }) {
   const cls =
-    status === "sent" ? "bg-primary/15 text-primary"
-    : status === "failed" ? "bg-destructive/15 text-destructive"
-    : "bg-secondary text-muted-foreground";
+    status === "sent"
+      ? "bg-primary/15 text-primary"
+      : status === "failed"
+        ? "bg-destructive/15 text-destructive"
+        : "bg-secondary text-muted-foreground";
   return (
-    <span className={"inline-block rounded-full px-3 py-1 text-xs uppercase tracking-widest " + cls}>
+    <span
+      className={"inline-block rounded-full px-3 py-1 text-xs uppercase tracking-widest " + cls}
+    >
       {status}
     </span>
   );

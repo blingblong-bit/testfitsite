@@ -30,23 +30,20 @@ async function sendTwilioSms(
   const from = process.env.TWILIO_FROM_NUMBER;
   if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
   const auth = Buffer.from(`${sid}:${token}`).toString("base64");
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        To: to,
-        From: from,
-        Body: body,
-        StatusCallback:
-          "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
-      }),
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-  );
+    body: new URLSearchParams({
+      To: to,
+      From: from,
+      Body: body,
+      StatusCallback:
+        "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
+    }),
+  });
   if (!res.ok) {
     const t = await res.text();
     console.error("[appointments] twilio error", res.status, t);
@@ -80,14 +77,18 @@ async function logOutbound(
 // ---------- available slots (public) ----------
 
 export const getAvailableSlotsFn = createServerFn({ method: "GET" })
-  .inputValidator((d: unknown) => z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(d))
+  .inputValidator((d: unknown) =>
+    z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(d),
+  )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const slots = slotsForDate(data.date);
     if (slots.length === 0) return { slots: [] as string[] };
     // Query the day's confirmed appointments to exclude.
     const start = slots[0];
-    const end = new Date(new Date(slots[slots.length - 1]).getTime() + 60 * 60 * 1000).toISOString();
+    const end = new Date(
+      new Date(slots[slots.length - 1]).getTime() + 60 * 60 * 1000,
+    ).toISOString();
     const { data: taken } = await supabaseAdmin
       .from("appointments")
       .select("confirmed_time")
@@ -114,7 +115,11 @@ const SubmitSchema = z.object({
 
 function looksFake(name: string, email: string): boolean {
   if (/\d{3,}/.test(name) || /(.)\1{4,}/.test(name)) return true;
-  if (/@(mailinator|tempmail|guerrillamail|10minutemail|yopmail|trashmail)\./.test(email.toLowerCase())) {
+  if (
+    /@(mailinator|tempmail|guerrillamail|10minutemail|yopmail|trashmail)\./.test(
+      email.toLowerCase(),
+    )
+  ) {
     return true;
   }
   return false;
@@ -158,7 +163,8 @@ export const submitAppointmentRequest = createServerFn({ method: "POST" })
         if (
           phoneDigits.length === 10 &&
           (r.phone ?? "").replace(/\D/g, "").slice(-10) === phoneDigits
-        ) return true;
+        )
+          return true;
         return false;
       })?.id ?? null;
 
@@ -234,10 +240,7 @@ export const submitAppointmentRequest = createServerFn({ method: "POST" })
 
 // ---------- admin actions ----------
 
-async function requireAdmin(context: {
-  supabase: any;
-  userId: string;
-}): Promise<boolean> {
+async function requireAdmin(context: { supabase: any; userId: string }): Promise<boolean> {
   const { data } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
     _role: "admin",
@@ -404,6 +407,134 @@ export const declineAppointment = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+// ---------- staff-set tours ----------
+
+/**
+ * True when an ISO timestamp lands exactly on midnight in Chicago, which is how
+ * the Lead Tracker stores a tour date with no time chosen yet.
+ */
+function isChicagoMidnight(iso: string): boolean {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(iso));
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? "0");
+  return get("hour") % 24 === 0 && get("minute") === 0;
+}
+
+const StaffTourSchema = z.object({ lead_id: z.string().uuid() });
+
+/**
+ * Keeps the tour pipeline in sync with what staff set on a lead card.
+ *
+ * Reminder texts (day before / morning of / hour before) are driven entirely by
+ * the appointments table, so a lead that staff mark as a scheduled tour needs a
+ * matching appointment row or it silently gets no reminders. Staff-created rows
+ * carry reminders_sent.staff_created so they're distinguishable from public
+ * booking requests (which still need approval).
+ *
+ * - tour scheduled + date with a time  -> confirmed row, reminders armed
+ * - tour scheduled + date only         -> pending row, cron sends a "what time?" text
+ * - tour unset / date cleared          -> row canceled, no more reminders
+ */
+export const syncStaffTourAppointment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => StaffTourSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const staffOk =
+      (await requireAdmin(context)) ||
+      Boolean(
+        (await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" })).data,
+      );
+    if (!staffOk) return { ok: false as const, error: "forbidden" };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: lead, error: leadErr } = await supabaseAdmin
+      .from("leads")
+      .select("id, name, email, phone, tour_scheduled, tour_date, tour_completed")
+      .eq("id", data.lead_id)
+      .maybeSingle();
+    if (leadErr || !lead) return { ok: false as const, error: "not_found" };
+
+    const { data: existingRows } = await supabaseAdmin
+      .from("appointments")
+      .select("id, status, confirmed_time, requested_time, reminders_sent")
+      .eq("lead_id", lead.id)
+      .eq("type", "tour")
+      .in("status", ["pending", "confirmed", "alternative_suggested"]);
+    const staffRows = (existingRows ?? []).filter((r) =>
+      Boolean((r.reminders_sent as Record<string, unknown> | null)?.staff_created),
+    );
+
+    const cancelStaffRows = async () => {
+      for (const r of staffRows) {
+        await supabaseAdmin.from("appointments").update({ status: "canceled" }).eq("id", r.id);
+      }
+    };
+
+    // Nothing to remind about.
+    if (!lead.tour_scheduled || !lead.tour_date || lead.tour_completed) {
+      await cancelStaffRows();
+      return { ok: true as const, state: "cleared" as const };
+    }
+    if (!lead.phone || lead.phone.trim().length < 7) {
+      await cancelStaffRows();
+      return { ok: true as const, state: "no_phone" as const };
+    }
+
+    const tourDate = lead.tour_date;
+    const dateOnly = isChicagoMidnight(tourDate);
+    const targetStatus = dateOnly ? "pending" : "confirmed";
+    const keep = staffRows[0] ?? null;
+    // Extra rows (shouldn't normally exist) are canceled so only one stays live.
+    for (const r of staffRows.slice(1)) {
+      await supabaseAdmin.from("appointments").update({ status: "canceled" }).eq("id", r.id);
+    }
+
+    if (keep) {
+      const prevTime = (keep.confirmed_time ?? keep.requested_time) as string | null;
+      const timeChanged = prevTime !== tourDate;
+      const prevFlags = (keep.reminders_sent ?? {}) as Record<string, unknown>;
+      await supabaseAdmin
+        .from("appointments")
+        .update({
+          name: lead.name,
+          phone: lead.phone,
+          email: lead.email,
+          status: targetStatus,
+          requested_time: tourDate,
+          confirmed_time: dateOnly ? null : tourDate,
+          confirmed_at: dateOnly ? null : new Date().toISOString(),
+          // Re-arm reminders whenever the time moves.
+          reminders_sent: (timeChanged
+            ? { staff_created: true }
+            : { ...prevFlags, staff_created: true }) as never,
+        })
+        .eq("id", keep.id);
+      return { ok: true as const, state: dateOnly ? ("needs_time" as const) : ("armed" as const) };
+    }
+
+    const { error: insErr } = await supabaseAdmin.from("appointments").insert({
+      lead_id: lead.id,
+      name: lead.name,
+      phone: lead.phone,
+      email: lead.email,
+      requested_time: tourDate,
+      confirmed_time: dateOnly ? null : tourDate,
+      confirmed_at: dateOnly ? null : new Date().toISOString(),
+      status: targetStatus,
+      type: "tour",
+      reminders_sent: { staff_created: true } as never,
+    });
+    if (insErr) {
+      console.error("[syncStaffTourAppointment] insert failed", insErr.message);
+      return { ok: false as const, error: insErr.message };
+    }
+    return { ok: true as const, state: dateOnly ? ("needs_time" as const) : ("armed" as const) };
+  });
+
 const LeadContactSchema = z.object({ lead_id: z.string().uuid() });
 
 /**
@@ -419,24 +550,25 @@ const LeadContactSchema = z.object({ lead_id: z.string().uuid() });
  */
 export const getLeadContactByToken = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => LeadContactSchema.parse(d))
-  .handler(async ({
-    data,
-  }): Promise<
-    | { ok: true; name: string; email: string; phone: string }
-    | { ok: false; error: string }
-  > => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
-      .from("leads")
-      .select("name, email, phone")
-      .eq("id", data.lead_id)
-      .maybeSingle();
-    if (error) return { ok: false, error: error.message };
-    if (!row) return { ok: false, error: "not_found" };
-    return {
-      ok: true,
-      name: row.name ?? "",
-      email: row.email ?? "",
-      phone: row.phone ?? "",
-    };
-  });
+  .handler(
+    async ({
+      data,
+    }): Promise<
+      { ok: true; name: string; email: string; phone: string } | { ok: false; error: string }
+    > => {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: row, error } = await supabaseAdmin
+        .from("leads")
+        .select("name, email, phone")
+        .eq("id", data.lead_id)
+        .maybeSingle();
+      if (error) return { ok: false, error: error.message };
+      if (!row) return { ok: false, error: "not_found" };
+      return {
+        ok: true,
+        name: row.name ?? "",
+        email: row.email ?? "",
+        phone: row.phone ?? "",
+      };
+    },
+  );
