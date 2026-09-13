@@ -24,6 +24,13 @@ function utcIsoToChicagoLocalInput(iso: string | null | undefined): string {
   return `${get("year")}-${get("month")}-${get("day")}T${hh}:${get("minute")}`;
 }
 
+// A tour date stored at exactly midnight Chicago means the day is set but the
+// time isn't — reminders can't be timed until someone picks a time.
+function tourDateIsDateOnly(iso: string | null | undefined): boolean {
+  if (!iso) return false;
+  return utcIsoToChicagoLocalInput(iso).endsWith("T00:00");
+}
+
 // Parse a datetime-local input's value ("YYYY-MM-DDTHH:mm") as America/Chicago
 // wall-clock time and convert to a UTC ISO string.
 function chicagoLocalInputToUtcIso(v: string): string | null {
