@@ -35,23 +35,20 @@ async function sendTwilioSms(
   const from = process.env.TWILIO_FROM_NUMBER;
   if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
   const auth = Buffer.from(`${sid}:${token}`).toString("base64");
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        To: to,
-        From: from,
-        Body: body,
-        StatusCallback:
-          "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
-      }),
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-  );
+    body: new URLSearchParams({
+      To: to,
+      From: from,
+      Body: body,
+      StatusCallback:
+        "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
+    }),
+  });
   if (!res.ok) {
     const t = await res.text();
     return { ok: false, error: `twilio_${res.status}: ${t}` };
@@ -170,7 +167,6 @@ export const Route = createFileRoute("/api/public/hooks/process-appointment-remi
           }
         }
 
-
         for (const appt of appts ?? []) {
           try {
             if (!appt.confirmed_time || !appt.phone) continue;
@@ -183,7 +179,10 @@ export const Route = createFileRoute("/api/public/hooks/process-appointment-remi
 
             // Reminders are evaluated independently so a morning appointment can
             // receive both the morning-of and hour-before texts in the same run.
-            const toSend: Array<{ kind: "day_before" | "morning_of" | "hour_before"; body: string }> = [];
+            const toSend: Array<{
+              kind: "day_before" | "morning_of" | "hour_before";
+              body: string;
+            }> = [];
 
             // Day-before: 24-25 hours away.
             if (
@@ -201,17 +200,16 @@ export const Route = createFileRoute("/api/public/hooks/process-appointment-remi
             if (!reminders.morning_of && sameChicagoDay(nowIso, appt.confirmed_time)) {
               const { hour, minute } = chicagoHourMinute(now);
               if (hour === 8 && minute < 16) {
-                toSend.push({ kind: "morning_of", body: `Hey ${fn}, see you today at ${timeStr}!` });
+                toSend.push({
+                  kind: "morning_of",
+                  body: `Hey ${fn}, see you today at ${timeStr}!`,
+                });
               }
             }
 
             // Hour-before: 45-75 minutes away, wide enough that every appointment
             // time lands on at least one 15-minute cron tick.
-            if (
-              !reminders.hour_before &&
-              diffMs > 45 * 60 * 1000 &&
-              diffMs <= 75 * 60 * 1000
-            ) {
+            if (!reminders.hour_before && diffMs > 45 * 60 * 1000 && diffMs <= 75 * 60 * 1000) {
               toSend.push({
                 kind: "hour_before",
                 body: `Hey ${fn}, see you in about an hour at ${timeStr}! We're at 449 W Lincoln St, Tullahoma.`,
@@ -236,7 +234,10 @@ export const Route = createFileRoute("/api/public/hooks/process-appointment-remi
               sentFlags = { ...sentFlags, [kind]: true };
               await supabase
                 .from("appointments")
-                .update({ reminders_sent: sentFlags as unknown as Database["public"]["Tables"]["appointments"]["Update"]["reminders_sent"] })
+                .update({
+                  reminders_sent:
+                    sentFlags as unknown as Database["public"]["Tables"]["appointments"]["Update"]["reminders_sent"],
+                })
                 .eq("id", appt.id);
 
               if (appt.lead_id) {
@@ -256,7 +257,6 @@ export const Route = createFileRoute("/api/public/hooks/process-appointment-remi
             }
             // Discourage unused-import warning while keeping formatChicagoDateTime handy.
             void formatChicagoDateTime;
-
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             console.error(`[process-appointment-reminders] appt ${appt.id} exception`, msg);

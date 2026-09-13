@@ -30,23 +30,20 @@ async function sendTwilioSms(
   const from = process.env.TWILIO_FROM_NUMBER;
   if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
   const auth = Buffer.from(`${sid}:${token}`).toString("base64");
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        To: to,
-        From: from,
-        Body: body,
-        StatusCallback:
-          "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
-      }),
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-  );
+    body: new URLSearchParams({
+      To: to,
+      From: from,
+      Body: body,
+      StatusCallback:
+        "https://pjntdyhshxwhsxnwjylk.supabase.co/functions/v1/twilio-status-callback",
+    }),
+  });
   if (!res.ok) {
     const t = await res.text();
     console.error("[appointments] twilio error", res.status, t);
@@ -80,14 +77,18 @@ async function logOutbound(
 // ---------- available slots (public) ----------
 
 export const getAvailableSlotsFn = createServerFn({ method: "GET" })
-  .inputValidator((d: unknown) => z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(d))
+  .inputValidator((d: unknown) =>
+    z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(d),
+  )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const slots = slotsForDate(data.date);
     if (slots.length === 0) return { slots: [] as string[] };
     // Query the day's confirmed appointments to exclude.
     const start = slots[0];
-    const end = new Date(new Date(slots[slots.length - 1]).getTime() + 60 * 60 * 1000).toISOString();
+    const end = new Date(
+      new Date(slots[slots.length - 1]).getTime() + 60 * 60 * 1000,
+    ).toISOString();
     const { data: taken } = await supabaseAdmin
       .from("appointments")
       .select("confirmed_time")
@@ -114,7 +115,11 @@ const SubmitSchema = z.object({
 
 function looksFake(name: string, email: string): boolean {
   if (/\d{3,}/.test(name) || /(.)\1{4,}/.test(name)) return true;
-  if (/@(mailinator|tempmail|guerrillamail|10minutemail|yopmail|trashmail)\./.test(email.toLowerCase())) {
+  if (
+    /@(mailinator|tempmail|guerrillamail|10minutemail|yopmail|trashmail)\./.test(
+      email.toLowerCase(),
+    )
+  ) {
     return true;
   }
   return false;
@@ -158,7 +163,8 @@ export const submitAppointmentRequest = createServerFn({ method: "POST" })
         if (
           phoneDigits.length === 10 &&
           (r.phone ?? "").replace(/\D/g, "").slice(-10) === phoneDigits
-        ) return true;
+        )
+          return true;
         return false;
       })?.id ?? null;
 
@@ -234,10 +240,7 @@ export const submitAppointmentRequest = createServerFn({ method: "POST" })
 
 // ---------- admin actions ----------
 
-async function requireAdmin(context: {
-  supabase: any;
-  userId: string;
-}): Promise<boolean> {
+async function requireAdmin(context: { supabase: any; userId: string }): Promise<boolean> {
   const { data } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
     _role: "admin",
@@ -547,24 +550,25 @@ const LeadContactSchema = z.object({ lead_id: z.string().uuid() });
  */
 export const getLeadContactByToken = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => LeadContactSchema.parse(d))
-  .handler(async ({
-    data,
-  }): Promise<
-    | { ok: true; name: string; email: string; phone: string }
-    | { ok: false; error: string }
-  > => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
-      .from("leads")
-      .select("name, email, phone")
-      .eq("id", data.lead_id)
-      .maybeSingle();
-    if (error) return { ok: false, error: error.message };
-    if (!row) return { ok: false, error: "not_found" };
-    return {
-      ok: true,
-      name: row.name ?? "",
-      email: row.email ?? "",
-      phone: row.phone ?? "",
-    };
-  });
+  .handler(
+    async ({
+      data,
+    }): Promise<
+      { ok: true; name: string; email: string; phone: string } | { ok: false; error: string }
+    > => {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: row, error } = await supabaseAdmin
+        .from("leads")
+        .select("name, email, phone")
+        .eq("id", data.lead_id)
+        .maybeSingle();
+      if (error) return { ok: false, error: error.message };
+      if (!row) return { ok: false, error: "not_found" };
+      return {
+        ok: true,
+        name: row.name ?? "",
+        email: row.email ?? "",
+        phone: row.phone ?? "",
+      };
+    },
+  );

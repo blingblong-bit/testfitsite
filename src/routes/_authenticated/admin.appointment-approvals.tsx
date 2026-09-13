@@ -18,14 +18,9 @@ import {
   chicagoDateISO,
 } from "@/lib/appointment-availability";
 
-export const Route = createFileRoute(
-  "/_authenticated/admin/appointment-approvals",
-)({
+export const Route = createFileRoute("/_authenticated/admin/appointment-approvals")({
   head: () => ({
-    meta: [
-      { title: "Appointment Approvals — Admin" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "Appointment Approvals — Admin" }, { name: "robots", content: "noindex" }],
   }),
   component: AdminAppointmentApprovals,
 });
@@ -57,15 +52,17 @@ function AdminAppointmentApprovals() {
   const load = useCallback(async () => {
     const { data, error } = await supabase
       .from("appointments")
-      .select("id, name, phone, email, requested_time, suggested_time, status, created_at, type, reminders_sent")
+      .select(
+        "id, name, phone, email, requested_time, suggested_time, status, created_at, type, reminders_sent",
+      )
       .in("status", ["pending", "alternative_suggested"])
       .order("requested_time", { ascending: true });
     if (!error && data) {
       // Staff-created tours (set from the Lead Tracker) are already agreed on —
       // they live here only to drive reminder texts, not to be approved.
-      const visible = (data as Array<Row & { reminders_sent?: Record<string, unknown> | null }>).filter(
-        (r) => !r.reminders_sent?.staff_created,
-      );
+      const visible = (
+        data as Array<Row & { reminders_sent?: Record<string, unknown> | null }>
+      ).filter((r) => !r.reminders_sent?.staff_created);
       setRows(visible as Row[]);
     }
     setLoading(false);
@@ -139,10 +136,7 @@ function AdminAppointmentApprovals() {
         ) : (
           <div className="space-y-3">
             {rows.map((r) => (
-              <div
-                key={r.id}
-                className="rounded-lg border border-border bg-card p-5"
-              >
+              <div key={r.id} className="rounded-lg border border-border bg-card p-5">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
@@ -167,18 +161,14 @@ function AdminAppointmentApprovals() {
                       {r.phone} {r.email ? `• ${r.email}` : ""}
                     </p>
                     <p className="mt-2 text-sm">
-                      Requested:{" "}
-                      <strong>{formatChicagoDateTime(r.requested_time)}</strong>
+                      Requested: <strong>{formatChicagoDateTime(r.requested_time)}</strong>
                     </p>
                     {r.suggested_time && (
                       <p className="mt-1 text-sm text-primary">
-                        Alt suggested: {formatChicagoDateTime(r.suggested_time)}{" "}
-                        (waiting on reply)
+                        Alt suggested: {formatChicagoDateTime(r.suggested_time)} (waiting on reply)
                       </p>
                     )}
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Status: {r.status}
-                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">Status: {r.status}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
@@ -189,9 +179,7 @@ function AdminAppointmentApprovals() {
                       <Check className="h-4 w-4" /> Approve
                     </button>
                     <button
-                      onClick={() =>
-                        setSuggesting(suggesting?.id === r.id ? null : r)
-                      }
+                      onClick={() => setSuggesting(suggesting?.id === r.id ? null : r)}
                       disabled={actingOn === r.id}
                       className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-5 text-sm font-bold uppercase tracking-wide disabled:opacity-60"
                     >
@@ -207,7 +195,9 @@ function AdminAppointmentApprovals() {
                   </div>
                 </div>
 
-                {suggesting?.id === r.id && <SuggestPicker onPick={(iso) => handleSuggest(r, iso)} />}
+                {suggesting?.id === r.id && (
+                  <SuggestPicker onPick={(iso) => handleSuggest(r, iso)} />
+                )}
               </div>
             ))}
           </div>
@@ -248,9 +238,7 @@ function SuggestPicker({ onPick }: { onPick: (iso: string) => void }) {
             key={d}
             onClick={() => setDate(d)}
             className={`shrink-0 rounded border px-3 py-2 text-xs ${
-              d === date
-                ? "border-primary bg-primary/10"
-                : "border-border hover:border-primary/50"
+              d === date ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
             }`}
           >
             {formatChicagoDate(`${d}T18:00:00Z`)}
