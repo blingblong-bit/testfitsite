@@ -57,10 +57,17 @@ function AdminAppointmentApprovals() {
   const load = useCallback(async () => {
     const { data, error } = await supabase
       .from("appointments")
-      .select("id, name, phone, email, requested_time, suggested_time, status, created_at, type")
+      .select("id, name, phone, email, requested_time, suggested_time, status, created_at, type, reminders_sent")
       .in("status", ["pending", "alternative_suggested"])
       .order("requested_time", { ascending: true });
-    if (!error && data) setRows(data as Row[]);
+    if (!error && data) {
+      // Staff-created tours (set from the Lead Tracker) are already agreed on —
+      // they live here only to drive reminder texts, not to be approved.
+      const visible = (data as Array<Row & { reminders_sent?: Record<string, unknown> | null }>).filter(
+        (r) => !r.reminders_sent?.staff_created,
+      );
+      setRows(visible as Row[]);
+    }
     setLoading(false);
   }, []);
 
