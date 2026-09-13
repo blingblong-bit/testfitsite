@@ -57,6 +57,7 @@ function chicagoLocalInputToUtcIso(v: string): string | null {
   return chicagoWallToUTC(Number(y), Number(mo), Number(d), Number(h), Number(mi));
 }
 import { AnalyticsView } from "@/components/AnalyticsView";
+import { MissedCallsView } from "@/components/MissedCallsView";
 import { channelForLead, hasMeasuredAttribution } from "@/lib/analytics";
 import {
   computePriority,
@@ -292,7 +293,7 @@ function matchesView(lead: Lead, view: TypeFilter): boolean {
   if (view === "members") return stage === "member";
   return stage === "lost";
 }
-type Tab = "leads" | "referrals" | "analytics" | "settings";
+type Tab = "leads" | "referrals" | "missed-calls" | "analytics" | "settings";
 type SortKey = "priority" | "newest" | "oldest" | "tour_date" | "last_contact" | "source";
 type QuickFilter =
   | "none"
@@ -617,6 +618,9 @@ function AdminLeads() {
         <TabBtn active={tab === "referrals"} onClick={() => setTab("referrals")}>
           Referral Tracker
         </TabBtn>
+        <TabBtn active={tab === "missed-calls"} onClick={() => setTab("missed-calls")}>
+          Missed Calls
+        </TabBtn>
         <TabBtn active={tab === "analytics"} onClick={() => setTab("analytics")}>
           Business Analytics
         </TabBtn>
@@ -649,6 +653,7 @@ function AdminLeads() {
         />
       )}
       {tab === "referrals" && <ReferralsView referrals={referrals} />}
+      {tab === "missed-calls" && <MissedCallsView />}
       {tab === "analytics" && (
         <AnalyticsView leads={leads} referrals={referrals} isAdmin={isAdmin === true} />
       )}
