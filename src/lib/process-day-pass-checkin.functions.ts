@@ -15,8 +15,12 @@ const Schema = z
     attribution: AttributionSchema,
   })
   .refine(
-    (d) => Boolean(d.lead_id) || (d.name.length > 0 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)),
-    { message: "Name and a valid email are required." },
+    // Email is optional; when supplied it must be valid. Name is required
+    // unless this is a recognized returning guest (lead_id present).
+    (d) =>
+      Boolean(d.lead_id) ||
+      (d.name.length > 0 && (d.email === "" || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email))),
+    { message: "Name is required, and email must be valid if given." },
   );
 
 // Same signal patterns already proven in lead-classifier.ts, reused here

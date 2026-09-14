@@ -5,7 +5,12 @@ import { AttributionSchema, attributionColumns } from "./attribution";
 const Schema = z.object({
   source: z.string().trim().min(1),
   name: z.string().trim().min(1).max(200),
-  email: z.string().trim().email().max(200),
+  // Email is optional on the forms now — allow blank, validate when given.
+  email: z
+    .string()
+    .trim()
+    .max(200)
+    .refine((e) => e === "" || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)),
   phone: z.string().trim().max(40).nullable().optional(),
   interest: z.string().trim().max(200).nullable().optional(),
   message: z.string().trim().max(4000).nullable().optional(),
