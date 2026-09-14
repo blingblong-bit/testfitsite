@@ -84,7 +84,7 @@ export const notifyNewLead = createServerFn({ method: "POST" })
     ${messageBlockHtml}
     <div style="margin-top:20px;padding-top:14px;border-top:1px solid #e5e7eb;font-size:14px;color:#333">
       <div><strong>Name:</strong> ${esc(data.name)}</div>
-      <div><strong>Email:</strong> <a href="mailto:${esc(data.email)}" style="color:#111">${esc(data.email)}</a></div>
+      ${data.email.trim() ? `<div><strong>Email:</strong> <a href="mailto:${esc(data.email)}" style="color:#111">${esc(data.email)}</a></div>` : ""}
       ${phone ? `<div><strong>Phone:</strong> <a href="tel:${esc(phone)}" style="color:#111">${esc(phone)}</a></div>` : ""}
       ${interest ? `<div><strong>Interested in:</strong> ${esc(interest)}</div>` : ""}
     </div>
@@ -106,12 +106,8 @@ export const notifyNewLead = createServerFn({ method: "POST" })
       if (message) {
         textLines.push("", "Your message:", message);
       }
-      textLines.push(
-        "",
-        "---",
-        `Name: ${data.name}`,
-        `Email: ${data.email}`,
-      );
+      textLines.push("", "---", `Name: ${data.name}`);
+      if (data.email.trim()) textLines.push(`Email: ${data.email}`);
       if (phone) textLines.push(`Phone: ${phone}`);
       if (interest) textLines.push(`Interested in: ${interest}`);
       textLines.push(
@@ -134,7 +130,8 @@ export const notifyNewLead = createServerFn({ method: "POST" })
           {
             to: NOTIFY_TO,
             from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-            reply_to: data.email,
+            // No email on the submission (email is optional) → no reply-to.
+            reply_to: data.email.trim() ? data.email : undefined,
             sender_domain: SENDER_DOMAIN,
             subject,
             html,
