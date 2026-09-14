@@ -343,15 +343,14 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
       <FormShell
         eyebrow="DAY PASS"
         title="Tell Us About You"
-        sub="First time here — we just need your name and email."
+        sub="First time here — we just need your name and number."
       >
         <form onSubmit={handleInfoSubmit} className="space-y-5">
           <KioskField label="Full name" name="name" required defaultValue={guest.name} />
           <KioskField
-            label="Email"
+            label="Email (optional)"
             name="email"
             type="email"
-            required
             defaultValue={guest.email}
           />
           <KioskField label="Phone" name="phone" type="tel" required defaultValue={guest.phone} />

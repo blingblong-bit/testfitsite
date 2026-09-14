@@ -31,8 +31,9 @@ export async function submitLead(input: LeadInput) {
     message: input.message?.trim() || null,
   };
 
-  if (!payload.name || !payload.email) {
-    throw new Error("Name and email are required.");
+  // Email is optional, but we need at least one way to reach them.
+  if (!payload.name || (!payload.email && !payload.phone)) {
+    throw new Error("Name plus an email or phone number are required.");
   }
 
   // First-touch attribution from this browser, if the visitor ever landed
@@ -90,18 +91,22 @@ export async function submitLead(input: LeadInput) {
     } catch (e) {
       console.error("Lead notification failed:", e);
     }
-    try {
-      await confirmLeadToCustomer({
-        data: {
-          name: payload.name,
-          email: payload.email,
-          interest: payload.interest,
-          message: payload.message,
-          submitted_at,
-        },
-      });
-    } catch (e) {
-      console.error("Lead confirmation email failed:", e);
+    // Only send the "we got your message" confirmation when we actually
+    // have an email address for them — email is optional on the form now.
+    if (payload.email) {
+      try {
+        await confirmLeadToCustomer({
+          data: {
+            name: payload.name,
+            email: payload.email,
+            interest: payload.interest,
+            message: payload.message,
+            submitted_at,
+          },
+        });
+      } catch (e) {
+        console.error("Lead confirmation email failed:", e);
+      }
     }
   }
 }
