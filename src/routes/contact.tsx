@@ -95,6 +95,13 @@ function Contact() {
     const form = e.currentTarget;
     const data = new FormData(form);
     const phone = String(data.get("phone") ?? "").trim();
+    const email = String(data.get("email") ?? "").trim();
+
+    // Email is optional, but we need at least one way to get back to them.
+    if (!phone && !email) {
+      setError("Please give us either an email or a phone number so we can get back to you.");
+      return;
+    }
 
     // Only require SMS consent if the person actually gave us a phone
     // number to text — no phone means nothing to opt in to.
@@ -108,7 +115,7 @@ function Contact() {
       await submitLead({
         source: "general_contact",
         name: String(data.get("name") ?? ""),
-        email: String(data.get("email") ?? ""),
+        email,
         phone,
         interest: String(data.get("interest") ?? ""),
         message: String(data.get("message") ?? ""),
@@ -154,7 +161,7 @@ function Contact() {
             <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
               <div className="grid sm:grid-cols-2 gap-5">
                 <Field label="Name" name="name" required />
-                <Field label="Email" name="email" type="email" required />
+                <Field label="Email (optional)" name="email" type="email" />
               </div>
               <div className="grid sm:grid-cols-2 gap-5">
                 <Field label="Phone" name="phone" type="tel" />
