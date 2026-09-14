@@ -54,6 +54,7 @@ function countMatches(haystack: string, needles: string[]) {
 export function classifyLead(input: {
   name: string;
   email: string;
+  phone?: string | null;
   message?: string | null;
   interest?: string | null;
 }): Classification {
@@ -66,7 +67,9 @@ export function classifyLead(input: {
   // --- Spam checks ---
   const reasons: string[] = [];
 
-  if (!input.name?.trim() || !input.email?.trim()) {
+  // Email is optional on the forms now — only suspicious when there's no
+  // way to reach the person at all.
+  if (!input.name?.trim() || (!input.email?.trim() && !input.phone?.trim())) {
     reasons.push("empty required fields");
   }
 
