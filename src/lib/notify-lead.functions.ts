@@ -4,7 +4,11 @@ import { z } from "zod";
 const LeadSchema = z.object({
   source: z.string().min(1).max(60),
   name: z.string().min(1).max(120),
-  email: z.string().email().max(254),
+  // Email is optional on the forms now — allow blank, validate when given.
+  email: z
+    .string()
+    .max(254)
+    .refine((e) => e.trim() === "" || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.trim())),
   phone: z.string().max(40).nullable().optional(),
   interest: z.string().max(120).nullable().optional(),
   message: z.string().max(4000).nullable().optional(),
@@ -26,23 +30,16 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 function esc(s: string) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 export const notifyNewLead = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => LeadSchema.parse(data))
   .handler(async ({ data }) => {
     try {
-      const { supabaseAdmin } = await import(
-        "@/integrations/supabase/client.server"
-      );
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-      const submittedAt = data.submitted_at
-        ? new Date(data.submitted_at)
-        : new Date();
+      const submittedAt = data.submitted_at ? new Date(data.submitted_at) : new Date();
       const submittedFmt =
         submittedAt.toLocaleString("en-US", {
           timeZone: "America/Chicago",
@@ -80,7 +77,7 @@ export const notifyNewLead = createServerFn({ method: "POST" })
     ${messageBlockHtml}
     <div style="margin-top:20px;padding-top:14px;border-top:1px solid #e5e7eb;font-size:14px;color:#333">
       <div><strong>Name:</strong> ${esc(data.name)}</div>
-      <div><strong>Email:</strong> <a href="mailto:${esc(data.email)}" style="color:#111">${esc(data.email)}</a></div>
+      ${data.email.trim() ? `<div><strong>Email:</strong> <a href="mailto:${esc(data.email)}" style="color:#111">${esc(data.email)}</a></div>` : ""}
       ${phone ? `<div><strong>Phone:</strong> <a href="tel:${esc(phone)}" style="color:#111">${esc(phone)}</a></div>` : ""}
       ${interest ? `<div><strong>Interested in:</strong> ${esc(interest)}</div>` : ""}
     </div>
@@ -93,21 +90,12 @@ export const notifyNewLead = createServerFn({ method: "POST" })
   </div>
 </body></html>`;
 
-      const textLines = [
-        `New inquiry from ${data.name}`,
-        "",
-        greeting,
-        introText,
-      ];
+      const textLines = [`New inquiry from ${data.name}`, "", greeting, introText];
       if (message) {
         textLines.push("", "Your message:", message);
       }
-      textLines.push(
-        "",
-        "---",
-        `Name: ${data.name}`,
-        `Email: ${data.email}`,
-      );
+      textLines.push("", "---", `Name: ${data.name}`);
+      if (data.email.trim()) textLines.push(`Email: ${data.email}`);
       if (phone) textLines.push(`Phone: ${phone}`);
       if (interest) textLines.push(`Interested in: ${interest}`);
       textLines.push(
@@ -121,16 +109,15 @@ export const notifyNewLead = createServerFn({ method: "POST" })
       const messageId = crypto.randomUUID();
       const idempotencyKey = `lead-${data.source}-${data.email.toLowerCase()}-${submittedAt.getTime()}`;
 
-      const { sendLovableEmail, EmailAPIError } = await import(
-        "@lovable.dev/email-js"
-      );
+      const { sendLovableEmail, EmailAPIError } = await import("@lovable.dev/email-js");
 
       try {
         await sendLovableEmail(
           {
             to: NOTIFY_TO,
             from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-            reply_to: data.email,
+            // No email on the submission (email is optional) → no reply-to.
+            reply_to: data.email.trim() ? data.email : undefined,
             sender_domain: SENDER_DOMAIN,
             subject,
             html,
@@ -145,45 +132,35 @@ export const notifyNewLead = createServerFn({ method: "POST" })
           },
         );
       } catch (sendErr) {
-        if (
-          sendErr instanceof EmailAPIError &&
-          sendErr.code === "recipient_suppressed"
-        ) {
-          const { error: logErr } = await supabaseAdmin
-            .from("email_send_log")
-            .insert({
-              message_id: messageId,
-              template_name: "lead-notification",
-              recipient_email: NOTIFY_TO,
-              status: "suppressed",
-            });
-          if (logErr) console.error("[notifyNewLead] log failed", logErr);
-          return { ok: false as const, error: "suppressed" };
-        }
-        const sendMsg =
-          sendErr instanceof Error ? sendErr.message : String(sendErr);
-        const { error: logErr } = await supabaseAdmin
-          .from("email_send_log")
-          .insert({
+        if (sendErr instanceof EmailAPIError && sendErr.code === "recipient_suppressed") {
+          const { error: logErr } = await supabaseAdmin.from("email_send_log").insert({
             message_id: messageId,
             template_name: "lead-notification",
             recipient_email: NOTIFY_TO,
-            status: "failed",
-            error_message: sendMsg.slice(0, 1000),
+            status: "suppressed",
           });
+          if (logErr) console.error("[notifyNewLead] log failed", logErr);
+          return { ok: false as const, error: "suppressed" };
+        }
+        const sendMsg = sendErr instanceof Error ? sendErr.message : String(sendErr);
+        const { error: logErr } = await supabaseAdmin.from("email_send_log").insert({
+          message_id: messageId,
+          template_name: "lead-notification",
+          recipient_email: NOTIFY_TO,
+          status: "failed",
+          error_message: sendMsg.slice(0, 1000),
+        });
         if (logErr) console.error("[notifyNewLead] log failed", logErr);
         console.error("[notifyNewLead] send failed", sendMsg);
         return { ok: false as const, error: "send_failed" };
       }
 
-      const { error: sentLogErr } = await supabaseAdmin
-        .from("email_send_log")
-        .insert({
-          message_id: messageId,
-          template_name: "lead-notification",
-          recipient_email: NOTIFY_TO,
-          status: "sent",
-        });
+      const { error: sentLogErr } = await supabaseAdmin.from("email_send_log").insert({
+        message_id: messageId,
+        template_name: "lead-notification",
+        recipient_email: NOTIFY_TO,
+        status: "sent",
+      });
       if (sentLogErr) console.error("[notifyNewLead] log failed", sentLogErr);
 
       return { ok: true as const };

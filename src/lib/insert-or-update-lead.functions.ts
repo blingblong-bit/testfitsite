@@ -47,8 +47,15 @@ export const insertOrUpdateLead = createServerFn({ method: "POST" })
     const phoneDigits = phone.replace(/\D/g, "").slice(-10);
     const last4 = phoneDigits.slice(-4);
 
-    const orFilters = [`email.ilike.${email}`];
+    // Email is optional now — skip the email filter entirely when blank,
+    // otherwise an empty email would match every other blank-email row.
+    const orFilters: string[] = [];
+    if (email) orFilters.push(`email.ilike.${email}`);
     if (last4.length === 4) orFilters.push(`phone.ilike.%${last4}%`);
+
+    if (orFilters.length === 0) {
+      return { ok: false as const, error: "no_contact_info" };
+    }
 
     const { data: candidates, error: findErr } = await supabaseAdmin
       .from("leads")
@@ -61,7 +68,7 @@ export const insertOrUpdateLead = createServerFn({ method: "POST" })
     }
 
     const existing = (candidates ?? []).find((r) => {
-      if ((r.email ?? "").trim().toLowerCase() === email) return true;
+      if (email && (r.email ?? "").trim().toLowerCase() === email) return true;
       if (
         phoneDigits.length === 10 &&
         (r.phone ?? "").replace(/\D/g, "").slice(-10) === phoneDigits

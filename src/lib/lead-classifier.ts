@@ -8,37 +8,107 @@ export type Classification = {
 };
 
 const CUSTOMER_KEYWORDS = [
-  "membership", "member", "join", "joining", "tour", "personal training",
-  "pt ", "class", "classes", "kickbox", "jiu-jitsu", "jiu jitsu", "jiujitsu",
-  "bjj", "pric", "cost", "rate", "hour", "open", "location", "address",
-  "try a class", "drop in", "drop-in", "train", "training", "coach",
-  "coaching", "facility", "access", "gym", "workout", "fitness", "tan",
-  "sauna", "barre", "yoga", "hiit", "trx",
+  "membership",
+  "member",
+  "join",
+  "joining",
+  "tour",
+  "personal training",
+  "pt ",
+  "class",
+  "classes",
+  "kickbox",
+  "jiu-jitsu",
+  "jiu jitsu",
+  "jiujitsu",
+  "bjj",
+  "pric",
+  "cost",
+  "rate",
+  "hour",
+  "open",
+  "location",
+  "address",
+  "try a class",
+  "drop in",
+  "drop-in",
+  "train",
+  "training",
+  "coach",
+  "coaching",
+  "facility",
+  "access",
+  "gym",
+  "workout",
+  "fitness",
+  "tan",
+  "sauna",
+  "barre",
+  "yoga",
+  "hiit",
+  "trx",
 ];
 
 const VENDOR_KEYWORDS = [
-  "seo", "search engine optimization", "web design", "website design",
-  "website redesign", "redesign your", "app development", "mobile app",
-  "marketing service", "digital marketing", "lead generation",
-  "backlink", "back link", "google ranking", "rank on google",
-  "rank higher", "first page of google", "page 1 of google",
-  "social media management", "social media marketing", "smm",
-  "advertising service", "ad campaign", "ppc", "google ads expert",
-  "business loan", "merchant cash", "funding for your business",
-  "crypto", "bitcoin", "forex", "investment opportunity",
-  "guest post", "link building", "outreach", "increase your traffic",
-  "increase traffic", "i can help your business", "grow your business online",
-  "boost your sales", "boost your website", "white label", "outsourc",
-  "offshore developer", "hire developer", "saas tool", "free audit",
-  "website audit", "noticed your website", "visited your website",
-  "checked your site", "your competitors are ranking",
+  "seo",
+  "search engine optimization",
+  "web design",
+  "website design",
+  "website redesign",
+  "redesign your",
+  "app development",
+  "mobile app",
+  "marketing service",
+  "digital marketing",
+  "lead generation",
+  "backlink",
+  "back link",
+  "google ranking",
+  "rank on google",
+  "rank higher",
+  "first page of google",
+  "page 1 of google",
+  "social media management",
+  "social media marketing",
+  "smm",
+  "advertising service",
+  "ad campaign",
+  "ppc",
+  "google ads expert",
+  "business loan",
+  "merchant cash",
+  "funding for your business",
+  "crypto",
+  "bitcoin",
+  "forex",
+  "investment opportunity",
+  "guest post",
+  "link building",
+  "outreach",
+  "increase your traffic",
+  "increase traffic",
+  "i can help your business",
+  "grow your business online",
+  "boost your sales",
+  "boost your website",
+  "white label",
+  "outsourc",
+  "offshore developer",
+  "hire developer",
+  "saas tool",
+  "free audit",
+  "website audit",
+  "noticed your website",
+  "visited your website",
+  "checked your site",
+  "your competitors are ranking",
 ];
 
 const SPAM_PATTERNS = [
-  /https?:\/\/\S+/gi,           // urls
+  /https?:\/\/\S+/gi, // urls
   /\b[a-z0-9.-]+\.(ru|cn|top|xyz|click|loan|tk)\b/gi,
-  /(.)\1{6,}/i,                  // aaaaaaa
-  /[^\s]{40,}/,                  // 40+ char no-space gibberish
+  /(.)\1{6,}/i, // aaaaaaa
+  /[^\s]{40,}/, // 40+ char no-space gibberish
 ];
 
 function lower(s: string | null | undefined) {
@@ -54,6 +124,7 @@ function countMatches(haystack: string, needles: string[]) {
 export function classifyLead(input: {
   name: string;
   email: string;
+  phone?: string | null;
   message?: string | null;
   interest?: string | null;
 }): Classification {
@@ -66,7 +137,9 @@ export function classifyLead(input: {
   // --- Spam checks ---
   const reasons: string[] = [];
 
-  if (!input.name?.trim() || !input.email?.trim()) {
+  // Email is optional on the forms now — only suspicious when there's no
+  // way to reach the person at all.
+  if (!input.name?.trim() || (!input.email?.trim() && !input.phone?.trim())) {
     reasons.push("empty required fields");
   }
 
@@ -104,7 +177,10 @@ export function classifyLead(input: {
   }
 
   // --- Spam ---
-  if (reasons.length >= 2 || (reasons.length >= 1 && customerHits === 0 && message.length > 0 && interest.length === 0)) {
+  if (
+    reasons.length >= 2 ||
+    (reasons.length >= 1 && customerHits === 0 && message.length > 0 && interest.length === 0)
+  ) {
     return {
       lead_type: "spam",
       lead_score: -5,

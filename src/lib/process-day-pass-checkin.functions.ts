@@ -15,8 +15,12 @@ const Schema = z
     attribution: AttributionSchema,
   })
   .refine(
-    (d) => Boolean(d.lead_id) || (d.name.length > 0 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)),
-    { message: "Name and a valid email are required." },
+    // Email is optional; when supplied it must be valid. Name is required
+    // unless this is a recognized returning guest (lead_id present).
+    (d) =>
+      Boolean(d.lead_id) ||
+      (d.name.length > 0 && (d.email === "" || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email))),
+    { message: "Name is required, and email must be valid if given." },
   );
 
 // Same signal patterns already proven in lead-classifier.ts, reused here
@@ -24,7 +28,11 @@ const Schema = z
 // the full classifier against.
 function looksFake(name: string, email: string): boolean {
   if (/\d{3,}/.test(name) || /(.)\1{4,}/.test(name)) return true;
-  if (/@(mailinator|tempmail|guerrillamail|10minutemail|yopmail|trashmail)\./.test(email.toLowerCase())) {
+  if (
+    /@(mailinator|tempmail|guerrillamail|10minutemail|yopmail|trashmail)\./.test(
+      email.toLowerCase(),
+    )
+  ) {
     return true;
   }
   return false;
@@ -86,7 +94,13 @@ async function finalizeDayPassLead(data: FinalizeInput): Promise<FinalizeResult>
   // the record was chosen before the purchase, so a returning guest can never
   // spin off a second record by typing a different email.
   let existingLead:
-    | { id: string; notes: string | null; email: string | null; phone: string | null; name?: string | null }
+    | {
+        id: string;
+        notes: string | null;
+        email: string | null;
+        phone: string | null;
+        name?: string | null;
+      }
     | undefined;
 
   if (data.lead_id) {
@@ -115,8 +129,11 @@ async function finalizeDayPassLead(data: FinalizeInput): Promise<FinalizeResult>
       }
       existingLead = (existingCandidates ?? []).find((r) => {
         if (email && (r.email ?? "").trim().toLowerCase() === email) return true;
-        if (phoneDigits.length === 10 &&
-            (r.phone ?? "").replace(/\D/g, "").slice(-10) === phoneDigits) return true;
+        if (
+          phoneDigits.length === 10 &&
+          (r.phone ?? "").replace(/\D/g, "").slice(-10) === phoneDigits
+        )
+          return true;
         return false;
       });
     }
@@ -227,7 +244,12 @@ export const processDayPassCheckin = createServerFn({ method: "POST" })
       });
       // Return a generic success-shaped response rather than a specific
       // error, so an automated submitter gets no useful signal back.
-      return { ok: true as const, existing_member: false as const, lead_id: null, pending: false as const };
+      return {
+        ok: true as const,
+        existing_member: false as const,
+        lead_id: null,
+        pending: false as const,
+      };
     }
 
     const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MIN * 60 * 1000).toISOString();
