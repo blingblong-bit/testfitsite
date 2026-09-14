@@ -4,7 +4,11 @@ import { z } from "zod";
 const LeadSchema = z.object({
   source: z.string().min(1).max(60),
   name: z.string().min(1).max(120),
-  email: z.string().email().max(254),
+  // Email is optional on the forms now — allow blank, validate when given.
+  email: z
+    .string()
+    .max(254)
+    .refine((e) => e.trim() === "" || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.trim())),
   phone: z.string().max(40).nullable().optional(),
   interest: z.string().max(120).nullable().optional(),
   message: z.string().max(4000).nullable().optional(),
