@@ -2,10 +2,7 @@ import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { createReferral, redeemReferral, lookupReferral } from "@/lib/referrals";
 import { processDayPassCheckin } from "@/lib/process-day-pass-checkin.functions";
-import {
-  lookupDayPassGuest,
-  type DayPassGuestLookup,
-} from "@/lib/lookup-day-pass-guest.functions";
+import { lookupDayPassGuest, type DayPassGuestLookup } from "@/lib/lookup-day-pass-guest.functions";
 import venmoQrAsset from "@/assets/venmo-qr.jpeg.asset.json";
 import { SmsConsentCheckbox } from "@/components/SmsConsent";
 
@@ -81,9 +78,7 @@ export function ConfirmationCard({
       </div>
       <h2 className="mt-6 text-3xl">{title}</h2>
       <p className="mt-3 text-sm text-muted-foreground">{message}</p>
-      <p className="mt-6 text-xs uppercase tracking-widest text-primary">
-        Returning in {seconds}s
-      </p>
+      <p className="mt-6 text-xs uppercase tracking-widest text-primary">Returning in {seconds}s</p>
       <button
         onClick={onDone}
         className="mt-4 inline-flex h-11 items-center rounded-md border border-border px-5 text-sm hover:bg-secondary"
@@ -129,7 +124,6 @@ export function KioskField({
     </div>
   );
 }
-
 
 export function FormShell({
   eyebrow,
@@ -280,8 +274,8 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
         </div>
         <h2 className="mt-6 text-3xl">Almost there!</h2>
         <p className="mt-3 text-sm text-muted-foreground">
-          Let the front desk know you're ready to pay — a staff member will confirm your
-          payment and check you in.
+          Let the front desk know you're ready to pay — a staff member will confirm your payment and
+          check you in.
         </p>
         <button
           onClick={onDone}
@@ -312,7 +306,13 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
           {/* Honeypot — hidden from real users, bots often fill every field they find */}
           <div
             aria-hidden="true"
-            style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}
+            style={{
+              position: "absolute",
+              left: "-9999px",
+              width: 1,
+              height: 1,
+              overflow: "hidden",
+            }}
           >
             <label htmlFor="company_website">Company website</label>
             <input
@@ -360,7 +360,6 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
       </FormShell>
     );
   }
-
 
   const methods: { id: PaymentMethod; label: string }[] = [
     { id: "venmo", label: "Venmo" },
@@ -447,7 +446,6 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
         >
           {known ? "← Not you? Start over" : "← Back to guest info"}
         </button>
-
       </form>
     </FormShell>
   );
@@ -498,7 +496,9 @@ export function RedeemScreen({
     setSubmitting(true);
     setError(null);
     const d = new FormData(e.currentTarget);
-    const entered = String(d.get("code") ?? "").trim().toUpperCase();
+    const entered = String(d.get("code") ?? "")
+      .trim()
+      .toUpperCase();
     const result = await lookupReferral({ data: { code: entered } });
     setSubmitting(false);
     if (!result.ok) {
@@ -594,13 +594,10 @@ export function RedeemScreen({
           : "Tell us about yourself to complete your free day pass."
       }
     >
-
       <form onSubmit={handleCheckinSubmit} className="space-y-5">
         <div className="rounded-xl border border-border bg-card p-5 space-y-2">
           <div>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">
-              Referral code
-            </p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Referral code</p>
             <p className="mt-1 text-lg font-semibold">{code}</p>
           </div>
           {referrerName && (

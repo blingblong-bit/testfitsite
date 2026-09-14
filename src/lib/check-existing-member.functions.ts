@@ -37,19 +37,13 @@ export const checkExistingMemberSubmission = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     try {
       const { checkMemberMatch } = await import("./antaris/client");
-      const match = await checkMemberMatch(
-        data.name,
-        data.email,
-        data.phone ?? "",
-      );
+      const match = await checkMemberMatch(data.name, data.email, data.phone ?? "");
 
       if (!match.isMember || match.confidence < 80) {
         return { handled: false as const };
       }
 
-      const { supabaseAdmin } = await import(
-        "@/integrations/supabase/client.server"
-      );
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
       const now = new Date().toISOString();
       const noteLine = `Detected as existing Antaris member at form submission (confidence: ${match.confidence})`;
@@ -91,10 +85,7 @@ export const checkExistingMemberSubmission = createServerFn({ method: "POST" })
       const isTest = data.email.trim().toLowerCase() === TEST_EMAIL;
 
       if (isTest) {
-        await supabaseAdmin
-          .from("leads")
-          .update({ last_sms_at: now })
-          .eq("id", leadId);
+        await supabaseAdmin.from("leads").update({ last_sms_at: now }).eq("id", leadId);
         await supabaseAdmin.from("sms_conversation_log").insert({
           lead_id: leadId,
           phone: to,
@@ -121,33 +112,23 @@ export const checkExistingMemberSubmission = createServerFn({ method: "POST" })
       }
 
       const auth = btoa(`${sid}:${token}`);
-      const res = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${auth}`,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({ To: to, From: from, Body: body }),
+      const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
         },
-      );
+        body: new URLSearchParams({ To: to, From: from, Body: body }),
+      });
 
       if (!res.ok) {
         const errText = await res.text();
-        console.error(
-          "[checkExistingMember] twilio error",
-          res.status,
-          errText,
-        );
+        console.error("[checkExistingMember] twilio error", res.status, errText);
         return { handled: true as const, lead_id: leadId };
       }
 
       const twilioResp = (await res.json()) as { sid?: string };
-      await supabaseAdmin
-        .from("leads")
-        .update({ last_sms_at: now })
-        .eq("id", leadId);
+      await supabaseAdmin.from("leads").update({ last_sms_at: now }).eq("id", leadId);
       await supabaseAdmin.from("sms_conversation_log").insert({
         lead_id: leadId,
         phone: to,
