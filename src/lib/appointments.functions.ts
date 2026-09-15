@@ -464,32 +464,41 @@ export const syncStaffTourAppointment = createServerFn({ method: "POST" })
       .eq("lead_id", lead.id)
       .eq("type", "tour")
       .in("status", ["pending", "confirmed", "alternative_suggested"]);
-    const staffRows = (existingRows ?? []).filter((r) =>
-      Boolean((r.reminders_sent as Record<string, unknown> | null)?.staff_created),
+    const isStaffRow = (r: { reminders_sent: unknown }) =>
+      Boolean((r.reminders_sent as Record<string, unknown> | null)?.staff_created);
+    const staffRows = (existingRows ?? []).filter(isStaffRow);
+    // Rows that can actually fire reminder texts: staff-created rows plus any
+    // confirmed row from the public booking flow. Pending public requests are
+    // left alone so they stay in the approval queue.
+    const reminderRows = (existingRows ?? []).filter(
+      (r) => isStaffRow(r) || r.status === "confirmed",
     );
 
-    const cancelStaffRows = async () => {
-      for (const r of staffRows) {
+    const cancelReminderRows = async () => {
+      for (const r of reminderRows) {
         await supabaseAdmin.from("appointments").update({ status: "canceled" }).eq("id", r.id);
       }
     };
 
     // Nothing to remind about.
     if (!lead.tour_scheduled || !lead.tour_date || lead.tour_completed) {
-      await cancelStaffRows();
+      await cancelReminderRows();
       return { ok: true as const, state: "cleared" as const };
     }
     if (!lead.phone || lead.phone.trim().length < 7) {
-      await cancelStaffRows();
+      await cancelReminderRows();
       return { ok: true as const, state: "no_phone" as const };
     }
 
     const tourDate = lead.tour_date;
     const dateOnly = isChicagoMidnight(tourDate);
     const targetStatus = dateOnly ? "pending" : "confirmed";
-    const keep = staffRows[0] ?? null;
-    // Extra rows (shouldn't normally exist) are canceled so only one stays live.
-    for (const r of staffRows.slice(1)) {
+    // Reuse the staff row if there is one, otherwise adopt the existing
+    // confirmed booking instead of creating a second reminder record.
+    const keep = staffRows[0] ?? reminderRows[0] ?? null;
+    // Any other live reminder row is canceled so only one stays armed.
+    for (const r of reminderRows) {
+      if (keep && r.id === keep.id) continue;
       await supabaseAdmin.from("appointments").update({ status: "canceled" }).eq("id", r.id);
     }
 
