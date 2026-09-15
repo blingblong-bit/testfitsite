@@ -647,6 +647,45 @@ export type Database = {
           },
         ]
       }
+      sms_consent_records: {
+        Row: {
+          consent: boolean
+          consent_at: string
+          consent_source: string
+          created_at: string
+          first_name: string
+          id: string
+          ip_address: string | null
+          last_name: string
+          phone: string
+          user_agent: string | null
+        }
+        Insert: {
+          consent?: boolean
+          consent_at?: string
+          consent_source?: string
+          created_at?: string
+          first_name: string
+          id?: string
+          ip_address?: string | null
+          last_name: string
+          phone: string
+          user_agent?: string | null
+        }
+        Update: {
+          consent?: boolean
+          consent_at?: string
+          consent_source?: string
+          created_at?: string
+          first_name?: string
+          id?: string
+          ip_address?: string | null
+          last_name?: string
+          phone?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       sms_conversation_log: {
         Row: {
           body: string

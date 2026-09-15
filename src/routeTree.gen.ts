@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SmsConsentRouteImport } from './routes/sms-consent'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ScheduleVisitRouteImport } from './routes/schedule-visit'
 import { Route as ReferAFriendRouteImport } from './routes/refer-a-friend'
@@ -65,6 +66,11 @@ import { Route as ApiPublicHooksProcessAppointmentRemindersRouteImport } from '.
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SmsConsentRoute = SmsConsentRouteImport.update({
+  id: '/sms-consent',
+  path: '/sms-consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -358,6 +364,7 @@ export interface FileRoutesByFullPath {
   '/refer-a-friend': typeof ReferAFriendRoute
   '/schedule-visit': typeof ScheduleVisitRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sms-consent': typeof SmsConsentRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -408,6 +415,7 @@ export interface FileRoutesByTo {
   '/refer-a-friend': typeof ReferAFriendRoute
   '/schedule-visit': typeof ScheduleVisitRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sms-consent': typeof SmsConsentRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -463,6 +471,7 @@ export interface FileRoutesById {
   '/refer-a-friend': typeof ReferAFriendRoute
   '/schedule-visit': typeof ScheduleVisitRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/sms-consent': typeof SmsConsentRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -518,6 +527,7 @@ export interface FileRouteTypes {
     | '/refer-a-friend'
     | '/schedule-visit'
     | '/sitemap.xml'
+    | '/sms-consent'
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -568,6 +578,7 @@ export interface FileRouteTypes {
     | '/refer-a-friend'
     | '/schedule-visit'
     | '/sitemap.xml'
+    | '/sms-consent'
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -622,6 +633,7 @@ export interface FileRouteTypes {
     | '/refer-a-friend'
     | '/schedule-visit'
     | '/sitemap.xml'
+    | '/sms-consent'
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -677,6 +689,7 @@ export interface RootRouteChildren {
   ReferAFriendRoute: typeof ReferAFriendRoute
   ScheduleVisitRoute: typeof ScheduleVisitRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SmsConsentRoute: typeof SmsConsentRoute
   TermsRoute: typeof TermsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -700,6 +713,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sms-consent': {
+      id: '/sms-consent'
+      path: '/sms-consent'
+      fullPath: '/sms-consent'
+      preLoaderRoute: typeof SmsConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -1159,6 +1179,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReferAFriendRoute: ReferAFriendRoute,
   ScheduleVisitRoute: ScheduleVisitRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SmsConsentRoute: SmsConsentRoute,
   TermsRoute: TermsRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
