@@ -537,7 +537,6 @@ export const syncStaffTourAppointment = createServerFn({ method: "POST" })
 
     const targetStatus = dateOnly ? "pending" : "confirmed";
 
-
     const { error: insErr } = await supabaseAdmin.from("appointments").insert({
       lead_id: lead.id,
       name: lead.name,
