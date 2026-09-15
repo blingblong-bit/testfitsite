@@ -522,10 +522,7 @@ export const syncStaffTourAppointment = createServerFn({ method: "POST" })
           status: effectiveDateOnly ? "pending" : "confirmed",
           requested_time: effectiveTime,
           confirmed_time: effectiveDateOnly ? null : effectiveTime,
-          confirmed_at: effectiveDateOnly
-            ? null
-            : ((keep.confirmed_time ? undefined : new Date().toISOString()) ??
-              new Date().toISOString()),
+          confirmed_at: effectiveDateOnly ? null : new Date().toISOString(),
           // Re-arm reminders whenever the time moves.
           reminders_sent: (timeChanged
             ? { staff_created: true }
