@@ -474,37 +474,44 @@ export const syncStaffTourAppointment = createServerFn({ method: "POST" })
       (r) => isStaffRow(r) || r.status === "confirmed",
     );
 
-    const cancelReminderRows = async () => {
-      for (const r of reminderRows) {
+    const cancelRows = async (rows: { id: string }[]) => {
+      for (const r of rows) {
         await supabaseAdmin.from("appointments").update({ status: "canceled" }).eq("id", r.id);
       }
     };
 
-    // Nothing to remind about.
+    // Nothing to remind about: staff explicitly cleared or completed the tour.
     if (!lead.tour_scheduled || !lead.tour_date || lead.tour_completed) {
-      await cancelReminderRows();
+      await cancelRows(reminderRows);
       return { ok: true as const, state: "cleared" as const };
     }
+    // A missing phone on the LEAD record says nothing about a booking the
+    // customer made themselves — that appointment row carries its own phone.
+    // Only staff-created reminder rows are cleaned up here.
     if (!lead.phone || lead.phone.trim().length < 7) {
-      await cancelReminderRows();
+      await cancelRows(staffRows);
       return { ok: true as const, state: "no_phone" as const };
     }
 
     const tourDate = lead.tour_date;
     const dateOnly = isChicagoMidnight(tourDate);
-    const targetStatus = dateOnly ? "pending" : "confirmed";
     // Reuse the staff row if there is one, otherwise adopt the existing
     // confirmed booking instead of creating a second reminder record.
     const keep = staffRows[0] ?? reminderRows[0] ?? null;
     // Any other live reminder row is canceled so only one stays armed.
-    for (const r of reminderRows) {
-      if (keep && r.id === keep.id) continue;
-      await supabaseAdmin.from("appointments").update({ status: "canceled" }).eq("id", r.id);
-    }
+    await cancelRows(reminderRows.filter((r) => !keep || r.id !== keep.id));
 
     if (keep) {
+      const keptCustomerBooking = !isStaffRow(keep) && keep.status === "confirmed";
+      // Never downgrade a customer's confirmed booking to "no time set" just
+      // because the lead card only carries a date. Keep their real time.
+      const preserveBooking = dateOnly && keptCustomerBooking;
+      const effectiveTime = preserveBooking
+        ? ((keep.confirmed_time ?? keep.requested_time ?? tourDate) as string)
+        : tourDate;
+      const effectiveDateOnly = preserveBooking ? false : dateOnly;
       const prevTime = (keep.confirmed_time ?? keep.requested_time) as string | null;
-      const timeChanged = prevTime !== tourDate;
+      const timeChanged = prevTime !== effectiveTime;
       const prevFlags = (keep.reminders_sent ?? {}) as Record<string, unknown>;
       await supabaseAdmin
         .from("appointments")
@@ -512,18 +519,27 @@ export const syncStaffTourAppointment = createServerFn({ method: "POST" })
           name: lead.name,
           phone: lead.phone,
           email: lead.email,
-          status: targetStatus,
-          requested_time: tourDate,
-          confirmed_time: dateOnly ? null : tourDate,
-          confirmed_at: dateOnly ? null : new Date().toISOString(),
+          status: effectiveDateOnly ? "pending" : "confirmed",
+          requested_time: effectiveTime,
+          confirmed_time: effectiveDateOnly ? null : effectiveTime,
+          confirmed_at: effectiveDateOnly
+            ? null
+            : ((keep.confirmed_time ? undefined : new Date().toISOString()) ??
+              new Date().toISOString()),
           // Re-arm reminders whenever the time moves.
           reminders_sent: (timeChanged
             ? { staff_created: true }
             : { ...prevFlags, staff_created: true }) as never,
         })
         .eq("id", keep.id);
-      return { ok: true as const, state: dateOnly ? ("needs_time" as const) : ("armed" as const) };
+      return {
+        ok: true as const,
+        state: effectiveDateOnly ? ("needs_time" as const) : ("armed" as const),
+      };
     }
+
+    const targetStatus = dateOnly ? "pending" : "confirmed";
+
 
     const { error: insErr } = await supabaseAdmin.from("appointments").insert({
       lead_id: lead.id,
