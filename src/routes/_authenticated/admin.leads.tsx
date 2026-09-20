@@ -389,10 +389,80 @@ function joinDateOf(lead: Lead): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function joinedInMonth(lead: Lead, monthStart: Date): boolean {
+// ---- Reporting period (month selector) -------------------------------------
+
+type Period = { kind: "month"; year: number; month: number } | { kind: "all" };
+type MonthRange = { start: number; end: number };
+
+function chicagoNowMonth(): { year: number; month: number } {
+  const p = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+  }).formatToParts(new Date());
+  const get = (t: string) => Number(p.find((x) => x.type === t)?.value ?? "0");
+  return { year: get("year"), month: get("month") };
+}
+
+function chicagoMonthRange(year: number, month: number): MonthRange {
+  const nextYear = month === 12 ? year + 1 : year;
+  const nextMonth = month === 12 ? 1 : month + 1;
+  return {
+    start: new Date(chicagoWallToUTC(year, month, 1, 0, 0)).getTime(),
+    end: new Date(chicagoWallToUTC(nextYear, nextMonth, 1, 0, 0)).getTime(),
+  };
+}
+
+function monthLabel(year: number, month: number): string {
+  return new Date(Date.UTC(year, month - 1, 15)).toLocaleDateString("en-US", {
+    timeZone: "UTC",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+// Timestamps arrive either as full ISO strings or date-only ("YYYY-MM-DD").
+// Date-only values are anchored to midday Chicago so they land on the right day.
+function timestampMs(raw: string | null | undefined): number | null {
+  if (!raw) return null;
+  const dateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const iso = dateOnly
+    ? chicagoWallToUTC(Number(dateOnly[1]), Number(dateOnly[2]), Number(dateOnly[3]), 12, 0)
+    : raw;
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+// A lead belongs to a month if anything happened with them that month: they came
+// in, were contacted, replied, toured, bought a day pass, or joined.
+function activeInRange(lead: Lead, range: MonthRange | null): boolean {
+  if (!range) return true;
+  const stamps = [
+    lead.created_at,
+    lead.first_touch_at,
+    lead.last_contacted_at,
+    lead.last_response_at,
+    lead.last_sms_at,
+    lead.tour_date,
+    lead.converted_at,
+    lead.membership_start_date,
+    lead.day_pass_purchased_at,
+  ];
+  for (const s of stamps) {
+    const t = timestampMs(s);
+    if (t !== null && t >= range.start && t < range.end) return true;
+  }
+  return false;
+}
+
+function joinedInRange(lead: Lead, range: MonthRange | null): boolean {
   if (!lead.became_member) return false;
   const d = joinDateOf(lead);
-  return !!d && d >= monthStart;
+  if (!d) return false;
+  if (!range) return true;
+  const t = d.getTime();
+  return t >= range.start && t < range.end;
 }
 
 function priorityRank(p: Priority): number {
