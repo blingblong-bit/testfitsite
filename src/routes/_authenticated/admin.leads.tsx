@@ -1088,10 +1088,10 @@ function LeadsView({
   const freeWeekMap = useMemo(() => buildFreeWeekMap(referrals), [referrals]);
 
   // Everything the selected period covers.
-  const inPeriod = useMemo(() => leads?.filter((l) => activeInRange(l, range)) ?? [], [
-    leads,
-    range,
-  ]);
+  const inPeriod = useMemo(
+    () => leads?.filter((l) => activeInRange(l, range)) ?? [],
+    [leads, range],
+  );
 
   const byType = useMemo(
     () => inPeriod.filter((l) => matchesView(l, typeFilter)),
@@ -1267,7 +1267,9 @@ function LeadsView({
           >
             ‹
           </button>
-          <span className="min-w-[170px] px-2 text-center text-sm font-semibold">{periodLabel}</span>
+          <span className="min-w-[170px] px-2 text-center text-sm font-semibold">
+            {periodLabel}
+          </span>
           <button
             type="button"
             onClick={() => stepMonth(1)}
