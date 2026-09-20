@@ -1067,13 +1067,8 @@ function LeadsView({
 
   function stepMonth(delta: number) {
     setPeriod((prev) => {
-      const base =
-        prev.kind === "month" ? prev : { kind: "month" as const, ...currentMonth, kind2: undefined };
-      const y = prev.kind === "month" ? prev.year : currentMonth.year;
-      const m = (prev.kind === "month" ? prev.month : currentMonth.month) + delta;
-      void base;
-      let year = y;
-      let month = m;
+      let year = prev.kind === "month" ? prev.year : currentMonth.year;
+      let month = (prev.kind === "month" ? prev.month : currentMonth.month) + delta;
       if (month < 1) {
         month = 12;
         year -= 1;
