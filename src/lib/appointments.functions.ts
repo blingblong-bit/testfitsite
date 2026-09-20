@@ -9,6 +9,7 @@ import {
   formatChicagoDateTime,
   BOOKING_WINDOW_DAYS,
 } from "./appointment-availability";
+import { chicagoDateOf, chicagoOffset } from "./chicago-time";
 
 // ---------- helpers ----------
 
@@ -424,6 +425,26 @@ function isChicagoMidnight(iso: string): boolean {
   return get("hour") % 24 === 0 && get("minute") === 0;
 }
 
+/**
+ * Moves an instant to a different Chicago calendar date while keeping its
+ * Chicago clock time, e.g. shifting a booked 3:00 PM tour from Tuesday to
+ * Thursday when staff update the date on the lead card.
+ */
+function shiftToChicagoDate(instant: string, targetDate: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(instant));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  const off = chicagoOffset(targetDate);
+  return new Date(
+    `${targetDate}T${get("hour")}:${get("minute")}:${get("second")}.000${off}`,
+  ).toISOString();
+}
+
 const StaffTourSchema = z.object({ lead_id: z.string().uuid() });
 
 /**
@@ -504,11 +525,15 @@ export const syncStaffTourAppointment = createServerFn({ method: "POST" })
     if (keep) {
       const keptCustomerBooking = !isStaffRow(keep) && keep.status === "confirmed";
       // Never downgrade a customer's confirmed booking to "no time set" just
-      // because the lead card only carries a date. Keep their real time.
+      // because the lead card only carries a date. Keep their real time — but
+      // if staff moved the tour to a different day, shift the booking onto the
+      // new date while keeping the time they booked for.
+      const bookingTime = (keep.confirmed_time ?? keep.requested_time ?? tourDate) as string;
       const preserveBooking = dateOnly && keptCustomerBooking;
-      const effectiveTime = preserveBooking
-        ? ((keep.confirmed_time ?? keep.requested_time ?? tourDate) as string)
-        : tourDate;
+      let effectiveTime = preserveBooking ? bookingTime : tourDate;
+      if (preserveBooking && chicagoDateOf(bookingTime) !== chicagoDateOf(tourDate)) {
+        effectiveTime = shiftToChicagoDate(bookingTime, chicagoDateOf(tourDate));
+      }
       const effectiveDateOnly = preserveBooking ? false : dateOnly;
       const prevTime = (keep.confirmed_time ?? keep.requested_time) as string | null;
       const timeChanged = prevTime !== effectiveTime;
