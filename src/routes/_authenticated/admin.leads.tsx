@@ -389,10 +389,80 @@ function joinDateOf(lead: Lead): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function joinedInMonth(lead: Lead, monthStart: Date): boolean {
+// ---- Reporting period (month selector) -------------------------------------
+
+type Period = { kind: "month"; year: number; month: number } | { kind: "all" };
+type MonthRange = { start: number; end: number };
+
+function chicagoNowMonth(): { year: number; month: number } {
+  const p = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+  }).formatToParts(new Date());
+  const get = (t: string) => Number(p.find((x) => x.type === t)?.value ?? "0");
+  return { year: get("year"), month: get("month") };
+}
+
+function chicagoMonthRange(year: number, month: number): MonthRange {
+  const nextYear = month === 12 ? year + 1 : year;
+  const nextMonth = month === 12 ? 1 : month + 1;
+  return {
+    start: new Date(chicagoWallToUTC(year, month, 1, 0, 0)).getTime(),
+    end: new Date(chicagoWallToUTC(nextYear, nextMonth, 1, 0, 0)).getTime(),
+  };
+}
+
+function monthLabel(year: number, month: number): string {
+  return new Date(Date.UTC(year, month - 1, 15)).toLocaleDateString("en-US", {
+    timeZone: "UTC",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+// Timestamps arrive either as full ISO strings or date-only ("YYYY-MM-DD").
+// Date-only values are anchored to midday Chicago so they land on the right day.
+function timestampMs(raw: string | null | undefined): number | null {
+  if (!raw) return null;
+  const dateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const iso = dateOnly
+    ? chicagoWallToUTC(Number(dateOnly[1]), Number(dateOnly[2]), Number(dateOnly[3]), 12, 0)
+    : raw;
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+// A lead belongs to a month if anything happened with them that month: they came
+// in, were contacted, replied, toured, bought a day pass, or joined.
+function activeInRange(lead: Lead, range: MonthRange | null): boolean {
+  if (!range) return true;
+  const stamps = [
+    lead.created_at,
+    lead.first_touch_at,
+    lead.last_contacted_at,
+    lead.last_response_at,
+    lead.last_sms_at,
+    lead.tour_date,
+    lead.converted_at,
+    lead.membership_start_date,
+    lead.day_pass_purchased_at,
+  ];
+  for (const s of stamps) {
+    const t = timestampMs(s);
+    if (t !== null && t >= range.start && t < range.end) return true;
+  }
+  return false;
+}
+
+function joinedInRange(lead: Lead, range: MonthRange | null): boolean {
   if (!lead.became_member) return false;
   const d = joinDateOf(lead);
-  return !!d && d >= monthStart;
+  if (!d) return false;
+  if (!range) return true;
+  const t = d.getTime();
+  return t >= range.start && t < range.end;
 }
 
 function priorityRank(p: Priority): number {
@@ -978,16 +1048,54 @@ function LeadsView({
   setQuery: (q: string) => void;
   updateLead: (id: string, patch: Partial<Lead>) => Promise<void>;
 }) {
-  const monthStart = useMemo(() => {
-    const n = new Date();
-    return new Date(n.getFullYear(), n.getMonth(), 1);
-  }, []);
+  const currentMonth = useMemo(() => chicagoNowMonth(), []);
+  const [period, setPeriod] = useState<Period>({
+    kind: "month",
+    year: currentMonth.year,
+    month: currentMonth.month,
+  });
+  const range = useMemo(
+    () => (period.kind === "month" ? chicagoMonthRange(period.year, period.month) : null),
+    [period],
+  );
+  const periodLabel =
+    period.kind === "month" ? monthLabel(period.year, period.month) : "All Time · every record";
+  const atCurrentMonth =
+    period.kind === "month" &&
+    period.year === currentMonth.year &&
+    period.month === currentMonth.month;
+
+  function stepMonth(delta: number) {
+    setPeriod((prev) => {
+      let year = prev.kind === "month" ? prev.year : currentMonth.year;
+      let month = (prev.kind === "month" ? prev.month : currentMonth.month) + delta;
+      if (month < 1) {
+        month = 12;
+        year -= 1;
+      } else if (month > 12) {
+        month = 1;
+        year += 1;
+      }
+      // Never step past the current month.
+      if (year > currentMonth.year || (year === currentMonth.year && month > currentMonth.month)) {
+        return { kind: "month", year: currentMonth.year, month: currentMonth.month };
+      }
+      return { kind: "month", year, month };
+    });
+  }
+
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("none");
   const freeWeekMap = useMemo(() => buildFreeWeekMap(referrals), [referrals]);
 
+  // Everything the selected period covers.
+  const inPeriod = useMemo(
+    () => leads?.filter((l) => activeInRange(l, range)) ?? [],
+    [leads, range],
+  );
+
   const byType = useMemo(
-    () => leads?.filter((l) => matchesView(l, typeFilter)) ?? [],
-    [leads, typeFilter],
+    () => inPeriod.filter((l) => matchesView(l, typeFilter)),
+    [inPeriod, typeFilter],
   );
 
   const sources = useMemo(() => Array.from(new Set(byType.map((l) => l.source))), [byType]);
@@ -1008,14 +1116,25 @@ function LeadsView({
       if (quickFilter === "tours_scheduled" && !(l.tour_scheduled && !l.tour_completed))
         return false;
       if (quickFilter === "tours_completed" && !l.tour_completed) return false;
-      if (quickFilter === "joined_this_month" && !joinedInMonth(l, monthStart)) return false;
+      if (quickFilter === "joined_this_month" && !joinedInRange(l, range)) return false;
       if (q) {
         const hay = `${l.name} ${l.email} ${l.phone ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [byType, statusFilter, sourceFilter, query, quickFilter, monthStart]);
+  }, [byType, statusFilter, sourceFilter, query, quickFilter, range]);
+
+  // When searching inside a month, tell staff if the name exists in other months.
+  const matchesOutsidePeriod = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q || period.kind === "all" || !leads) return 0;
+    return leads.filter(
+      (l) =>
+        `${l.name} ${l.email} ${l.phone ?? ""}`.toLowerCase().includes(q) &&
+        !activeInRange(l, range),
+    ).length;
+  }, [query, leads, period, range]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
@@ -1068,25 +1187,32 @@ function LeadsView({
   // pass is a customer, not a prospect, and is measured in its own funnel
   // below. (A lead who inquired first and bought a pass later still counts as
   // a prospect, since they genuinely started as one.)
-  const prospectPool = useMemo(() => leads?.filter((l) => isProspectFunnel(l)) ?? [], [leads]);
+  // Period-scoped pools drive the reporting tiles.
+  const prospectPool = useMemo(() => inPeriod.filter((l) => isProspectFunnel(l)), [inPeriod]);
   const customerLeads = prospectPool;
-  const dayPassPool = useMemo(() => leads?.filter((l) => isDayPassFunnel(l)) ?? [], [leads]);
+  const dayPassPool = useMemo(() => inPeriod.filter((l) => isDayPassFunnel(l)), [inPeriod]);
   const existingMembersCount = useMemo(
-    () => leads?.filter((l) => l.lead_type === "existing_member").length ?? 0,
-    [leads],
+    () => inPeriod.filter((l) => l.lead_type === "existing_member").length,
+    [inPeriod],
   );
-  const stats = useMemo(() => {
-    const newLeads = customerLeads.filter((l) => needsFirstTouch(l)).length;
-    const highPriority = customerLeads.filter(
+
+  // Urgent work is always counted across every record, so nobody who came in an
+  // earlier month gets hidden from today's to-do list.
+  const allProspects = useMemo(() => leads?.filter((l) => isProspectFunnel(l)) ?? [], [leads]);
+  const workStats = useMemo(() => {
+    const newLeads = allProspects.filter((l) => needsFirstTouch(l)).length;
+    const highPriority = allProspects.filter(
       (l) =>
         computePriority(l) === "high" && l.crm_status !== "Joined" && l.crm_status !== "Lost Lead",
     ).length;
-    const followUpsDueToday = customerLeads.filter((l) => isFollowUpDueToday(l)).length;
-    const toursScheduled = customerLeads.filter(
-      (l) => l.tour_scheduled && !l.tour_completed,
-    ).length;
+    const followUpsDueToday = allProspects.filter((l) => isFollowUpDueToday(l)).length;
+    const toursScheduled = allProspects.filter((l) => l.tour_scheduled && !l.tour_completed).length;
+    return { newLeads, highPriority, followUpsDueToday, toursScheduled };
+  }, [allProspects]);
+
+  const stats = useMemo(() => {
     const toursCompleted = customerLeads.filter((l) => l.tour_completed).length;
-    const joinedThisMonth = customerLeads.filter((l) => joinedInMonth(l, monthStart)).length;
+    const joinedInPeriod = customerLeads.filter((l) => joinedInRange(l, range)).length;
     const totalForConversion = customerLeads.length;
     const totalJoined = customerLeads.filter(
       (l) => l.became_member || l.crm_status === "Joined",
@@ -1102,29 +1228,79 @@ function LeadsView({
 
     return {
       prospectLeads: totalForConversion,
-      newLeads,
-      highPriority,
-      followUpsDueToday,
-      toursScheduled,
       toursCompleted,
-      joinedThisMonth,
+      joinedInPeriod,
       conversionRate,
       dayPassCustomers,
       dayPassConversions,
       dayPassConversionRate,
     };
-  }, [customerLeads, dayPassPool, monthStart]);
+  }, [customerLeads, dayPassPool, range]);
 
+  // The four always-on tiles count every record, so selecting one switches the
+  // page to All Time to keep the list and the number in agreement.
   function toggleQuick(q: QuickFilter) {
-    setQuickFilter((prev) => (prev === q ? "none" : q));
+    const allTimeQuick =
+      q === "new" || q === "high_priority" || q === "due_today" || q === "tours_scheduled";
+    setQuickFilter((prev) => {
+      const next = prev === q ? "none" : q;
+      if (next !== "none" && allTimeQuick) setPeriod({ kind: "all" });
+      return next;
+    });
   }
 
-  const count = (t: TypeFilter) => leads?.filter((l) => matchesView(l, t)).length ?? 0;
+  const count = (t: TypeFilter) => inPeriod.filter((l) => matchesView(l, t)).length;
 
   return (
     <>
+      {/* Reporting period */}
+      <div className="mt-8 flex flex-wrap items-center gap-3">
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Period
+        </span>
+        <div className="inline-flex items-center gap-1 rounded-md border border-border bg-card p-1">
+          <button
+            type="button"
+            onClick={() => stepMonth(-1)}
+            aria-label="Previous month"
+            className="h-8 w-8 rounded text-sm hover:bg-secondary/60"
+          >
+            ‹
+          </button>
+          <span className="min-w-[170px] px-2 text-center text-sm font-semibold">
+            {periodLabel}
+          </span>
+          <button
+            type="button"
+            onClick={() => stepMonth(1)}
+            aria-label="Next month"
+            disabled={atCurrentMonth}
+            className="h-8 w-8 rounded text-sm hover:bg-secondary/60 disabled:opacity-40"
+          >
+            ›
+          </button>
+        </div>
+        {period.kind === "month" ? (
+          <button
+            type="button"
+            onClick={() => setPeriod({ kind: "all" })}
+            className="h-9 rounded-full border border-border px-3 text-xs uppercase tracking-widest hover:border-primary/60 hover:bg-secondary/40"
+          >
+            View All Time
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setPeriod({ kind: "month", ...currentMonth })}
+            className="h-9 rounded-full border border-primary bg-primary/15 px-3 text-xs uppercase tracking-widest text-primary hover:bg-primary/25"
+          >
+            Back To This Month
+          </button>
+        )}
+      </div>
+
       {/* Dashboard stats — click to filter */}
-      <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <Stat
           label="Prospect Leads"
           value={stats.prospectLeads}
@@ -1136,27 +1312,31 @@ function LeadsView({
         />
         <Stat
           label="New Leads"
-          value={stats.newLeads}
+          note="all time"
+          value={workStats.newLeads}
           active={quickFilter === "new"}
           onClick={() => toggleQuick("new")}
         />
         <Stat
           label="Follow-Ups Due Today"
-          value={stats.followUpsDueToday}
-          accent={stats.followUpsDueToday > 0 ? "destructive" : undefined}
+          note="all time"
+          value={workStats.followUpsDueToday}
+          accent={workStats.followUpsDueToday > 0 ? "destructive" : undefined}
           active={quickFilter === "due_today"}
           onClick={() => toggleQuick("due_today")}
         />
         <Stat
           label="High Priority"
-          value={stats.highPriority}
+          note="all time"
+          value={workStats.highPriority}
           accent="destructive"
           active={quickFilter === "high_priority"}
           onClick={() => toggleQuick("high_priority")}
         />
         <Stat
           label="Tours Scheduled"
-          value={stats.toursScheduled}
+          note="all time"
+          value={workStats.toursScheduled}
           active={quickFilter === "tours_scheduled"}
           onClick={() => toggleQuick("tours_scheduled")}
         />
@@ -1167,8 +1347,8 @@ function LeadsView({
           onClick={() => toggleQuick("tours_completed")}
         />
         <Stat
-          label="Converted This Month"
-          value={stats.joinedThisMonth}
+          label={period.kind === "month" ? "Converted This Period" : "Converted (All Time)"}
+          value={stats.joinedInPeriod}
           accent="primary"
           active={quickFilter === "joined_this_month"}
           onClick={() => toggleQuick("joined_this_month")}
@@ -1298,6 +1478,19 @@ function LeadsView({
       {leads !== null && sorted.length === 0 && (
         <p className="mt-10 text-muted-foreground">No leads match your filters.</p>
       )}
+      {matchesOutsidePeriod > 0 && (
+        <p className="mt-4 text-sm text-muted-foreground">
+          {matchesOutsidePeriod} more {matchesOutsidePeriod === 1 ? "match" : "matches"} in other
+          months.{" "}
+          <button
+            type="button"
+            onClick={() => setPeriod({ kind: "all" })}
+            className="font-semibold text-primary underline"
+          >
+            View All Time
+          </button>
+        </p>
+      )}
 
       {quickFilter !== "none" ? (
         <div className="mt-6 space-y-3">
@@ -1416,12 +1609,14 @@ function Stat({
   accent,
   active,
   onClick,
+  note,
 }: {
   label: string;
   value: number | string;
   accent?: "primary" | "destructive";
   active?: boolean;
   onClick?: () => void;
+  note?: string;
 }) {
   const color =
     accent === "destructive"
@@ -1437,20 +1632,21 @@ function Stat({
     ? " border-primary ring-2 ring-primary/30 bg-primary/5"
     : " border-border bg-card";
   const cls = base + interactive + activeCls;
+  const body = (
+    <>
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className={"mt-1 text-2xl font-bold " + color}>{value}</p>
+      {note && <p className="mt-0.5 text-[10px] text-muted-foreground/80">{note}</p>}
+    </>
+  );
   if (onClick) {
     return (
       <button type="button" onClick={onClick} className={cls} aria-pressed={active}>
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-        <p className={"mt-1 text-2xl font-bold " + color}>{value}</p>
+        {body}
       </button>
     );
   }
-  return (
-    <div className={cls}>
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className={"mt-1 text-2xl font-bold " + color}>{value}</p>
-    </div>
-  );
+  return <div className={cls}>{body}</div>;
 }
 
 function PriorityBadge({ p }: { p: Priority }) {
