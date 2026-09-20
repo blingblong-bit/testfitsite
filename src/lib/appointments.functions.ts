@@ -9,6 +9,7 @@ import {
   formatChicagoDateTime,
   BOOKING_WINDOW_DAYS,
 } from "./appointment-availability";
+import { chicagoDateOf, chicagoOffset } from "./chicago-time";
 
 // ---------- helpers ----------
 
@@ -422,6 +423,26 @@ function isChicagoMidnight(iso: string): boolean {
   }).formatToParts(new Date(iso));
   const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? "0");
   return get("hour") % 24 === 0 && get("minute") === 0;
+}
+
+/**
+ * Moves an instant to a different Chicago calendar date while keeping its
+ * Chicago clock time, e.g. shifting a booked 3:00 PM tour from Tuesday to
+ * Thursday when staff update the date on the lead card.
+ */
+function shiftToChicagoDate(instant: string, targetDate: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(instant));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  const off = chicagoOffset(targetDate);
+  return new Date(
+    `${targetDate}T${get("hour")}:${get("minute")}:${get("second")}.000${off}`,
+  ).toISOString();
 }
 
 const StaffTourSchema = z.object({ lead_id: z.string().uuid() });
