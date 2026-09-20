@@ -1048,16 +1048,59 @@ function LeadsView({
   setQuery: (q: string) => void;
   updateLead: (id: string, patch: Partial<Lead>) => Promise<void>;
 }) {
-  const monthStart = useMemo(() => {
-    const n = new Date();
-    return new Date(n.getFullYear(), n.getMonth(), 1);
-  }, []);
+  const currentMonth = useMemo(() => chicagoNowMonth(), []);
+  const [period, setPeriod] = useState<Period>({
+    kind: "month",
+    year: currentMonth.year,
+    month: currentMonth.month,
+  });
+  const range = useMemo(
+    () => (period.kind === "month" ? chicagoMonthRange(period.year, period.month) : null),
+    [period],
+  );
+  const periodLabel =
+    period.kind === "month" ? monthLabel(period.year, period.month) : "All Time · every record";
+  const atCurrentMonth =
+    period.kind === "month" &&
+    period.year === currentMonth.year &&
+    period.month === currentMonth.month;
+
+  function stepMonth(delta: number) {
+    setPeriod((prev) => {
+      const base =
+        prev.kind === "month" ? prev : { kind: "month" as const, ...currentMonth, kind2: undefined };
+      const y = prev.kind === "month" ? prev.year : currentMonth.year;
+      const m = (prev.kind === "month" ? prev.month : currentMonth.month) + delta;
+      void base;
+      let year = y;
+      let month = m;
+      if (month < 1) {
+        month = 12;
+        year -= 1;
+      } else if (month > 12) {
+        month = 1;
+        year += 1;
+      }
+      // Never step past the current month.
+      if (year > currentMonth.year || (year === currentMonth.year && month > currentMonth.month)) {
+        return { kind: "month", year: currentMonth.year, month: currentMonth.month };
+      }
+      return { kind: "month", year, month };
+    });
+  }
+
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("none");
   const freeWeekMap = useMemo(() => buildFreeWeekMap(referrals), [referrals]);
 
+  // Everything the selected period covers.
+  const inPeriod = useMemo(() => leads?.filter((l) => activeInRange(l, range)) ?? [], [
+    leads,
+    range,
+  ]);
+
   const byType = useMemo(
-    () => leads?.filter((l) => matchesView(l, typeFilter)) ?? [],
-    [leads, typeFilter],
+    () => inPeriod.filter((l) => matchesView(l, typeFilter)),
+    [inPeriod, typeFilter],
   );
 
   const sources = useMemo(() => Array.from(new Set(byType.map((l) => l.source))), [byType]);
@@ -1078,14 +1121,25 @@ function LeadsView({
       if (quickFilter === "tours_scheduled" && !(l.tour_scheduled && !l.tour_completed))
         return false;
       if (quickFilter === "tours_completed" && !l.tour_completed) return false;
-      if (quickFilter === "joined_this_month" && !joinedInMonth(l, monthStart)) return false;
+      if (quickFilter === "joined_this_month" && !joinedInRange(l, range)) return false;
       if (q) {
         const hay = `${l.name} ${l.email} ${l.phone ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [byType, statusFilter, sourceFilter, query, quickFilter, monthStart]);
+  }, [byType, statusFilter, sourceFilter, query, quickFilter, range]);
+
+  // When searching inside a month, tell staff if the name exists in other months.
+  const matchesOutsidePeriod = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q || period.kind === "all" || !leads) return 0;
+    return leads.filter(
+      (l) =>
+        `${l.name} ${l.email} ${l.phone ?? ""}`.toLowerCase().includes(q) &&
+        !activeInRange(l, range),
+    ).length;
+  }, [query, leads, period, range]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
