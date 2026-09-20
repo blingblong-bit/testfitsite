@@ -1476,6 +1476,19 @@ function LeadsView({
       {leads !== null && sorted.length === 0 && (
         <p className="mt-10 text-muted-foreground">No leads match your filters.</p>
       )}
+      {matchesOutsidePeriod > 0 && (
+        <p className="mt-4 text-sm text-muted-foreground">
+          {matchesOutsidePeriod} more {matchesOutsidePeriod === 1 ? "match" : "matches"} in other
+          months.{" "}
+          <button
+            type="button"
+            onClick={() => setPeriod({ kind: "all" })}
+            className="font-semibold text-primary underline"
+          >
+            View All Time
+          </button>
+        </p>
+      )}
 
       {quickFilter !== "none" ? (
         <div className="mt-6 space-y-3">
