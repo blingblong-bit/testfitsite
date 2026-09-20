@@ -1258,8 +1258,52 @@ function LeadsView({
 
   return (
     <>
+      {/* Reporting period */}
+      <div className="mt-8 flex flex-wrap items-center gap-3">
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Period
+        </span>
+        <div className="inline-flex items-center gap-1 rounded-md border border-border bg-card p-1">
+          <button
+            type="button"
+            onClick={() => stepMonth(-1)}
+            aria-label="Previous month"
+            className="h-8 w-8 rounded text-sm hover:bg-secondary/60"
+          >
+            ‹
+          </button>
+          <span className="min-w-[170px] px-2 text-center text-sm font-semibold">{periodLabel}</span>
+          <button
+            type="button"
+            onClick={() => stepMonth(1)}
+            aria-label="Next month"
+            disabled={atCurrentMonth}
+            className="h-8 w-8 rounded text-sm hover:bg-secondary/60 disabled:opacity-40"
+          >
+            ›
+          </button>
+        </div>
+        {period.kind === "month" ? (
+          <button
+            type="button"
+            onClick={() => setPeriod({ kind: "all" })}
+            className="h-9 rounded-full border border-border px-3 text-xs uppercase tracking-widest hover:border-primary/60 hover:bg-secondary/40"
+          >
+            View All Time
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setPeriod({ kind: "month", ...currentMonth })}
+            className="h-9 rounded-full border border-primary bg-primary/15 px-3 text-xs uppercase tracking-widest text-primary hover:bg-primary/25"
+          >
+            Back To This Month
+          </button>
+        )}
+      </div>
+
       {/* Dashboard stats — click to filter */}
-      <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <Stat
           label="Prospect Leads"
           value={stats.prospectLeads}
@@ -1271,27 +1315,31 @@ function LeadsView({
         />
         <Stat
           label="New Leads"
-          value={stats.newLeads}
+          note="all time"
+          value={workStats.newLeads}
           active={quickFilter === "new"}
           onClick={() => toggleQuick("new")}
         />
         <Stat
           label="Follow-Ups Due Today"
-          value={stats.followUpsDueToday}
-          accent={stats.followUpsDueToday > 0 ? "destructive" : undefined}
+          note="all time"
+          value={workStats.followUpsDueToday}
+          accent={workStats.followUpsDueToday > 0 ? "destructive" : undefined}
           active={quickFilter === "due_today"}
           onClick={() => toggleQuick("due_today")}
         />
         <Stat
           label="High Priority"
-          value={stats.highPriority}
+          note="all time"
+          value={workStats.highPriority}
           accent="destructive"
           active={quickFilter === "high_priority"}
           onClick={() => toggleQuick("high_priority")}
         />
         <Stat
           label="Tours Scheduled"
-          value={stats.toursScheduled}
+          note="all time"
+          value={workStats.toursScheduled}
           active={quickFilter === "tours_scheduled"}
           onClick={() => toggleQuick("tours_scheduled")}
         />
@@ -1302,8 +1350,8 @@ function LeadsView({
           onClick={() => toggleQuick("tours_completed")}
         />
         <Stat
-          label="Converted This Month"
-          value={stats.joinedThisMonth}
+          label={period.kind === "month" ? "Converted This Period" : "Converted (All Time)"}
+          value={stats.joinedInPeriod}
           accent="primary"
           active={quickFilter === "joined_this_month"}
           onClick={() => toggleQuick("joined_this_month")}
