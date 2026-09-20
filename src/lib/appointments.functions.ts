@@ -504,11 +504,15 @@ export const syncStaffTourAppointment = createServerFn({ method: "POST" })
     if (keep) {
       const keptCustomerBooking = !isStaffRow(keep) && keep.status === "confirmed";
       // Never downgrade a customer's confirmed booking to "no time set" just
-      // because the lead card only carries a date. Keep their real time.
+      // because the lead card only carries a date. Keep their real time — but
+      // if staff moved the tour to a different day, shift the booking onto the
+      // new date while keeping the time they booked for.
+      const bookingTime = (keep.confirmed_time ?? keep.requested_time ?? tourDate) as string;
       const preserveBooking = dateOnly && keptCustomerBooking;
-      const effectiveTime = preserveBooking
-        ? ((keep.confirmed_time ?? keep.requested_time ?? tourDate) as string)
-        : tourDate;
+      let effectiveTime = preserveBooking ? bookingTime : tourDate;
+      if (preserveBooking && chicagoDateOf(bookingTime) !== chicagoDateOf(tourDate)) {
+        effectiveTime = shiftToChicagoDate(bookingTime, chicagoDateOf(tourDate));
+      }
       const effectiveDateOnly = preserveBooking ? false : dateOnly;
       const prevTime = (keep.confirmed_time ?? keep.requested_time) as string | null;
       const timeChanged = prevTime !== effectiveTime;
