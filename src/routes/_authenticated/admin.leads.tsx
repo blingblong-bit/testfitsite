@@ -1599,12 +1599,14 @@ function Stat({
   accent,
   active,
   onClick,
+  note,
 }: {
   label: string;
   value: number | string;
   accent?: "primary" | "destructive";
   active?: boolean;
   onClick?: () => void;
+  note?: string;
 }) {
   const color =
     accent === "destructive"
@@ -1620,20 +1622,21 @@ function Stat({
     ? " border-primary ring-2 ring-primary/30 bg-primary/5"
     : " border-border bg-card";
   const cls = base + interactive + activeCls;
+  const body = (
+    <>
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className={"mt-1 text-2xl font-bold " + color}>{value}</p>
+      {note && <p className="mt-0.5 text-[10px] text-muted-foreground/80">{note}</p>}
+    </>
+  );
   if (onClick) {
     return (
       <button type="button" onClick={onClick} className={cls} aria-pressed={active}>
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-        <p className={"mt-1 text-2xl font-bold " + color}>{value}</p>
+        {body}
       </button>
     );
   }
-  return (
-    <div className={cls}>
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className={"mt-1 text-2xl font-bold " + color}>{value}</p>
-    </div>
-  );
+  return <div className={cls}>{body}</div>;
 }
 
 function PriorityBadge({ p }: { p: Priority }) {
