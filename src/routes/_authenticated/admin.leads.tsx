@@ -1192,25 +1192,32 @@ function LeadsView({
   // pass is a customer, not a prospect, and is measured in its own funnel
   // below. (A lead who inquired first and bought a pass later still counts as
   // a prospect, since they genuinely started as one.)
-  const prospectPool = useMemo(() => leads?.filter((l) => isProspectFunnel(l)) ?? [], [leads]);
+  // Period-scoped pools drive the reporting tiles.
+  const prospectPool = useMemo(() => inPeriod.filter((l) => isProspectFunnel(l)), [inPeriod]);
   const customerLeads = prospectPool;
-  const dayPassPool = useMemo(() => leads?.filter((l) => isDayPassFunnel(l)) ?? [], [leads]);
+  const dayPassPool = useMemo(() => inPeriod.filter((l) => isDayPassFunnel(l)), [inPeriod]);
   const existingMembersCount = useMemo(
-    () => leads?.filter((l) => l.lead_type === "existing_member").length ?? 0,
-    [leads],
+    () => inPeriod.filter((l) => l.lead_type === "existing_member").length,
+    [inPeriod],
   );
-  const stats = useMemo(() => {
-    const newLeads = customerLeads.filter((l) => needsFirstTouch(l)).length;
-    const highPriority = customerLeads.filter(
+
+  // Urgent work is always counted across every record, so nobody who came in an
+  // earlier month gets hidden from today's to-do list.
+  const allProspects = useMemo(() => leads?.filter((l) => isProspectFunnel(l)) ?? [], [leads]);
+  const workStats = useMemo(() => {
+    const newLeads = allProspects.filter((l) => needsFirstTouch(l)).length;
+    const highPriority = allProspects.filter(
       (l) =>
         computePriority(l) === "high" && l.crm_status !== "Joined" && l.crm_status !== "Lost Lead",
     ).length;
-    const followUpsDueToday = customerLeads.filter((l) => isFollowUpDueToday(l)).length;
-    const toursScheduled = customerLeads.filter(
-      (l) => l.tour_scheduled && !l.tour_completed,
-    ).length;
+    const followUpsDueToday = allProspects.filter((l) => isFollowUpDueToday(l)).length;
+    const toursScheduled = allProspects.filter((l) => l.tour_scheduled && !l.tour_completed).length;
+    return { newLeads, highPriority, followUpsDueToday, toursScheduled };
+  }, [allProspects]);
+
+  const stats = useMemo(() => {
     const toursCompleted = customerLeads.filter((l) => l.tour_completed).length;
-    const joinedThisMonth = customerLeads.filter((l) => joinedInMonth(l, monthStart)).length;
+    const joinedInPeriod = customerLeads.filter((l) => joinedInRange(l, range)).length;
     const totalForConversion = customerLeads.length;
     const totalJoined = customerLeads.filter(
       (l) => l.became_member || l.crm_status === "Joined",
@@ -1226,24 +1233,28 @@ function LeadsView({
 
     return {
       prospectLeads: totalForConversion,
-      newLeads,
-      highPriority,
-      followUpsDueToday,
-      toursScheduled,
       toursCompleted,
-      joinedThisMonth,
+      joinedInPeriod,
       conversionRate,
       dayPassCustomers,
       dayPassConversions,
       dayPassConversionRate,
     };
-  }, [customerLeads, dayPassPool, monthStart]);
+  }, [customerLeads, dayPassPool, range]);
 
+  // The four always-on tiles count every record, so selecting one switches the
+  // page to All Time to keep the list and the number in agreement.
   function toggleQuick(q: QuickFilter) {
-    setQuickFilter((prev) => (prev === q ? "none" : q));
+    const allTimeQuick =
+      q === "new" || q === "high_priority" || q === "due_today" || q === "tours_scheduled";
+    setQuickFilter((prev) => {
+      const next = prev === q ? "none" : q;
+      if (next !== "none" && allTimeQuick) setPeriod({ kind: "all" });
+      return next;
+    });
   }
 
-  const count = (t: TypeFilter) => leads?.filter((l) => matchesView(l, t)).length ?? 0;
+  const count = (t: TypeFilter) => inPeriod.filter((l) => matchesView(l, t)).length;
 
   return (
     <>
