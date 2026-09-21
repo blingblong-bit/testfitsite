@@ -339,9 +339,7 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
               // Carry over anything they already typed so the number is
               // never entered twice.
               const form = e.currentTarget.form;
-              const typed = form
-                ? String(new FormData(form).get("phone") ?? "").trim()
-                : "";
+              const typed = form ? String(new FormData(form).get("phone") ?? "").trim() : "";
               if (typed) setGuest((g) => ({ ...g, phone: typed }));
               setKnown(null);
               setError(null);
