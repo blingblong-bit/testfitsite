@@ -335,7 +335,14 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
           <SubmitButton submitting={looking} label="Continue" />
           <button
             type="button"
-            onClick={() => {
+            onClick={(e) => {
+              // Carry over anything they already typed so the number is
+              // never entered twice.
+              const form = e.currentTarget.form;
+              const typed = form
+                ? String(new FormData(form).get("phone") ?? "").trim()
+                : "";
+              if (typed) setGuest((g) => ({ ...g, phone: typed }));
               setKnown(null);
               setError(null);
               setStep("info");
