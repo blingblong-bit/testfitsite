@@ -333,6 +333,22 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
           />
           {error && <p className="text-sm text-destructive">{error}</p>}
           <SubmitButton submitting={looking} label="Continue" />
+          <button
+            type="button"
+            onClick={(e) => {
+              // Carry over anything they already typed so the number is
+              // never entered twice.
+              const form = e.currentTarget.form;
+              const typed = form ? String(new FormData(form).get("phone") ?? "").trim() : "";
+              if (typed) setGuest((g) => ({ ...g, phone: typed }));
+              setKnown(null);
+              setError(null);
+              setStep("info");
+            }}
+            className="w-full inline-flex h-14 items-center justify-center rounded-md border border-border bg-secondary px-6 text-base font-semibold hover:border-primary"
+          >
+            First time here — I haven't been in before
+          </button>
         </form>
       </FormShell>
     );
