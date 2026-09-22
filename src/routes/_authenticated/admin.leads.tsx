@@ -316,6 +316,7 @@ type QuickFilter =
   | "tours_scheduled"
   | "tours_completed"
   | "joined_this_month";
+type CommandView = "attention" | "automated";
 
 function notificationForLead(lead: Lead): { title: string; body: string } {
   const src = (lead.source ?? "").toLowerCase();
@@ -1061,6 +1062,10 @@ function LeadsView({
   setQuery: (q: string) => void;
   updateLead: (id: string, patch: Partial<Lead>) => Promise<void>;
 }) {
+  const [commandView, setCommandView] = useState<CommandView>("attention");
+  const [commandMessages, setCommandMessages] = useState<CommandMessage[]>([]);
+  const [commandAppointments, setCommandAppointments] = useState<CommandAppointment[]>([]);
+  const [commandLoading, setCommandLoading] = useState(true);
   const currentMonth = useMemo(() => chicagoNowMonth(), []);
   const [period, setPeriod] = useState<Period>({
     kind: "month",
@@ -1099,6 +1104,78 @@ function LeadsView({
 
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("none");
   const freeWeekMap = useMemo(() => buildFreeWeekMap(referrals), [referrals]);
+
+  useEffect(() => {
+    if (!leads) return;
+    let cancelled = false;
+    setCommandLoading(true);
+    Promise.all([
+      supabase
+        .from("sms_conversation_log")
+        .select(
+          "id, lead_id, direction, body, status, delivery_status, error_code, from_ai, created_at, metadata",
+        )
+        .not("lead_id", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(5000),
+      supabase
+        .from("appointments")
+        .select(
+          "id, lead_id, requested_time, confirmed_time, suggested_time, status, type, created_at",
+        )
+        .not("lead_id", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(2000),
+    ]).then(([messageResult, appointmentResult]) => {
+      if (cancelled) return;
+      if (messageResult.error) toast.error("Could not load lead activity");
+      if (appointmentResult.error) toast.error("Could not load tour activity");
+      setCommandMessages((messageResult.data ?? []) as CommandMessage[]);
+      setCommandAppointments((appointmentResult.data ?? []) as CommandAppointment[]);
+      setCommandLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [leads]);
+
+  const messagesByLead = useMemo(() => {
+    const map = new Map<string, CommandMessage[]>();
+    for (const message of commandMessages) {
+      if (!message.lead_id) continue;
+      const existing = map.get(message.lead_id) ?? [];
+      existing.push(message);
+      map.set(message.lead_id, existing);
+    }
+    return map;
+  }, [commandMessages]);
+
+  const appointmentsByLead = useMemo(() => {
+    const map = new Map<string, CommandAppointment[]>();
+    for (const appointment of commandAppointments) {
+      if (!appointment.lead_id) continue;
+      const existing = map.get(appointment.lead_id) ?? [];
+      existing.push(appointment);
+      map.set(appointment.lead_id, existing);
+    }
+    return map;
+  }, [commandAppointments]);
+
+  const commandStates = useMemo(() => {
+    const map = new Map<string, LeadCommandState>();
+    for (const lead of leads ?? []) {
+      map.set(
+        lead.id,
+        deriveLeadCommandState(
+          lead,
+          messagesByLead.get(lead.id) ?? [],
+          appointmentsByLead.get(lead.id) ?? [],
+          freeWeekMap[lead.id] ?? null,
+        ),
+      );
+    }
+    return map;
+  }, [leads, messagesByLead, appointmentsByLead, freeWeekMap]);
 
   // Everything the selected period covers.
   const inPeriod = useMemo(
@@ -1183,6 +1260,53 @@ function LeadsView({
     });
     return arr;
   }, [filtered, sortBy]);
+
+  const commandRows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const rows = (leads ?? []).filter((lead) => {
+      const state = commandStates.get(lead.id);
+      if (!state) return false;
+      if (!matchesView(lead, typeFilter)) return false;
+      if (statusFilter !== "all" && (lead.crm_status ?? "New Lead") !== statusFilter) return false;
+      if (sourceFilter !== "all" && lead.source !== sourceFilter) return false;
+      if (q && !`${lead.name} ${lead.email} ${lead.phone ?? ""}`.toLowerCase().includes(q)) {
+        return false;
+      }
+      if (commandView === "attention") return Boolean(state.attention);
+      return !state.attention && state.stage !== "Joined" && state.stage !== "Closed";
+    });
+    rows.sort((a, b) => {
+      const aState = commandStates.get(a.id);
+      const bState = commandStates.get(b.id);
+      if (!aState || !bState) return 0;
+      if (commandView === "attention") {
+        const aReason = aState.attention;
+        const bReason = bState.attention;
+        if (!aReason || !bReason) return 0;
+        return (
+          aReason.rank - bReason.rank ||
+          new Date(aReason.unresolvedAt).getTime() - new Date(bReason.unresolvedAt).getTime()
+        );
+      }
+      return (
+        lifecycleRank(aState.stage) - lifecycleRank(bState.stage) ||
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    });
+    return rows;
+  }, [leads, commandStates, commandView, typeFilter, statusFilter, sourceFilter, query]);
+
+  const automatedGroups = useMemo(() => {
+    const map = new Map<LifecycleStage, Lead[]>();
+    for (const lead of commandRows) {
+      const stage = commandStates.get(lead.id)?.stage;
+      if (!stage) continue;
+      const existing = map.get(stage) ?? [];
+      existing.push(lead);
+      map.set(stage, existing);
+    }
+    return map;
+  }, [commandRows, commandStates]);
 
   // Section the list: working leads first, converted members and closed-out
   // records tucked into collapsible groups below.
@@ -1310,6 +1434,45 @@ function LeadsView({
             Back To This Month
           </button>
         )}
+      </div>
+
+      <div className="mt-6 grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => {
+            setCommandView("attention");
+            setQuickFilter("none");
+          }}
+          className={
+            "rounded-md border px-4 py-3 text-left transition " +
+            (commandView === "attention" && quickFilter === "none"
+              ? "border-destructive bg-destructive/10"
+              : "border-border bg-card hover:bg-secondary/40")
+          }
+        >
+          <span className="block text-sm font-semibold">Needs Staff Attention</span>
+          <span className="mt-1 block text-xs text-muted-foreground">
+            Questions, buying intent, visit requests, and problems that need a person.
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setCommandView("automated");
+            setQuickFilter("none");
+          }}
+          className={
+            "rounded-md border px-4 py-3 text-left transition " +
+            (commandView === "automated" && quickFilter === "none"
+              ? "border-primary bg-primary/10"
+              : "border-border bg-card hover:bg-secondary/40")
+          }
+        >
+          <span className="block text-sm font-semibold">Automated Follow-up</span>
+          <span className="mt-1 block text-xs text-muted-foreground">
+            Healthy sequences working without staff help.
+          </span>
+        </button>
       </div>
 
       {/* Dashboard stats — click to filter */}
@@ -1487,8 +1650,17 @@ function LeadsView({
         </select>
       </div>
 
-      {leads === null && <p className="mt-10 text-muted-foreground">Loading leads…</p>}
-      {leads !== null && sorted.length === 0 && (
+      {(leads === null || commandLoading) && (
+        <p className="mt-10 text-muted-foreground">Loading leads…</p>
+      )}
+      {leads !== null && !commandLoading && quickFilter === "none" && commandRows.length === 0 && (
+        <p className="mt-10 text-muted-foreground">
+          {commandView === "attention"
+            ? "No leads need staff attention right now."
+            : "No leads are currently in automated follow-up."}
+        </p>
+      )}
+      {leads !== null && quickFilter !== "none" && sorted.length === 0 && (
         <p className="mt-10 text-muted-foreground">No leads match your filters.</p>
       )}
       {matchesOutsidePeriod > 0 && (
@@ -1514,10 +1686,46 @@ function LeadsView({
               updateLead={updateLead}
               freeWeek={freeWeekMap[lead.id] ?? null}
               onConverted={() => setQuickFilter("joined_this_month")}
+              commandState={commandStates.get(lead.id) ?? null}
+              initialMessages={messagesByLead.get(lead.id) ?? []}
+            />
+          ))}
+        </div>
+      ) : commandView === "attention" ? (
+        <div className="mt-6 space-y-3">
+          {commandRows.map((lead) => (
+            <LeadCard
+              key={lead.id}
+              lead={lead}
+              updateLead={updateLead}
+              freeWeek={freeWeekMap[lead.id] ?? null}
+              onConverted={() => setQuickFilter("joined_this_month")}
+              commandState={commandStates.get(lead.id) ?? null}
+              initialMessages={messagesByLead.get(lead.id) ?? []}
             />
           ))}
         </div>
       ) : (
+        <div className="mt-6 space-y-6">
+          {Array.from(automatedGroups.entries()).map(([stage, stageLeads]) => (
+            <div key={stage} className="space-y-3">
+              <SectionHeader label={`${stage} (${stageLeads.length})`} />
+              {stageLeads.map((lead) => (
+                <LeadCard
+                  key={lead.id}
+                  lead={lead}
+                  updateLead={updateLead}
+                  freeWeek={freeWeekMap[lead.id] ?? null}
+                  onConverted={() => setQuickFilter("joined_this_month")}
+                  commandState={commandStates.get(lead.id) ?? null}
+                  initialMessages={messagesByLead.get(lead.id) ?? []}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+      {false && (
         <div className="mt-6 space-y-6">
           {groups.working.length > 0 && (
             <div className="space-y-3">
