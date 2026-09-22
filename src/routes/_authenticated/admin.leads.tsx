@@ -1612,18 +1612,20 @@ function LeadsView({
             className="h-10 w-full rounded-md border border-border bg-background pl-9 pr-3 text-sm"
           />
         </div>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortKey)}
-          className="h-10 rounded-md border border-border bg-background px-3 text-sm"
-        >
-          <option value="priority">Sort: Highest Priority</option>
-          <option value="newest">Sort: Newest</option>
-          <option value="oldest">Sort: Oldest</option>
-          <option value="tour_date">Sort: Tour Date</option>
-          <option value="last_contact">Sort: Last Contact</option>
-          <option value="source">Sort: Lead Source</option>
-        </select>
+        {quickFilter !== "none" && (
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortKey)}
+            className="h-10 rounded-md border border-border bg-background px-3 text-sm"
+          >
+            <option value="priority">Sort: Highest Priority</option>
+            <option value="newest">Sort: Newest</option>
+            <option value="oldest">Sort: Oldest</option>
+            <option value="tour_date">Sort: Tour Date</option>
+            <option value="last_contact">Sort: Last Contact</option>
+            <option value="source">Sort: Lead Source</option>
+          </select>
+        )}
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as CrmStatus | "all")}
@@ -1723,72 +1725,6 @@ function LeadsView({
               ))}
             </div>
           ))}
-        </div>
-      )}
-      {false && (
-        <div className="mt-6 space-y-6">
-          {groups.working.length > 0 && (
-            <div className="space-y-3">
-              <SectionHeader
-                label={
-                  typeFilter === "day_pass"
-                    ? `Day Pass Customers (${groups.working.length})`
-                    : typeFilter === "prospects"
-                      ? `Prospect Leads (${groups.working.length})`
-                      : `Working Leads (${groups.working.length})`
-                }
-              />
-              {groups.working.map((lead) => (
-                <LeadCard
-                  key={lead.id}
-                  lead={lead}
-                  updateLead={updateLead}
-                  freeWeek={freeWeekMap[lead.id] ?? null}
-                  onConverted={() => setQuickFilter("joined_this_month")}
-                />
-              ))}
-            </div>
-          )}
-
-          {groups.converted.length > 0 && (
-            <div className="space-y-3">
-              <SectionHeader
-                label={`Converted Members (${groups.converted.length})`}
-                open={searching || showConverted}
-                onToggle={() => setShowConverted((v) => !v)}
-              />
-              {(searching || showConverted) &&
-                groups.converted.map((lead) => (
-                  <LeadCard
-                    key={lead.id}
-                    lead={lead}
-                    updateLead={updateLead}
-                    freeWeek={freeWeekMap[lead.id] ?? null}
-                    onConverted={() => setQuickFilter("joined_this_month")}
-                  />
-                ))}
-            </div>
-          )}
-
-          {groups.closed.length > 0 && (
-            <div className="space-y-3">
-              <SectionHeader
-                label={`Closed / Not A Fit (${groups.closed.length})`}
-                open={searching || showClosed}
-                onToggle={() => setShowClosed((v) => !v)}
-              />
-              {(searching || showClosed) &&
-                groups.closed.map((lead) => (
-                  <LeadCard
-                    key={lead.id}
-                    lead={lead}
-                    updateLead={updateLead}
-                    freeWeek={freeWeekMap[lead.id] ?? null}
-                    onConverted={() => setQuickFilter("joined_this_month")}
-                  />
-                ))}
-            </div>
-          )}
         </div>
       )}
     </>
