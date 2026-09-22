@@ -2067,11 +2067,15 @@ function LeadCard({
   updateLead,
   freeWeek,
   onConverted,
+  commandState,
+  initialMessages,
 }: {
   lead: Lead;
   updateLead: (id: string, patch: Partial<Lead>) => Promise<void>;
   freeWeek?: FreeWeekInfo | null;
   onConverted?: () => void;
+  commandState?: LeadCommandState | null;
+  initialMessages?: CommandMessage[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
@@ -2079,7 +2083,9 @@ function LeadCard({
   const [convertBusy, setConvertBusy] = useState(false);
   const [showLostReason, setShowLostReason] = useState(false);
   const [lostReason, setLostReason] = useState("");
-  const [thread, setThread] = useState<SmsMessage[] | null>(null);
+  const [thread, setThread] = useState<SmsMessage[] | null>(
+    initialMessages ? (initialMessages as SmsMessage[]) : null,
+  );
   const [threadLoading, setThreadLoading] = useState(false);
   // Every day pass this person has bought, newest first.
   const [passDates, setPassDates] = useState<string[] | null>(null);
@@ -2239,6 +2245,30 @@ function LeadCard({
     setConvertBusy(false);
   }
 
+  async function moveToNurture() {
+    await updateLead(lead.id, {
+      crm_status: "Contacted",
+      sequence_status: "paused",
+      next_action: "Text Follow-Up",
+    });
+    setShowLostReason(false);
+    toast.success("Lead moved to nurture");
+  }
+
+  function openReply() {
+    setExpanded(true);
+    window.setTimeout(() => {
+      document.getElementById(`reply-${lead.id}`)?.focus();
+    }, 50);
+  }
+
+  function openTour() {
+    setExpanded(true);
+    window.setTimeout(() => {
+      document.getElementById(`tour-${lead.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+  }
+
   async function saveNotes() {
     setSavingNotes(true);
     await updateLead(lead.id, { notes: notesDraft });
@@ -2292,6 +2322,12 @@ function LeadCard({
     await updateLead(lead.id, patch);
   }
 
+  const activityPreview = (message: SmsMessage | null | undefined) => {
+    if (!message) return "None yet";
+    const text = message.body.replace(/^\[[^\]]+\]\s*/, "").trim();
+    return `${formatLastSmsAt(message.created_at)} · ${text.length > 78 ? `${text.slice(0, 78)}…` : text}`;
+  };
+
   return (
     <article className="rounded-lg border border-border bg-card overflow-hidden">
       {/* Header (always visible) */}
@@ -2311,75 +2347,22 @@ function LeadCard({
                 Day Pass Customer
               </span>
             )}
-            {lead.crm_status === "Joined" ? (
-              <span className="inline-block rounded-full border px-3 py-1 text-xs uppercase tracking-widest bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40">
-                Member
-              </span>
-            ) : (
-              <>
-                <PriorityBadge p={priority} />
-                <CrmStatusBadge status={(lead.crm_status ?? "New Lead") as CrmStatus} />
-              </>
-            )}
-            {lead.sequence_status && <SequenceStatusBadge status={lead.sequence_status} />}
-            {lead.sequence_status === "undeliverable" && (
-              <span
-                title="The phone carrier could not deliver our text to this number"
-                className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-destructive/15 text-destructive border-destructive/40"
-              >
-                Text Undelivered — Call Instead
+            {commandState && <LifecycleBadge stage={commandState.stage} />}
+            {commandState?.attention && (
+              <span className="inline-block rounded-full border border-destructive/40 bg-destructive/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-widest text-destructive">
+                High Priority
               </span>
             )}
-            {lead.tour_scheduled && !lead.tour_completed && !lead.phone && (
-              <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-destructive/15 text-destructive border-destructive/40">
-                No Phone — Can't Remind
-              </span>
-            )}
-            {lead.tour_scheduled &&
-              !lead.tour_completed &&
-              Boolean(lead.phone) &&
-              (!lead.tour_date || tourDateIsDateOnly(lead.tour_date)) && (
-                <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/40">
-                  Tour Needs A Time
-                </span>
-              )}
-            {freeWeek?.active && (
-              <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/40">
-                Free Week — {freeWeek.daysLeft} {freeWeek.daysLeft === 1 ? "day" : "days"} left
-              </span>
-            )}
-            {lead.sms_opted_out && (
-              <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-destructive/15 text-destructive border-destructive/40">
-                SMS Opted Out
-              </span>
-            )}
-            <LastContactBadge iso={lead.last_contacted_at} />
-            {lead.high_intent && (
-              <span className="inline-block rounded-full border px-2.5 py-0.5 text-[11px] uppercase tracking-widest bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/40">
-                Ready To Buy
-              </span>
-            )}
-            {(lead.objections ?? []).map((o) => (
-              <span
-                key={`obj-${o}`}
-                className="inline-block rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 text-[11px] uppercase tracking-widest text-amber-700 dark:text-amber-400"
-              >
-                Concern: {o.replaceAll("_", " ")}
-              </span>
-            ))}
-            {(lead.lost_reasons ?? []).map((o) => (
-              <span
-                key={`lost-${o}`}
-                className="inline-block rounded-full border border-muted-foreground/30 bg-muted px-2.5 py-0.5 text-[11px] uppercase tracking-widest text-muted-foreground"
-              >
-                Reason: {o.replaceAll("_", " ")}
-              </span>
-            ))}
           </div>
-          {lead.high_intent && lead.high_intent_note && (
-            <p className="mt-2 text-sm font-medium text-orange-700 dark:text-orange-400">
-              Wants: {lead.high_intent_note}
-            </p>
+          {commandState?.attention && (
+            <div className="mt-3 border-l-2 border-destructive pl-3">
+              <p className="text-sm font-semibold text-destructive">
+                {commandState.attention.instruction}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                {commandState.attention.detail}
+              </p>
+            </div>
           )}
           <p className="mt-2 text-sm text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
             <a
@@ -2401,53 +2384,45 @@ function LeadCard({
             </span>
             <span className="text-xs uppercase tracking-widest text-primary">{lead.source}</span>
           </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {lead.last_contact_method && (
-              <>
-                Method: <span className="text-foreground">{lead.last_contact_method}</span>
-              </>
-            )}
-            {lead.last_response_at && (
-              <>
-                {lead.last_contact_method ? " · " : ""}Last response:{" "}
-                <span className="text-foreground">{relativeDays(lead.last_response_at)}</span>
-              </>
-            )}
-            {lead.next_follow_up_date && (
-              <>
-                {lead.last_contact_method || lead.last_response_at ? " · " : ""}Follow up:{" "}
-                <span className="text-foreground">
-                  {new Date(lead.next_follow_up_date + "T00:00:00").toLocaleDateString(undefined, {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </span>
-              </>
-            )}
-            {lead.next_action && (
-              <>
-                {lead.last_contact_method || lead.last_response_at || lead.next_follow_up_date
-                  ? " · "
-                  : ""}
-                Next: <span className="text-foreground">{lead.next_action}</span>
-              </>
-            )}
-            {lead.last_sms_at && (
-              <>
-                {lead.last_contact_method ||
-                lead.last_response_at ||
-                lead.next_follow_up_date ||
-                lead.next_action
-                  ? " · "
-                  : ""}
-                Last text:{" "}
-                <span className="text-foreground">{formatLastSmsAt(lead.last_sms_at)}</span>
-              </>
-            )}
-          </p>
+          {commandState && (
+            <div className="mt-4 grid gap-2 text-xs sm:grid-cols-2">
+              <ActivityLine
+                label="Last outbound"
+                value={`${commandState.lastOutboundSender ?? "—"} · ${activityPreview(commandState.lastOutbound as SmsMessage | null)}`}
+              />
+              <ActivityLine
+                label="Last inbound"
+                value={activityPreview(commandState.lastInbound as SmsMessage | null)}
+              />
+              <ActivityLine label="Sequence" value={lead.sequence_status ?? "Not started"} />
+              <ActivityLine label="Next automated step" value={commandState.nextAutomatedStep} />
+            </div>
+          )}
         </div>
         <div className="flex flex-col items-end gap-2">
+          <div className="flex max-w-md flex-wrap justify-end gap-2">
+            <button type="button" onClick={openReply} className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground">
+              <MessageSquare className="h-3.5 w-3.5" /> Reply
+            </button>
+            {lead.phone && (
+              <a href={`tel:${lead.phone}`} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-semibold hover:bg-secondary">
+                <Phone className="h-3.5 w-3.5" /> Call
+              </a>
+            )}
+            <button type="button" onClick={openTour} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-semibold hover:bg-secondary">
+              <CalendarPlus className="h-3.5 w-3.5" /> Book Tour
+            </button>
+            {canConvert && (
+              <button type="button" onClick={markConverted} disabled={convertBusy} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-emerald-500/40 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-500/10 disabled:opacity-50 dark:text-emerald-400">
+                <UserCheck className="h-3.5 w-3.5" /> Mark Joined
+              </button>
+            )}
+            {canConvert && (
+              <button type="button" onClick={() => { setExpanded(true); setShowLostReason((v) => !v); }} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-semibold hover:bg-secondary">
+                <Archive className="h-3.5 w-3.5" /> Close / Nurture
+              </button>
+            )}
+          </div>
           <button
             onClick={() => setExpanded((v) => !v)}
             className="inline-flex items-center gap-1 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
@@ -2600,7 +2575,7 @@ function LeadCard({
 
           {/* Tour + Membership */}
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="rounded-md border border-border p-4">
+            <div id={`tour-${lead.id}`} className="rounded-md border border-border p-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Tour</p>
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm">
@@ -2653,6 +2628,7 @@ function LeadCard({
               </p>
               <label className="flex items-center gap-2 text-sm">
                 <input
+                  id={`reply-${lead.id}`}
                   type="checkbox"
                   checked={lead.became_member}
                   onChange={(e) => toggleMember(e.target.checked)}
@@ -2968,6 +2944,13 @@ function LeadCard({
                   <option value="Chose another gym">Chose another gym</option>
                   <option value="Other">Other</option>
                 </select>
+                <button
+                  onClick={moveToNurture}
+                  disabled={convertBusy}
+                  className="h-9 rounded-md border border-primary px-4 text-xs font-semibold uppercase tracking-widest text-primary hover:bg-primary/10 disabled:opacity-50"
+                >
+                  Move To Nurture
+                </button>
                 <button
                   onClick={() => lostReason && markNotConverted(lostReason)}
                   disabled={!lostReason || convertBusy}
