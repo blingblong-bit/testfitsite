@@ -126,7 +126,10 @@ function isAutomated(message: CommandMessage): boolean {
   return AUTOMATED_KINDS.has(messageKind(message));
 }
 
-function latestAutomatedAfter(messages: CommandMessage[], after: string | null): CommandMessage | null {
+function latestAutomatedAfter(
+  messages: CommandMessage[],
+  after: string | null,
+): CommandMessage | null {
   const afterMs = ms(after);
   return newest(
     messages.filter(
@@ -154,7 +157,11 @@ function isClosed(lead: CommandLead): boolean {
 }
 
 function isJoined(lead: CommandLead): boolean {
-  return Boolean(lead.became_member) || lead.crm_status === "Joined" || lead.lead_type === "existing_member";
+  return (
+    Boolean(lead.became_member) ||
+    lead.crm_status === "Joined" ||
+    lead.lead_type === "existing_member"
+  );
 }
 
 function formatStepDate(iso: string): string {
@@ -167,10 +174,7 @@ function formatStepDate(iso: string): string {
   });
 }
 
-function nextAutomatedStep(
-  lead: CommandLead,
-  appointments: CommandAppointment[],
-): string {
+function nextAutomatedStep(lead: CommandLead, appointments: CommandAppointment[]): string {
   if (isJoined(lead) || isClosed(lead)) return "No automated follow-up";
   if (lead.sms_opted_out || lead.sequence_status === "opted_out") return "Stopped — SMS opted out";
   if (lead.sequence_status === "undeliverable") return "Stopped — phone cannot receive texts";
@@ -239,9 +243,9 @@ export function deriveLeadCommandState(
       lead.sequence_status === "undeliverable" ||
       Boolean(
         lastOutbound &&
-          (lastOutbound.status === "failed" ||
-            lastOutbound.delivery_status === "failed" ||
-            lastOutbound.delivery_status === "undelivered"),
+        (lastOutbound.status === "failed" ||
+          lastOutbound.delivery_status === "failed" ||
+          lastOutbound.delivery_status === "undelivered"),
       );
     if (deliveryFailed) {
       reasons.push({
@@ -272,7 +276,10 @@ export function deriveLeadCommandState(
       lead.sequence_status === "opted_out" ||
       appointments.some((appointment) => appointment.status === "confirmed") ||
       Boolean(latestOutboundAnsweredInbound);
-    if (!deliveryFailed && (failedStillLatest || (lead.sequence_status === "paused" && !validPause))) {
+    if (
+      !deliveryFailed &&
+      (failedStillLatest || (lead.sequence_status === "paused" && !validPause))
+    ) {
       reasons.push({
         kind: "automation_failure",
         instruction: "Fix automation",
@@ -284,7 +291,10 @@ export function deriveLeadCommandState(
       });
     }
 
-    if (lastInbound && (!lastOutbound || ms(lastInbound.created_at) > ms(lastOutbound.created_at))) {
+    if (
+      lastInbound &&
+      (!lastOutbound || ms(lastInbound.created_at) > ms(lastOutbound.created_at))
+    ) {
       reasons.push({
         kind: "unanswered",
         instruction: "Reply to question",

@@ -2293,7 +2293,9 @@ function LeadCard({
   function openTour() {
     setExpanded(true);
     window.setTimeout(() => {
-      document.getElementById(`tour-${lead.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document
+        .getElementById(`tour-${lead.id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 50);
   }
 
@@ -2429,24 +2431,47 @@ function LeadCard({
         </div>
         <div className="flex flex-col items-end gap-2">
           <div className="flex max-w-md flex-wrap justify-end gap-2">
-            <button type="button" onClick={openReply} className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground">
+            <button
+              type="button"
+              onClick={openReply}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground"
+            >
               <MessageSquare className="h-3.5 w-3.5" /> Reply
             </button>
             {lead.phone && (
-              <a href={`tel:${lead.phone}`} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-semibold hover:bg-secondary">
+              <a
+                href={`tel:${lead.phone}`}
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-semibold hover:bg-secondary"
+              >
                 <Phone className="h-3.5 w-3.5" /> Call
               </a>
             )}
-            <button type="button" onClick={openTour} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-semibold hover:bg-secondary">
+            <button
+              type="button"
+              onClick={openTour}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-semibold hover:bg-secondary"
+            >
               <CalendarPlus className="h-3.5 w-3.5" /> Book Tour
             </button>
             {canConvert && (
-              <button type="button" onClick={markConverted} disabled={convertBusy} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-emerald-500/40 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-500/10 disabled:opacity-50 dark:text-emerald-400">
+              <button
+                type="button"
+                onClick={markConverted}
+                disabled={convertBusy}
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-emerald-500/40 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-500/10 disabled:opacity-50 dark:text-emerald-400"
+              >
                 <UserCheck className="h-3.5 w-3.5" /> Mark Joined
               </button>
             )}
             {canConvert && (
-              <button type="button" onClick={() => { setExpanded(true); setShowLostReason((v) => !v); }} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-semibold hover:bg-secondary">
+              <button
+                type="button"
+                onClick={() => {
+                  setExpanded(true);
+                  setShowLostReason((v) => !v);
+                }}
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-xs font-semibold hover:bg-secondary"
+              >
                 <Archive className="h-3.5 w-3.5" /> Close / Nurture
               </button>
             )}
