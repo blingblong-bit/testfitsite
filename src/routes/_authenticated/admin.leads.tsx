@@ -13,6 +13,10 @@ import {
   Search,
   Plus,
   X,
+  MessageSquare,
+  CalendarPlus,
+  UserCheck,
+  Archive,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +77,14 @@ import {
   isDayPassFunnel,
   isProspectFunnel,
 } from "@/lib/customer-stage";
+import {
+  deriveLeadCommandState,
+  lifecycleRank,
+  type CommandAppointment,
+  type CommandMessage,
+  type LeadCommandState,
+  type LifecycleStage,
+} from "@/lib/lead-command-center";
 
 type CrmStatus =
   | "New Lead"
@@ -190,6 +202,7 @@ type Lead = {
   payment_status?: string | null;
   payment_method?: string | null;
   day_pass_price?: number | null;
+  followup_count?: number | null;
 };
 
 type Referral = {
