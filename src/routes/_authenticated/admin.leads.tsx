@@ -2050,6 +2050,35 @@ function formatLastSmsAt(iso: string): string {
   return str.replace(", ", " at ");
 }
 
+function LifecycleBadge({ stage }: { stage: LifecycleStage }) {
+  const tone =
+    stage === "Joined"
+      ? "border-primary/40 bg-primary/10 text-primary"
+      : stage === "Closed"
+        ? "border-border bg-secondary text-muted-foreground"
+        : stage === "Tour Requested" || stage === "Engaged"
+          ? "border-accent/50 bg-accent/10 text-accent-foreground"
+          : "border-border bg-secondary/60 text-foreground";
+  return (
+    <span
+      className={`inline-block rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-widest ${tone}`}
+    >
+      {stage}
+    </span>
+  );
+}
+
+function ActivityLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 border-l border-border pl-2">
+      <span className="block uppercase tracking-widest text-muted-foreground">{label}</span>
+      <span className="mt-0.5 block truncate text-foreground" title={value}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 type SmsMessage = {
   id: string;
   direction: "inbound" | "outbound";
@@ -2094,7 +2123,6 @@ function LeadCard({
   const sendWelcome = useServerFn(sendWelcomeSms);
   const sendManual = useServerFn(sendManualSms);
   const syncTour = useServerFn(syncStaffTourAppointment);
-  const priority = computePriority(lead);
 
   useEffect(() => {
     if (!expanded) return;
@@ -2862,6 +2890,7 @@ function LeadCard({
             ) : (
               <div className="flex gap-2">
                 <input
+                  id={`reply-${lead.id}`}
                   value={smsDraft}
                   onChange={(e) => setSmsDraft(e.target.value)}
                   onKeyDown={(e) => {
