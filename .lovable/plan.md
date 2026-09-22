@@ -47,6 +47,18 @@ A card enters **Needs Staff Attention** with one highest-priority instruction wh
 
 If several apply, the card shows only the highest-priority instruction; all supporting facts remain in Details. Opted-out, Joined, and Closed records never appear merely because automation is not running.
 
+The queue sorts by instruction priority first, then by the oldest unresolved item within that instruction:
+
+1. Text undelivered / fix automation
+2. Unanswered question
+3. Ready to buy
+4. Tour request
+5. Tour no-show
+6. Trial ending
+7. Day-pass follow-up
+
+A brand-new lead whose first automated message was delivered successfully and who has not replied belongs in **Automated Follow-up**, not Needs Staff Attention. It enters the attention queue only after a reply, high-intent signal, tour request, or automation failure.
+
 ### 4. Cards become action-first
 
 Each attention card shows:
