@@ -202,7 +202,7 @@ type Lead = {
   payment_status?: string | null;
   payment_method?: string | null;
   day_pass_price?: number | null;
-  followup_count?: number | null;
+  followup_count?: number;
 };
 
 type Referral = {

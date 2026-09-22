@@ -31,6 +31,8 @@ export type CommandLead = {
   crm_status?: string | null;
   sequence_status?: string | null;
   followup_count?: number | null;
+  last_sms_at?: string | null;
+  next_action?: string | null;
   high_intent?: boolean | null;
   high_intent_at?: string | null;
   tour_scheduled?: boolean | null;
@@ -219,7 +221,7 @@ function lifecycleStage(
 }
 
 export function deriveLeadCommandState(
-  lead: CommandLead & { next_action?: string | null },
+  lead: CommandLead,
   messages: CommandMessage[],
   appointments: CommandAppointment[],
   freeWeek: CommandFreeWeek | null,
