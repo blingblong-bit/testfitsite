@@ -93,6 +93,7 @@ type CrmStatus =
   | "Tour Scheduled"
   | "Tour Completed"
   | "Joined"
+  | "Nurture"
   | "Lost Lead";
 
 const CRM_STATUSES: CrmStatus[] = [
@@ -102,6 +103,7 @@ const CRM_STATUSES: CrmStatus[] = [
   "Tour Scheduled",
   "Tour Completed",
   "Joined",
+  "Nurture",
   "Lost Lead",
 ];
 
