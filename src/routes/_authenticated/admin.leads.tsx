@@ -1861,6 +1861,7 @@ function CrmStatusBadge({ status }: { status: CrmStatus }) {
       label: "🟢 Joined",
       cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40",
     },
+    Nurture: { label: "🌱 Nurture", cls: "bg-muted text-muted-foreground border-border" },
     "Lost Lead": { label: "⚪ Lost Lead", cls: "bg-muted text-muted-foreground border-border" },
   };
   const { label, cls } = map[status];
