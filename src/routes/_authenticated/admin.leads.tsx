@@ -93,6 +93,7 @@ type CrmStatus =
   | "Tour Scheduled"
   | "Tour Completed"
   | "Joined"
+  | "Nurture"
   | "Lost Lead";
 
 const CRM_STATUSES: CrmStatus[] = [
@@ -102,6 +103,7 @@ const CRM_STATUSES: CrmStatus[] = [
   "Tour Scheduled",
   "Tour Completed",
   "Joined",
+  "Nurture",
   "Lost Lead",
 ];
 
@@ -1859,6 +1861,7 @@ function CrmStatusBadge({ status }: { status: CrmStatus }) {
       label: "🟢 Joined",
       cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40",
     },
+    Nurture: { label: "🌱 Nurture", cls: "bg-muted text-muted-foreground border-border" },
     "Lost Lead": { label: "⚪ Lost Lead", cls: "bg-muted text-muted-foreground border-border" },
   };
   const { label, cls } = map[status];
@@ -2211,7 +2214,7 @@ function LeadCard({
 
   async function moveToNurture() {
     await updateLead(lead.id, {
-      crm_status: "Contacted",
+      crm_status: "Nurture",
       sequence_status: "paused",
       next_action: "Text Follow-Up",
     });
@@ -2617,7 +2620,6 @@ function LeadCard({
               </p>
               <label className="flex items-center gap-2 text-sm">
                 <input
-                  id={`reply-${lead.id}`}
                   type="checkbox"
                   checked={lead.became_member}
                   onChange={(e) => toggleMember(e.target.checked)}

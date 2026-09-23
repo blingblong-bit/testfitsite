@@ -210,6 +210,7 @@ function lifecycleStage(
 ): LifecycleStage {
   if (isClosed(lead)) return "Closed";
   if (isJoined(lead)) return "Joined";
+  if (lead.crm_status === "Nurture") return "Nurture";
   if (freeWeek?.active || Boolean(lead.day_pass_purchased_at)) return "Trial / Day Pass Active";
   const confirmed = appointments.some((appointment) => appointment.status === "confirmed");
   if (confirmed || lead.tour_scheduled) return "Tour Booked";
@@ -274,6 +275,7 @@ export function deriveLeadCommandState(
     const validPause =
       lead.sms_opted_out ||
       lead.sequence_status === "opted_out" ||
+      lead.crm_status === "Nurture" ||
       appointments.some((appointment) => appointment.status === "confirmed") ||
       Boolean(latestOutboundAnsweredInbound);
     if (
