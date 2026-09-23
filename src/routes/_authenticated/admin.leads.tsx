@@ -2211,7 +2211,7 @@ function LeadCard({
 
   async function moveToNurture() {
     await updateLead(lead.id, {
-      crm_status: "Contacted",
+      crm_status: "Nurture",
       sequence_status: "paused",
       next_action: "Text Follow-Up",
     });
@@ -2617,7 +2617,6 @@ function LeadCard({
               </p>
               <label className="flex items-center gap-2 text-sm">
                 <input
-                  id={`reply-${lead.id}`}
                   type="checkbox"
                   checked={lead.became_member}
                   onChange={(e) => toggleMember(e.target.checked)}
