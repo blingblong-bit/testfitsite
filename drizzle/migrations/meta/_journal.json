@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790291772699,
+      "tag": "0000_allow_nurture_crm_status",
+      "breakpoints": true
+    }
+  ]
+}
