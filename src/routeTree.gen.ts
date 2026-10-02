@@ -9,157 +9,63 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as BlogRouteImport } from './routes/blog'
-import { Route as ClaimFreeWeekRouteImport } from './routes/claim-free-week'
-import { Route as ClassCheckinRouteImport } from './routes/class-checkin'
-import { Route as ClassesRouteImport } from './routes/classes'
-import { Route as CombatSportsRouteImport } from './routes/combat-sports'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as DayPassRouteImport } from './routes/day-pass'
-import { Route as FacilityRouteImport } from './routes/facility'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as MembershipsRouteImport } from './routes/memberships'
-import { Route as PersonalTrainingRouteImport } from './routes/personal-training'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as RedeemReferralRouteImport } from './routes/redeem-referral'
-import { Route as ReferAFriendRouteImport } from './routes/refer-a-friend'
-import { Route as ScheduleVisitRouteImport } from './routes/schedule-visit'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as SmsConsentRouteImport } from './routes/sms-consent'
 import { Route as TermsRouteImport } from './routes/terms'
-import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
-import { Route as AuthenticatedFrontdeskRouteImport } from './routes/_authenticated/frontdesk'
-import { Route as AuthenticatedStaffHomeRouteImport } from './routes/_authenticated/staff-home'
-import { Route as AdminLoginRouteImport } from './routes/admin.login'
-import { Route as BlogIndexRouteImport } from './routes/blog.index'
-import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
-import { Route as ClassesIndexRouteImport } from './routes/classes.index'
-import { Route as ClassesScheduleRouteImport } from './routes/classes.schedule'
+import { Route as SmsConsentRouteImport } from './routes/sms-consent'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ScheduleVisitRouteImport } from './routes/schedule-visit'
+import { Route as ReferAFriendRouteImport } from './routes/refer-a-friend'
+import { Route as RedeemReferralRouteImport } from './routes/redeem-referral'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PersonalTrainingRouteImport } from './routes/personal-training'
+import { Route as MembershipsRouteImport } from './routes/memberships'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as FacilityRouteImport } from './routes/facility'
+import { Route as DayPassRouteImport } from './routes/day-pass'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CombatSportsRouteImport } from './routes/combat-sports'
+import { Route as ClassesRouteImport } from './routes/classes'
+import { Route as ClassCheckinRouteImport } from './routes/class-checkin'
+import { Route as ClaimFreeWeekRouteImport } from './routes/claim-free-week'
+import { Route as BlogRouteImport } from './routes/blog'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as CombatSportsIndexRouteImport } from './routes/combat-sports.index'
-import { Route as CombatSportsBjjRouteImport } from './routes/combat-sports.bjj'
+import { Route as ClassesIndexRouteImport } from './routes/classes.index'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as CombatSportsKickboxingRouteImport } from './routes/combat-sports.kickboxing'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
-import { Route as AuthenticatedAdminAiReplyRulesRouteImport } from './routes/_authenticated/admin.ai-reply-rules'
-import { Route as AuthenticatedAdminAppointmentApprovalsRouteImport } from './routes/_authenticated/admin.appointment-approvals'
-import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
-import { Route as AuthenticatedAdminClassCheckinsRouteImport } from './routes/_authenticated/admin.class-checkins'
-import { Route as AuthenticatedAdminDayPassApprovalsRouteImport } from './routes/_authenticated/admin.day-pass-approvals'
-import { Route as AuthenticatedAdminFollowupCatchupRouteImport } from './routes/_authenticated/admin.followup-catchup'
-import { Route as AuthenticatedAdminFreeWeekArrivalsRouteImport } from './routes/_authenticated/admin.free-week-arrivals'
-import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
-import { Route as AuthenticatedAdminReengagementRouteImport } from './routes/_authenticated/admin.reengagement'
+import { Route as CombatSportsBjjRouteImport } from './routes/combat-sports.bjj'
+import { Route as ClassesScheduleRouteImport } from './routes/classes.schedule'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AuthenticatedStaffHomeRouteImport } from './routes/_authenticated/staff-home'
+import { Route as AuthenticatedFrontdeskRouteImport } from './routes/_authenticated/frontdesk'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
-import { Route as ApiPublicHooksProcessAppointmentRemindersRouteImport } from './routes/api/public/hooks/process-appointment-reminders'
-import { Route as ApiPublicHooksSnapshotMonthRouteImport } from './routes/api/public/hooks/snapshot-month'
-import { Route as ApiPublicWebhooksCalendlyRouteImport } from './routes/api/public/webhooks/calendly'
-import { Route as ApiPublicWebhooksMakeLeadUpdateRouteImport } from './routes/api/public/webhooks/make-lead-update'
-import { Route as ApiPublicWebhooksTwilioMissedCallRouteImport } from './routes/api/public/webhooks/twilio-missed-call'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as AuthenticatedAdminReengagementRouteImport } from './routes/_authenticated/admin.reengagement'
+import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
+import { Route as AuthenticatedAdminFreeWeekArrivalsRouteImport } from './routes/_authenticated/admin.free-week-arrivals'
+import { Route as AuthenticatedAdminFollowupCatchupRouteImport } from './routes/_authenticated/admin.followup-catchup'
+import { Route as AuthenticatedAdminDayPassApprovalsRouteImport } from './routes/_authenticated/admin.day-pass-approvals'
+import { Route as AuthenticatedAdminClassCheckinsRouteImport } from './routes/_authenticated/admin.class-checkins'
+import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
+import { Route as AuthenticatedAdminAppointmentApprovalsRouteImport } from './routes/_authenticated/admin.appointment-approvals'
+import { Route as AuthenticatedAdminAiReplyRulesRouteImport } from './routes/_authenticated/admin.ai-reply-rules'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicWebhooksTwilioMissedCallRouteImport } from './routes/api/public/webhooks/twilio-missed-call'
+import { Route as ApiPublicWebhooksMakeLeadUpdateRouteImport } from './routes/api/public/webhooks/make-lead-update'
+import { Route as ApiPublicWebhooksCalendlyRouteImport } from './routes/api/public/webhooks/calendly'
+import { Route as ApiPublicHooksSnapshotMonthRouteImport } from './routes/api/public/hooks/snapshot-month'
+import { Route as ApiPublicHooksProcessAppointmentRemindersRouteImport } from './routes/api/public/hooks/process-appointment-reminders'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogRoute = BlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClaimFreeWeekRoute = ClaimFreeWeekRouteImport.update({
-  id: '/claim-free-week',
-  path: '/claim-free-week',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClassCheckinRoute = ClassCheckinRouteImport.update({
-  id: '/class-checkin',
-  path: '/class-checkin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClassesRoute = ClassesRouteImport.update({
-  id: '/classes',
-  path: '/classes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CombatSportsRoute = CombatSportsRouteImport.update({
-  id: '/combat-sports',
-  path: '/combat-sports',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DayPassRoute = DayPassRouteImport.update({
-  id: '/day-pass',
-  path: '/day-pass',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FacilityRoute = FacilityRouteImport.update({
-  id: '/facility',
-  path: '/facility',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MembershipsRoute = MembershipsRouteImport.update({
-  id: '/memberships',
-  path: '/memberships',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PersonalTrainingRoute = PersonalTrainingRouteImport.update({
-  id: '/personal-training',
-  path: '/personal-training',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RedeemReferralRoute = RedeemReferralRouteImport.update({
-  id: '/redeem-referral',
-  path: '/redeem-referral',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReferAFriendRoute = ReferAFriendRouteImport.update({
-  id: '/refer-a-friend',
-  path: '/refer-a-friend',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ScheduleVisitRoute = ScheduleVisitRouteImport.update({
-  id: '/schedule-visit',
-  path: '/schedule-visit',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SmsConsentRoute = SmsConsentRouteImport.update({
@@ -167,61 +73,123 @@ const SmsConsentRoute = SmsConsentRouteImport.update({
   path: '/sms-consent',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedFrontdeskRoute = AuthenticatedFrontdeskRouteImport.update({
-  id: '/frontdesk',
-  path: '/frontdesk',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedStaffHomeRoute = AuthenticatedStaffHomeRouteImport.update({
-  id: '/staff-home',
-  path: '/staff-home',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/admin/login',
-  path: '/admin/login',
+const ScheduleVisitRoute = ScheduleVisitRouteImport.update({
+  id: '/schedule-visit',
+  path: '/schedule-visit',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BlogIndexRoute = BlogIndexRouteImport.update({
+const ReferAFriendRoute = ReferAFriendRouteImport.update({
+  id: '/refer-a-friend',
+  path: '/refer-a-friend',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedeemReferralRoute = RedeemReferralRouteImport.update({
+  id: '/redeem-referral',
+  path: '/redeem-referral',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonalTrainingRoute = PersonalTrainingRouteImport.update({
+  id: '/personal-training',
+  path: '/personal-training',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembershipsRoute = MembershipsRouteImport.update({
+  id: '/memberships',
+  path: '/memberships',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FacilityRoute = FacilityRouteImport.update({
+  id: '/facility',
+  path: '/facility',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DayPassRoute = DayPassRouteImport.update({
+  id: '/day-pass',
+  path: '/day-pass',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CombatSportsRoute = CombatSportsRouteImport.update({
+  id: '/combat-sports',
+  path: '/combat-sports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClassesRoute = ClassesRouteImport.update({
+  id: '/classes',
+  path: '/classes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClassCheckinRoute = ClassCheckinRouteImport.update({
+  id: '/class-checkin',
+  path: '/class-checkin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClaimFreeWeekRoute = ClaimFreeWeekRouteImport.update({
+  id: '/claim-free-week',
+  path: '/claim-free-week',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => BlogRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => BlogRoute,
+const CombatSportsIndexRoute = CombatSportsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CombatSportsRoute,
 } as any)
 const ClassesIndexRoute = ClassesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ClassesRoute,
 } as any)
-const ClassesScheduleRoute = ClassesScheduleRouteImport.update({
-  id: '/schedule',
-  path: '/schedule',
-  getParentRoute: () => ClassesRoute,
-} as any)
-const CombatSportsIndexRoute = CombatSportsIndexRouteImport.update({
+const BlogIndexRoute = BlogIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => BlogRoute,
+} as any)
+const CombatSportsKickboxingRoute = CombatSportsKickboxingRouteImport.update({
+  id: '/kickboxing',
+  path: '/kickboxing',
   getParentRoute: () => CombatSportsRoute,
 } as any)
 const CombatSportsBjjRoute = CombatSportsBjjRouteImport.update({
@@ -229,44 +197,63 @@ const CombatSportsBjjRoute = CombatSportsBjjRouteImport.update({
   path: '/bjj',
   getParentRoute: () => CombatSportsRoute,
 } as any)
-const CombatSportsKickboxingRoute = CombatSportsKickboxingRouteImport.update({
-  id: '/kickboxing',
-  path: '/kickboxing',
-  getParentRoute: () => CombatSportsRoute,
+const ClassesScheduleRoute = ClassesScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
+  getParentRoute: () => ClassesRoute,
 } as any)
-const Char91DotmcpChar93InvokeToolToolRoute =
-  Char91DotmcpChar93InvokeToolToolRouteImport.update({
-    id: '/.mcp/invoke-tool/$tool',
-    path: '/.mcp/invoke-tool/$tool',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedAdminAiReplyRulesRoute =
-  AuthenticatedAdminAiReplyRulesRouteImport.update({
-    id: '/admin/ai-reply-rules',
-    path: '/admin/ai-reply-rules',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminAppointmentApprovalsRoute =
-  AuthenticatedAdminAppointmentApprovalsRouteImport.update({
-    id: '/admin/appointment-approvals',
-    path: '/admin/appointment-approvals',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminBlogRoute = AuthenticatedAdminBlogRouteImport.update({
-  id: '/admin/blog',
-  path: '/admin/blog',
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedStaffHomeRoute = AuthenticatedStaffHomeRouteImport.update({
+  id: '/staff-home',
+  path: '/staff-home',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminClassCheckinsRoute =
-  AuthenticatedAdminClassCheckinsRouteImport.update({
-    id: '/admin/class-checkins',
-    path: '/admin/class-checkins',
+const AuthenticatedFrontdeskRoute = AuthenticatedFrontdeskRouteImport.update({
+  id: '/frontdesk',
+  path: '/frontdesk',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
+  id: '/lovable/email/events',
+  path: '/lovable/email/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminReengagementRoute =
+  AuthenticatedAdminReengagementRouteImport.update({
+    id: '/admin/reengagement',
+    path: '/admin/reengagement',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminDayPassApprovalsRoute =
-  AuthenticatedAdminDayPassApprovalsRouteImport.update({
-    id: '/admin/day-pass-approvals',
-    path: '/admin/day-pass-approvals',
+const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
+  id: '/admin/leads',
+  path: '/admin/leads',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminFreeWeekArrivalsRoute =
+  AuthenticatedAdminFreeWeekArrivalsRouteImport.update({
+    id: '/admin/free-week-arrivals',
+    path: '/admin/free-week-arrivals',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminFollowupCatchupRoute =
@@ -275,44 +262,61 @@ const AuthenticatedAdminFollowupCatchupRoute =
     path: '/admin/followup-catchup',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminFreeWeekArrivalsRoute =
-  AuthenticatedAdminFreeWeekArrivalsRouteImport.update({
-    id: '/admin/free-week-arrivals',
-    path: '/admin/free-week-arrivals',
+const AuthenticatedAdminDayPassApprovalsRoute =
+  AuthenticatedAdminDayPassApprovalsRouteImport.update({
+    id: '/admin/day-pass-approvals',
+    path: '/admin/day-pass-approvals',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
-  id: '/admin/leads',
-  path: '/admin/leads',
+const AuthenticatedAdminClassCheckinsRoute =
+  AuthenticatedAdminClassCheckinsRouteImport.update({
+    id: '/admin/class-checkins',
+    path: '/admin/class-checkins',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminBlogRoute = AuthenticatedAdminBlogRouteImport.update({
+  id: '/admin/blog',
+  path: '/admin/blog',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminReengagementRoute =
-  AuthenticatedAdminReengagementRouteImport.update({
-    id: '/admin/reengagement',
-    path: '/admin/reengagement',
+const AuthenticatedAdminAppointmentApprovalsRoute =
+  AuthenticatedAdminAppointmentApprovalsRouteImport.update({
+    id: '/admin/appointment-approvals',
+    path: '/admin/appointment-approvals',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
-  id: '/lovable/email/events',
-  path: '/lovable/email/events',
+const AuthenticatedAdminAiReplyRulesRoute =
+  AuthenticatedAdminAiReplyRulesRouteImport.update({
+    id: '/admin/ai-reply-rules',
+    path: '/admin/ai-reply-rules',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksProcessAppointmentRemindersRoute =
-  ApiPublicHooksProcessAppointmentRemindersRouteImport.update({
-    id: '/api/public/hooks/process-appointment-reminders',
-    path: '/api/public/hooks/process-appointment-reminders',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksSnapshotMonthRoute =
-  ApiPublicHooksSnapshotMonthRouteImport.update({
-    id: '/api/public/hooks/snapshot-month',
-    path: '/api/public/hooks/snapshot-month',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicWebhooksCalendlyRoute =
-  ApiPublicWebhooksCalendlyRouteImport.update({
-    id: '/api/public/webhooks/calendly',
-    path: '/api/public/webhooks/calendly',
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWebhooksTwilioMissedCallRoute =
+  ApiPublicWebhooksTwilioMissedCallRouteImport.update({
+    id: '/api/public/webhooks/twilio-missed-call',
+    path: '/api/public/webhooks/twilio-missed-call',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicWebhooksMakeLeadUpdateRoute =
@@ -321,26 +325,22 @@ const ApiPublicWebhooksMakeLeadUpdateRoute =
     path: '/api/public/webhooks/make-lead-update',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicWebhooksTwilioMissedCallRoute =
-  ApiPublicWebhooksTwilioMissedCallRouteImport.update({
-    id: '/api/public/webhooks/twilio-missed-call',
-    path: '/api/public/webhooks/twilio-missed-call',
+const ApiPublicWebhooksCalendlyRoute =
+  ApiPublicWebhooksCalendlyRouteImport.update({
+    id: '/api/public/webhooks/calendly',
+    path: '/api/public/webhooks/calendly',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
+const ApiPublicHooksSnapshotMonthRoute =
+  ApiPublicHooksSnapshotMonthRouteImport.update({
+    id: '/api/public/hooks/snapshot-month',
+    path: '/api/public/hooks/snapshot-month',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksProcessAppointmentRemindersRoute =
+  ApiPublicHooksProcessAppointmentRemindersRouteImport.update({
+    id: '/api/public/hooks/process-appointment-reminders',
+    path: '/api/public/hooks/process-appointment-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -708,144 +708,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/claim-free-week': {
-      id: '/claim-free-week'
-      path: '/claim-free-week'
-      fullPath: '/claim-free-week'
-      preLoaderRoute: typeof ClaimFreeWeekRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/class-checkin': {
-      id: '/class-checkin'
-      path: '/class-checkin'
-      fullPath: '/class-checkin'
-      preLoaderRoute: typeof ClassCheckinRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/classes': {
-      id: '/classes'
-      path: '/classes'
-      fullPath: '/classes'
-      preLoaderRoute: typeof ClassesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/combat-sports': {
-      id: '/combat-sports'
-      path: '/combat-sports'
-      fullPath: '/combat-sports'
-      preLoaderRoute: typeof CombatSportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/day-pass': {
-      id: '/day-pass'
-      path: '/day-pass'
-      fullPath: '/day-pass'
-      preLoaderRoute: typeof DayPassRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/facility': {
-      id: '/facility'
-      path: '/facility'
-      fullPath: '/facility'
-      preLoaderRoute: typeof FacilityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/memberships': {
-      id: '/memberships'
-      path: '/memberships'
-      fullPath: '/memberships'
-      preLoaderRoute: typeof MembershipsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/personal-training': {
-      id: '/personal-training'
-      path: '/personal-training'
-      fullPath: '/personal-training'
-      preLoaderRoute: typeof PersonalTrainingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/redeem-referral': {
-      id: '/redeem-referral'
-      path: '/redeem-referral'
-      fullPath: '/redeem-referral'
-      preLoaderRoute: typeof RedeemReferralRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/refer-a-friend': {
-      id: '/refer-a-friend'
-      path: '/refer-a-friend'
-      fullPath: '/refer-a-friend'
-      preLoaderRoute: typeof ReferAFriendRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/schedule-visit': {
-      id: '/schedule-visit'
-      path: '/schedule-visit'
-      fullPath: '/schedule-visit'
-      preLoaderRoute: typeof ScheduleVisitRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sms-consent': {
@@ -855,61 +722,152 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SmsConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.mcp/list-tools': {
-      id: '/.mcp/list-tools'
-      path: '/.mcp/list-tools'
-      fullPath: '/.mcp/list-tools'
-      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+    '/schedule-visit': {
+      id: '/schedule-visit'
+      path: '/schedule-visit'
+      fullPath: '/schedule-visit'
+      preLoaderRoute: typeof ScheduleVisitRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/refer-a-friend': {
+      id: '/refer-a-friend'
+      path: '/refer-a-friend'
+      fullPath: '/refer-a-friend'
+      preLoaderRoute: typeof ReferAFriendRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/frontdesk': {
-      id: '/_authenticated/frontdesk'
-      path: '/frontdesk'
-      fullPath: '/frontdesk'
-      preLoaderRoute: typeof AuthenticatedFrontdeskRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/staff-home': {
-      id: '/_authenticated/staff-home'
-      path: '/staff-home'
-      fullPath: '/staff-home'
-      preLoaderRoute: typeof AuthenticatedStaffHomeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/admin/login': {
-      id: '/admin/login'
-      path: '/admin/login'
-      fullPath: '/admin/login'
-      preLoaderRoute: typeof AdminLoginRouteImport
+    '/redeem-referral': {
+      id: '/redeem-referral'
+      path: '/redeem-referral'
+      fullPath: '/redeem-referral'
+      preLoaderRoute: typeof RedeemReferralRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blog/': {
-      id: '/blog/'
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personal-training': {
+      id: '/personal-training'
+      path: '/personal-training'
+      fullPath: '/personal-training'
+      preLoaderRoute: typeof PersonalTrainingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/memberships': {
+      id: '/memberships'
+      path: '/memberships'
+      fullPath: '/memberships'
+      preLoaderRoute: typeof MembershipsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/facility': {
+      id: '/facility'
+      path: '/facility'
+      fullPath: '/facility'
+      preLoaderRoute: typeof FacilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/day-pass': {
+      id: '/day-pass'
+      path: '/day-pass'
+      fullPath: '/day-pass'
+      preLoaderRoute: typeof DayPassRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/combat-sports': {
+      id: '/combat-sports'
+      path: '/combat-sports'
+      fullPath: '/combat-sports'
+      preLoaderRoute: typeof CombatSportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/classes': {
+      id: '/classes'
+      path: '/classes'
+      fullPath: '/classes'
+      preLoaderRoute: typeof ClassesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/class-checkin': {
+      id: '/class-checkin'
+      path: '/class-checkin'
+      fullPath: '/class-checkin'
+      preLoaderRoute: typeof ClassCheckinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/claim-free-week': {
+      id: '/claim-free-week'
+      path: '/claim-free-week'
+      fullPath: '/claim-free-week'
+      preLoaderRoute: typeof ClaimFreeWeekRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
       path: '/'
-      fullPath: '/blog/'
-      preLoaderRoute: typeof BlogIndexRouteImport
-      parentRoute: typeof BlogRoute
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/blog/$slug': {
-      id: '/blog/$slug'
-      path: '/$slug'
-      fullPath: '/blog/$slug'
-      preLoaderRoute: typeof BlogSlugRouteImport
-      parentRoute: typeof BlogRoute
+    '/combat-sports/': {
+      id: '/combat-sports/'
+      path: '/'
+      fullPath: '/combat-sports/'
+      preLoaderRoute: typeof CombatSportsIndexRouteImport
+      parentRoute: typeof CombatSportsRoute
     }
     '/classes/': {
       id: '/classes/'
@@ -918,18 +876,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClassesIndexRouteImport
       parentRoute: typeof ClassesRoute
     }
-    '/classes/schedule': {
-      id: '/classes/schedule'
-      path: '/schedule'
-      fullPath: '/classes/schedule'
-      preLoaderRoute: typeof ClassesScheduleRouteImport
-      parentRoute: typeof ClassesRoute
-    }
-    '/combat-sports/': {
-      id: '/combat-sports/'
+    '/blog/': {
+      id: '/blog/'
       path: '/'
-      fullPath: '/combat-sports/'
-      preLoaderRoute: typeof CombatSportsIndexRouteImport
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof BlogRoute
+    }
+    '/combat-sports/kickboxing': {
+      id: '/combat-sports/kickboxing'
+      path: '/kickboxing'
+      fullPath: '/combat-sports/kickboxing'
+      preLoaderRoute: typeof CombatSportsKickboxingRouteImport
       parentRoute: typeof CombatSportsRoute
     }
     '/combat-sports/bjj': {
@@ -939,67 +897,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CombatSportsBjjRouteImport
       parentRoute: typeof CombatSportsRoute
     }
-    '/combat-sports/kickboxing': {
-      id: '/combat-sports/kickboxing'
-      path: '/kickboxing'
-      fullPath: '/combat-sports/kickboxing'
-      preLoaderRoute: typeof CombatSportsKickboxingRouteImport
-      parentRoute: typeof CombatSportsRoute
+    '/classes/schedule': {
+      id: '/classes/schedule'
+      path: '/schedule'
+      fullPath: '/classes/schedule'
+      preLoaderRoute: typeof ClassesScheduleRouteImport
+      parentRoute: typeof ClassesRoute
     }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/ai-reply-rules': {
-      id: '/_authenticated/admin/ai-reply-rules'
-      path: '/admin/ai-reply-rules'
-      fullPath: '/admin/ai-reply-rules'
-      preLoaderRoute: typeof AuthenticatedAdminAiReplyRulesRouteImport
+    '/_authenticated/staff-home': {
+      id: '/_authenticated/staff-home'
+      path: '/staff-home'
+      fullPath: '/staff-home'
+      preLoaderRoute: typeof AuthenticatedStaffHomeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/appointment-approvals': {
-      id: '/_authenticated/admin/appointment-approvals'
-      path: '/admin/appointment-approvals'
-      fullPath: '/admin/appointment-approvals'
-      preLoaderRoute: typeof AuthenticatedAdminAppointmentApprovalsRouteImport
+    '/_authenticated/frontdesk': {
+      id: '/_authenticated/frontdesk'
+      path: '/frontdesk'
+      fullPath: '/frontdesk'
+      preLoaderRoute: typeof AuthenticatedFrontdeskRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/blog': {
-      id: '/_authenticated/admin/blog'
-      path: '/admin/blog'
-      fullPath: '/admin/blog'
-      preLoaderRoute: typeof AuthenticatedAdminBlogRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/class-checkins': {
-      id: '/_authenticated/admin/class-checkins'
-      path: '/admin/class-checkins'
-      fullPath: '/admin/class-checkins'
-      preLoaderRoute: typeof AuthenticatedAdminClassCheckinsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/day-pass-approvals': {
-      id: '/_authenticated/admin/day-pass-approvals'
-      path: '/admin/day-pass-approvals'
-      fullPath: '/admin/day-pass-approvals'
-      preLoaderRoute: typeof AuthenticatedAdminDayPassApprovalsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/lovable/email/events': {
+      id: '/lovable/email/events'
+      path: '/lovable/email/events'
+      fullPath: '/lovable/email/events'
+      preLoaderRoute: typeof LovableEmailEventsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/followup-catchup': {
-      id: '/_authenticated/admin/followup-catchup'
-      path: '/admin/followup-catchup'
-      fullPath: '/admin/followup-catchup'
-      preLoaderRoute: typeof AuthenticatedAdminFollowupCatchupRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/free-week-arrivals': {
-      id: '/_authenticated/admin/free-week-arrivals'
-      path: '/admin/free-week-arrivals'
-      fullPath: '/admin/free-week-arrivals'
-      preLoaderRoute: typeof AuthenticatedAdminFreeWeekArrivalsRouteImport
+    '/_authenticated/admin/reengagement': {
+      id: '/_authenticated/admin/reengagement'
+      path: '/admin/reengagement'
+      fullPath: '/admin/reengagement'
+      preLoaderRoute: typeof AuthenticatedAdminReengagementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/leads': {
@@ -1009,60 +967,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/reengagement': {
-      id: '/_authenticated/admin/reengagement'
-      path: '/admin/reengagement'
-      fullPath: '/admin/reengagement'
-      preLoaderRoute: typeof AuthenticatedAdminReengagementRouteImport
+    '/_authenticated/admin/free-week-arrivals': {
+      id: '/_authenticated/admin/free-week-arrivals'
+      path: '/admin/free-week-arrivals'
+      fullPath: '/admin/free-week-arrivals'
+      preLoaderRoute: typeof AuthenticatedAdminFreeWeekArrivalsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/lovable/email/events': {
-      id: '/lovable/email/events'
-      path: '/lovable/email/events'
-      fullPath: '/lovable/email/events'
-      preLoaderRoute: typeof LovableEmailEventsRouteImport
+    '/_authenticated/admin/followup-catchup': {
+      id: '/_authenticated/admin/followup-catchup'
+      path: '/admin/followup-catchup'
+      fullPath: '/admin/followup-catchup'
+      preLoaderRoute: typeof AuthenticatedAdminFollowupCatchupRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/day-pass-approvals': {
+      id: '/_authenticated/admin/day-pass-approvals'
+      path: '/admin/day-pass-approvals'
+      fullPath: '/admin/day-pass-approvals'
+      preLoaderRoute: typeof AuthenticatedAdminDayPassApprovalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/class-checkins': {
+      id: '/_authenticated/admin/class-checkins'
+      path: '/admin/class-checkins'
+      fullPath: '/admin/class-checkins'
+      preLoaderRoute: typeof AuthenticatedAdminClassCheckinsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/blog': {
+      id: '/_authenticated/admin/blog'
+      path: '/admin/blog'
+      fullPath: '/admin/blog'
+      preLoaderRoute: typeof AuthenticatedAdminBlogRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/appointment-approvals': {
+      id: '/_authenticated/admin/appointment-approvals'
+      path: '/admin/appointment-approvals'
+      fullPath: '/admin/appointment-approvals'
+      preLoaderRoute: typeof AuthenticatedAdminAppointmentApprovalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/ai-reply-rules': {
+      id: '/_authenticated/admin/ai-reply-rules'
+      path: '/admin/ai-reply-rules'
+      fullPath: '/admin/ai-reply-rules'
+      preLoaderRoute: typeof AuthenticatedAdminAiReplyRulesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/process-appointment-reminders': {
-      id: '/api/public/hooks/process-appointment-reminders'
-      path: '/api/public/hooks/process-appointment-reminders'
-      fullPath: '/api/public/hooks/process-appointment-reminders'
-      preLoaderRoute: typeof ApiPublicHooksProcessAppointmentRemindersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/snapshot-month': {
-      id: '/api/public/hooks/snapshot-month'
-      path: '/api/public/hooks/snapshot-month'
-      fullPath: '/api/public/hooks/snapshot-month'
-      preLoaderRoute: typeof ApiPublicHooksSnapshotMonthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/webhooks/calendly': {
-      id: '/api/public/webhooks/calendly'
-      path: '/api/public/webhooks/calendly'
-      fullPath: '/api/public/webhooks/calendly'
-      preLoaderRoute: typeof ApiPublicWebhooksCalendlyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/webhooks/make-lead-update': {
-      id: '/api/public/webhooks/make-lead-update'
-      path: '/api/public/webhooks/make-lead-update'
-      fullPath: '/api/public/webhooks/make-lead-update'
-      preLoaderRoute: typeof ApiPublicWebhooksMakeLeadUpdateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/webhooks/twilio-missed-call': {
-      id: '/api/public/webhooks/twilio-missed-call'
-      path: '/api/public/webhooks/twilio-missed-call'
-      fullPath: '/api/public/webhooks/twilio-missed-call'
-      preLoaderRoute: typeof ApiPublicWebhooksTwilioMissedCallRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/auth/webhook': {
@@ -1072,11 +1037,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/twilio-missed-call': {
+      id: '/api/public/webhooks/twilio-missed-call'
+      path: '/api/public/webhooks/twilio-missed-call'
+      fullPath: '/api/public/webhooks/twilio-missed-call'
+      preLoaderRoute: typeof ApiPublicWebhooksTwilioMissedCallRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/make-lead-update': {
+      id: '/api/public/webhooks/make-lead-update'
+      path: '/api/public/webhooks/make-lead-update'
+      fullPath: '/api/public/webhooks/make-lead-update'
+      preLoaderRoute: typeof ApiPublicWebhooksMakeLeadUpdateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/calendly': {
+      id: '/api/public/webhooks/calendly'
+      path: '/api/public/webhooks/calendly'
+      fullPath: '/api/public/webhooks/calendly'
+      preLoaderRoute: typeof ApiPublicWebhooksCalendlyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/snapshot-month': {
+      id: '/api/public/hooks/snapshot-month'
+      path: '/api/public/hooks/snapshot-month'
+      fullPath: '/api/public/hooks/snapshot-month'
+      preLoaderRoute: typeof ApiPublicHooksSnapshotMonthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/process-appointment-reminders': {
+      id: '/api/public/hooks/process-appointment-reminders'
+      path: '/api/public/hooks/process-appointment-reminders'
+      fullPath: '/api/public/hooks/process-appointment-reminders'
+      preLoaderRoute: typeof ApiPublicHooksProcessAppointmentRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
