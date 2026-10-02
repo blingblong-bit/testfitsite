@@ -1,25 +1,20 @@
-# Day pass QR code: "needs a business profile" error
+# Why Daryl Dong never got an answer
 
-## What we found
+## What happened (Oct 2, about 4:17 PM Chicago)
+1. Daryl filled out the contact form and got the automatic welcome text. It was delivered.
+2. 45 seconds later he wrote back: "Any other fees beside the 39 a month?"
+3. No reply went out. The system decided a staff member was already texting him by hand, so it held back the automatic answer and sent staff an alert ("You're handling this one").
 
-The error doesn't come from our website. No page on the site uses the words "business profile," and nothing on the day pass page asks anyone to sign in. That message comes from **Venmo**.
+No staff member had actually texted him. The bug: the system decides "staff is handling this" by looking for any recent text that wasn't written by the AI. The automatic welcome text counts as one of those, so whenever a lead replies within 4 hours of their first text, the auto-reply gets skipped.
 
-The day pass page shows a Venmo QR code and a "Pay on Venmo: @Philip-Hill-11" link. Both lead to a **personal** Venmo account. Venmo now blocks or flags payments to personal accounts when the payment looks like a purchase from a business, for example when the payer marks it "Goods & Services" or scans from a business setting. The payer then gets a message saying the recipient needs a Venmo business profile. Some phones also make people sign in to Venmo in the browser first, which can show a similar message.
+So texting itself works fine. Daryl's question just never got answered automatically. **Someone should text him back now.** Note that his fee question should go to staff anyway, since the annual fee and contract details are something staff handle.
 
-So the page is working. It's the Venmo account that can't take this kind of payment.
+Daryl also has two lead records. The first form submission had a phone number that was one digit short (931999535). He submitted again 25 seconds later with the correct number.
 
-## Fix options
-
-1. **Recommended: create a Venmo Business profile for FIT Beyond Plus.** It's free to set up inside the Venmo app and has a small fee per payment. Then send me the new @handle and its QR code, and I'll swap them onto the day pass page and the front desk screen.
-2. **Short-term fallback: point guests to the front desk.** Until the business profile exists, the page would make "Pay at the front desk" the main choice and show a note that Venmo is temporarily unavailable. Staff approvals keep working as they do now.
-3. Leave it as is and tell guests to send the money as "Friends & Family." This goes against Venmo's rules for businesses, and they can limit the account, so I don't recommend it.
-
-## What I'd change once you pick an option
-
-- Option 1: replace the Venmo QR image, the link, and the "@Philip-Hill-11" text in the day pass payment step. Nothing else changes.
-- Option 2: make "Pay at the front desk" the default payment choice and add the note.
+## Fix
+- Only treat a recent text as "staff is handling this" when a staff member actually sent it by hand from the lead card. Automatic welcome texts and follow-ups won't count.
+- Remove the duplicate record with the short phone number, and keep the record with the correct number and the conversation.
 
 ## Technical notes
-
-- The Venmo QR image, link, and "@Philip-Hill-11" text all live in `src/components/kiosk-screens.tsx` (around lines 396–415). The same part of the page is used on `/day-pass` and on the front desk screen.
-- No changes to the backend or the database.
+- In `supabase/functions/twilio-inbound-sms/index.ts`, the staff takeover query (around lines 695–703) matches on `direction=outbound` and `from_ai=false`. The initial automated send is logged with `from_ai=false` and `metadata.kind="initial"`. Add a filter for `metadata->>kind = 'manual'` (or `metadata->>sent_by = 'staff'`), then redeploy the function.
+- Delete lead `55d1c4cb-a227-4b90-8838-5e68332cf95e`. It has no texts linked to it.
