@@ -698,6 +698,9 @@ Deno.serve(async (req) => {
       .eq("lead_id", lead.id)
       .eq("direction", "outbound")
       .eq("from_ai", false)
+      // Only real hand-typed staff texts count — automated sends (initial,
+      // follow-ups, reminders) are also logged with from_ai=false.
+      .eq("metadata->>kind", "manual")
       .gte("created_at", takeoverSince)
       .order("created_at", { ascending: false })
       .limit(1);
