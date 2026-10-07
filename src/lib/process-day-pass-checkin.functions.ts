@@ -269,74 +269,8 @@ export const processDayPassCheckin = createServerFn({ method: "POST" })
       };
     }
 
-    // Paid-at-desk means a staff member is physically handling payment
-    // right now. Don't finalize the lead until staff confirms it on
-    // their end — create a pending request instead.
-    if (data.payment_method === "paid_at_desk") {
-      const phone = data.phone.trim();
-      const digits = phone.replace(/\D/g, "").slice(-10);
-
-      // A second request from the same guest reuses the one already waiting
-      // instead of stacking up duplicate rows for staff.
-      const { data: waiting } = await supabaseAdmin
-        .from("day_pass_pending_checkins")
-        .select("id, phone")
-        .eq("status", "pending");
-      const already = (waiting ?? []).find(
-        (r) => digits.length === 10 && (r.phone ?? "").replace(/\D/g, "").slice(-10) === digits,
-      );
-      if (already) {
-        return {
-          ok: true as const,
-          pending: true as const,
-          pending_id: already.id as string,
-          existing_member: false as const,
-          lead_id: null,
-        };
-      }
-
-      let name = data.name.trim();
-      let email = data.email.trim().toLowerCase();
-      if (data.lead_id && (!name || !email)) {
-        const { data: lead } = await supabaseAdmin
-          .from("leads")
-          .select("name, email")
-          .eq("id", data.lead_id)
-          .maybeSingle();
-        if (lead) {
-          name = name || (lead.name ?? "");
-          email = email || (lead.email ?? "").toLowerCase();
-        }
-      }
-
-      const { data: pending, error: pendErr } = await supabaseAdmin
-        .from("day_pass_pending_checkins")
-        .insert({
-          name,
-          email,
-          phone,
-          payment_method: "paid_at_desk",
-          status: "pending",
-          lead_id: data.lead_id ?? null,
-        })
-        .select("id")
-        .single();
-
-      if (pendErr || !pending) {
-        console.error("[dayPassCheckin] pending insert error", pendErr?.message);
-        return { ok: false as const, error: pendErr?.message ?? "insert_failed" };
-      }
-
-      return {
-        ok: true as const,
-        pending: true as const,
-        pending_id: pending.id as string,
-        existing_member: false as const,
-        lead_id: null,
-      };
-    }
-
-    // Venmo stays instant — unchanged behavior.
+    // Both Venmo and paid-at-desk check in instantly — no staff approval
+    // step. Staff see everyone on the daily Day Pass Check-Ins list.
     const result = await finalizeDayPassLead(data);
     return { ...result, pending: false as const };
   });
