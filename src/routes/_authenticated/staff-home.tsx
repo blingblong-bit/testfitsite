@@ -102,13 +102,13 @@ function StaffHome() {
             <div className="h-12 w-12 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
               <Receipt className="h-6 w-6" />
             </div>
-            <h2 className="mt-5 text-2xl">Day Pass Approvals</h2>
+            <h2 className="mt-5 text-2xl">Day Pass Check-Ins</h2>
             <p className="mt-3 text-sm text-muted-foreground max-w-sm">
-              Confirm or decline "paid at desk" day pass requests waiting on staff.
+              See everyone who submitted a day pass form, day by day.
             </p>
           </div>
           <span className="mt-8 text-xs uppercase tracking-widest text-primary group-hover:translate-x-1 transition-transform">
-            Open Day Pass Approvals →
+            Open Day Pass Check-Ins →
           </span>
         </Link>
 
