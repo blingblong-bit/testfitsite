@@ -436,21 +436,13 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
               );
             })}
           </div>
-          {method === "paid_at_desk" && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              A staff member will confirm your payment before you're checked in.
-            </p>
-          )}
         </div>
 
         <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
         <SmsConsentCheckbox checked={smsConsent} onChange={setSmsConsent} />
 
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <SubmitButton
-          submitting={submitting}
-          label={method === "paid_at_desk" ? "Request Check-In" : "Confirm Payment & Check In"}
-        />
+        <SubmitButton submitting={submitting} label="Check In" />
         <button
           type="button"
           onClick={() => {
