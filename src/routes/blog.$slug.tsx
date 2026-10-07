@@ -53,7 +53,7 @@ export const Route = createFileRoute("/blog/$slug")({
   },
   errorComponent: ({ error }) => (
     <section className="container-page py-20">
-      <p className="text-destructive">Unable to load post: {error.message}</p>
+      <p className="text-destructive">Unable to load post: {error instanceof Error ? error.message : String(error)}</p>
       <Link to="/blog" className="mt-6 inline-block text-primary underline">
         ← Back to Blog
       </Link>
