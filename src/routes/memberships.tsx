@@ -44,7 +44,7 @@ export const Route = createFileRoute("/memberships")({
               name: "Is there a contract for monthly memberships?",
               acceptedAnswer: {
                 "@type": "Answer",
-                text: "Monthly memberships have no contract. There is a $49.99 annual fee billed on July 1st. Paid-in-full memberships have no annual fee and offer the best value for committed training.",
+                text: "Monthly memberships have no contract. There is a $49.99 annual fee billed on July 1st. Paid-in-full memberships offer the best value for committed training.",
               },
             },
             {
@@ -267,7 +267,7 @@ function Memberships() {
         <div className="mt-20">
           <p className="text-xs tracking-[0.3em] text-primary">PAID IN FULL MEMBERSHIPS</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            No annual fee · One upfront payment · Best value for committed training
+            One upfront payment · Best value for committed training
           </p>
 
           <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border">
