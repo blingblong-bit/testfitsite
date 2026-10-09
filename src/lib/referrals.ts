@@ -455,6 +455,13 @@ export const createReferral = createServerFn({ method: "POST" })
                       : {}),
                   })
                   .eq("id", existing.id);
+                {
+                  const { sendNewLeadAlert } = await import("./lead-alert.server");
+                  await sendNewLeadAlert(existing.id, {
+                    kind: "reengaged",
+                    submissionId: `referral:${inserted.id}`,
+                  });
+                }
               } else {
                 const { data: newLead, error: leadErr } = await supabaseAdmin
                   .from("leads")
@@ -492,7 +499,7 @@ export const createReferral = createServerFn({ method: "POST" })
                 leadId = newLead?.id ?? null;
                 if (leadId) {
                   const { sendNewLeadAlert } = await import("./lead-alert.server");
-                  await sendNewLeadAlert(leadId);
+                  await sendNewLeadAlert(leadId, { submissionId: `referral:${inserted.id}` });
                 }
               }
 

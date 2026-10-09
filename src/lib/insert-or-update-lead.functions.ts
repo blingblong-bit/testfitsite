@@ -21,6 +21,8 @@ const Schema = z.object({
   should_notify: z.boolean(),
   spam_reason: z.string().nullable(),
   attribution: AttributionSchema,
+  // Unique per form submission (generated once in the browser on submit).
+  submission_id: z.string().max(100).nullable().optional(),
 });
 
 /**
@@ -98,6 +100,16 @@ export const insertOrUpdateLead = createServerFn({ method: "POST" })
         return { ok: false as const, error: upErr.message };
       }
 
+      // Re-engagement: a known lead submitted a new form. One alert per
+      // submission_id, so retries of this same submission stay blocked.
+      if (data.should_notify && data.lead_type === "customer_lead") {
+        const { sendNewLeadAlert } = await import("./lead-alert.server");
+        await sendNewLeadAlert(existing.id, {
+          kind: "reengaged",
+          submissionId: data.submission_id ? `form:${data.submission_id}` : null,
+        });
+      }
+
       // Existing lead — do NOT treat as a new-lead event. No insert means
       // the DB trigger never fires, and we skip the admin/customer emails
       // too since this isn't actually a new inquiry.
@@ -139,7 +151,9 @@ export const insertOrUpdateLead = createServerFn({ method: "POST" })
     // Instant internal "call now" text — only for real new customer leads.
     if (data.should_notify && data.lead_type === "customer_lead") {
       const { sendNewLeadAlert } = await import("./lead-alert.server");
-      await sendNewLeadAlert(inserted.id as string);
+      await sendNewLeadAlert(inserted.id as string, {
+        submissionId: data.submission_id ? `form:${data.submission_id}` : null,
+      });
     }
 
     return { ok: true as const, isNew: true as const, leadId: inserted.id as string };

@@ -371,6 +371,7 @@ export type Database = {
       }
       lead_alert_log: {
         Row: {
+          alert_kind: string
           created_at: string
           error_message: string | null
           id: string
@@ -379,10 +380,12 @@ export type Database = {
           sent_at: string | null
           source: string | null
           status: string
+          submission_id: string
           to_phone: string | null
           twilio_sid: string | null
         }
         Insert: {
+          alert_kind?: string
           created_at?: string
           error_message?: string | null
           id?: string
@@ -391,10 +394,12 @@ export type Database = {
           sent_at?: string | null
           source?: string | null
           status?: string
+          submission_id: string
           to_phone?: string | null
           twilio_sid?: string | null
         }
         Update: {
+          alert_kind?: string
           created_at?: string
           error_message?: string | null
           id?: string
@@ -403,6 +408,7 @@ export type Database = {
           sent_at?: string | null
           source?: string | null
           status?: string
+          submission_id?: string
           to_phone?: string | null
           twilio_sid?: string | null
         }

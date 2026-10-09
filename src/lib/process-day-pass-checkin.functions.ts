@@ -230,7 +230,7 @@ async function finalizeDayPassLead(data: FinalizeInput): Promise<FinalizeResult>
   await recordPurchase(inserted.id as string, now, payment_status);
   {
     const { sendNewLeadAlert } = await import("./lead-alert.server");
-    await sendNewLeadAlert(inserted.id as string);
+    await sendNewLeadAlert(inserted.id as string, { submissionId: `daypass:${inserted.id}` });
   }
 
   return { ok: true, existing_member: false, lead_id: inserted.id as string, created: true };
