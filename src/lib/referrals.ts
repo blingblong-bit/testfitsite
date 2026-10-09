@@ -490,6 +490,10 @@ export const createReferral = createServerFn({ method: "POST" })
                   .single();
                 if (leadErr) throw new Error(leadErr.message);
                 leadId = newLead?.id ?? null;
+                if (leadId) {
+                  const { sendNewLeadAlert } = await import("./lead-alert.server");
+                  await sendNewLeadAlert(leadId);
+                }
               }
 
               if (leadId) {
