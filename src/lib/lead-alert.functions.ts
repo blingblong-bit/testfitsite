@@ -28,9 +28,10 @@ export const sendTestLeadAlert = createServerFn({ method: "POST" })
         phone: "+19315550100",
         interest: "Membership",
         message: "TEST lead created to verify the internal new-lead text alert. Safe to ignore.",
-        lead_type: "test",
+        lead_type: "spam", // keeps the TEST lead out of working lists, stats and automation
+        spam_reason: "TEST lead alert check",
         should_notify: false,
-        crm_status: "Closed",
+        crm_status: "Lost Lead",
         sequence_status: "completed",
         notes: "TEST lead — internal alert verification",
       })
