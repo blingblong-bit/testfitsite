@@ -1,6 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ClipboardList, LayoutDashboard, LogOut, CalendarCheck, Receipt, Newspaper, CalendarClock, Ticket, MessageSquare, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { sendTestLeadAlert } from "@/lib/lead-alert.functions";
 
 export const Route = createFileRoute("/_authenticated/staff-home")({
   head: () => ({
@@ -11,6 +14,49 @@ export const Route = createFileRoute("/_authenticated/staff-home")({
   }),
   component: StaffHome,
 });
+
+function TestLeadAlert() {
+  const run = useServerFn(sendTestLeadAlert);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  async function go() {
+    setBusy(true);
+    setResult(null);
+    try {
+      const r = await run();
+      if (!r.ok) setResult(`Could not create test lead: ${r.error}`);
+      else {
+        const f = r.first;
+        const first =
+          f.status === "sent"
+            ? `Sent ✓ (Twilio ID ${f.sid}, ${new Date(f.sentAt).toLocaleTimeString("en-US", { timeZone: "America/Chicago" })} CT)`
+            : f.status === "failed"
+              ? `Failed: ${f.error}`
+              : "Duplicate";
+        const second = r.second.status === "duplicate" ? "duplicate blocked ✓" : `unexpected: ${r.second.status}`;
+        setResult(`Alert: ${first} · Second attempt: ${second}`);
+      }
+    } catch (e) {
+      setResult(e instanceof Error ? e.message : "Test failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="mt-8 rounded-xl border border-border bg-card p-4 flex flex-wrap items-center gap-4">
+      <button
+        onClick={go}
+        disabled={busy}
+        className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50"
+      >
+        {busy ? "Sending…" : "Send test lead alert"}
+      </button>
+      <p className="text-sm text-muted-foreground">
+        {result ?? "Creates a TEST lead and texts the new-lead alert to the owner's phone once."}
+      </p>
+    </div>
+  );
+}
 
 function StaffHome() {
   const navigate = useNavigate();
@@ -35,6 +81,8 @@ function StaffHome() {
           <LogOut className="h-4 w-4" /> Sign out
         </button>
       </div>
+
+      <TestLeadAlert />
 
       <div className="mt-12 grid md:grid-cols-3 gap-6 flex-1">
         <Link
