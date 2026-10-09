@@ -369,6 +369,45 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_alert_log: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          is_test: boolean
+          lead_id: string
+          sent_at: string | null
+          source: string | null
+          status: string
+          to_phone: string | null
+          twilio_sid: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          is_test?: boolean
+          lead_id: string
+          sent_at?: string | null
+          source?: string | null
+          status?: string
+          to_phone?: string | null
+          twilio_sid?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          is_test?: boolean
+          lead_id?: string
+          sent_at?: string | null
+          source?: string | null
+          status?: string
+          to_phone?: string | null
+          twilio_sid?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           attribution_channel: string | null

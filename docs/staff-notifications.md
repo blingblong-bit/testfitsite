@@ -48,3 +48,13 @@ this helper inline because it runs in Deno and cannot import from `src/`.
 
 Customer-facing messaging (lead sequences, referrals, free week, appointment
 reminders) is untouched and never goes to the staff list.
+
+## New-lead "CALL NOW" alert
+
+- `LEAD_ALERT_PHONE` (secret) — the single number that receives the instant
+  "NEW FIT LEAD — CALL NOW" text. Change this one value to reroute it.
+- Sent by `src/lib/lead-alert.server.ts` after a brand-new website lead is saved
+  (contact/combat forms, schedule-a-visit, first-time day pass, free-week claim).
+- One alert per lead: `public.lead_alert_log.lead_id` is UNIQUE and claimed
+  before sending. The log records status, Twilio SID, sent time and errors.
+- Test: Staff Portal → "Send test lead alert".
