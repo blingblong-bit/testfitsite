@@ -39,6 +39,8 @@ export async function submitLead(input: LeadInput) {
   // First-touch attribution from this browser, if the visitor ever landed
   // with campaign tags. Null when there's nothing measured.
   const attribution = attributionForSubmission(payload.source);
+  // One ID per form submission — the internal alert dedups on this.
+  const submission_id = crypto.randomUUID();
 
   // Check Antaris first — if this submitter is already an active member,
   // handle it server-side (insert + welcome SMS) and skip the normal flow.
@@ -76,6 +78,7 @@ export async function submitLead(input: LeadInput) {
       should_notify: classification.should_notify,
       spam_reason: classification.spam_reason,
       attribution,
+      submission_id,
     },
   });
   if (!result.ok) throw new Error(result.error);

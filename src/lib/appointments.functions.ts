@@ -169,6 +169,7 @@ export const submitAppointmentRequest = createServerFn({ method: "POST" })
         return false;
       })?.id ?? null;
 
+    let leadWasNew = false;
     if (!leadId) {
       const { data: inserted, error: insErr } = await supabaseAdmin
         .from("leads")
@@ -193,8 +194,7 @@ export const submitAppointmentRequest = createServerFn({ method: "POST" })
         return { ok: false as const, error: "Could not save your request." };
       }
       leadId = inserted.id as string;
-      const { sendNewLeadAlert } = await import("./lead-alert.server");
-      await sendNewLeadAlert(leadId);
+      leadWasNew = true;
     }
 
     const { data: appt, error: apptErr } = await supabaseAdmin
@@ -213,6 +213,14 @@ export const submitAppointmentRequest = createServerFn({ method: "POST" })
     if (apptErr || !appt) {
       console.error("[appointments] insert failed", apptErr?.message);
       return { ok: false as const, error: "Could not save your request." };
+    }
+    {
+      // The appointment row is this submission's event ID.
+      const { sendNewLeadAlert } = await import("./lead-alert.server");
+      await sendNewLeadAlert(leadId, {
+        kind: leadWasNew ? "new" : "reengaged",
+        submissionId: `appointment:${appt.id}`,
+      });
     }
 
     // Send the "we got your request" text.

@@ -39,7 +39,7 @@ export const sendTestLeadAlert = createServerFn({ method: "POST" })
       .single();
     if (error || !lead) return { ok: false as const, error: error?.message ?? "insert_failed" };
 
-    const first = await sendNewLeadAlert(lead.id as string, { isTest: true });
-    const second = await sendNewLeadAlert(lead.id as string, { isTest: true });
+    const first = await sendNewLeadAlert(lead.id as string, { isTest: true, submissionId: `test:${lead.id}` });
+    const second = await sendNewLeadAlert(lead.id as string, { isTest: true, submissionId: `test:${lead.id}` });
     return { ok: true as const, leadId: lead.id as string, first, second };
   });
