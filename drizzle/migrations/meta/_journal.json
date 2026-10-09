@@ -15,6 +15,13 @@
       "when": 1791579249288,
       "tag": "0001_lead_alert_log",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791579516889,
+      "tag": "0002_lead_alert_dedup_by_submission",
+      "breakpoints": true
     }
   ]
 }
