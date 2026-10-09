@@ -136,5 +136,11 @@ export const insertOrUpdateLead = createServerFn({ method: "POST" })
       return { ok: false as const, error: insErr?.message ?? "insert_failed" };
     }
 
+    // Instant internal "call now" text — only for real new customer leads.
+    if (data.should_notify && data.lead_type === "customer_lead") {
+      const { sendNewLeadAlert } = await import("./lead-alert.server");
+      await sendNewLeadAlert(inserted.id as string);
+    }
+
     return { ok: true as const, isNew: true as const, leadId: inserted.id as string };
   });

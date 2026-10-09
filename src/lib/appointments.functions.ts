@@ -193,6 +193,8 @@ export const submitAppointmentRequest = createServerFn({ method: "POST" })
         return { ok: false as const, error: "Could not save your request." };
       }
       leadId = inserted.id as string;
+      const { sendNewLeadAlert } = await import("./lead-alert.server");
+      await sendNewLeadAlert(leadId);
     }
 
     const { data: appt, error: apptErr } = await supabaseAdmin
