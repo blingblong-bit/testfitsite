@@ -12,7 +12,7 @@ export type BoardOpportunity = {
   last_activity_at: string | null;
   no_action_required: boolean;
   created_at: string;
-  contact: { name: string; phone: string | null; email: string; review_flag: boolean } | null;
+  contact: { name: string; phone: string | null; email: string; review_flag: boolean; contact_type: string | null } | null;
   nextTask: { title: string; due_at: string | null } | null;
   appointmentAt: string | null;
 };
@@ -29,7 +29,7 @@ export const boardQuery = queryOptions({
     const { data: opps, error } = await supabase
       .from("opportunities")
       .select(
-        "id, contact_id, stage, status, interest, source, owner_id, last_activity_at, no_action_required, created_at, contact:leads!opportunities_contact_id_fkey(name, phone, email, review_flag)",
+        "id, contact_id, stage, status, interest, source, owner_id, last_activity_at, no_action_required, created_at, contact:leads!opportunities_contact_id_fkey(name, phone, email, review_flag, contact_type)",
       )
       .order("last_activity_at", { ascending: false, nullsFirst: false })
       .limit(1000);
@@ -85,7 +85,8 @@ export function contactQuery(id: string) {
         supabase.from("crm_tasks").select("*").eq("contact_id", id).order("due_at", { ascending: true, nullsFirst: false }),
         supabase.from("contact_activity").select("*").eq("contact_id", id).order("created_at", { ascending: false }).limit(200),
       ]);
-      if (lead.error) throw lead.error;
+      const error = [lead, opps, sms, appts, tasks, activity].find((result) => result.error)?.error;
+      if (error) throw error;
       return {
         lead: lead.data,
         opportunities: opps.data ?? [],
@@ -97,6 +98,17 @@ export function contactQuery(id: string) {
     },
   });
 }
+
+export const contactLookupQuery = queryOptions({
+  queryKey: ["crm", "contact-lookup"],
+  queryFn: async () => {
+    const { data, error } = await supabase.from("leads")
+      .select("id, name, phone, email, contact_type, review_flag, review_reason")
+      .order("name").limit(1000);
+    if (error) throw error;
+    return data ?? [];
+  },
+});
 
 export function daysSince(iso: string | null): number | null {
   if (!iso) return null;

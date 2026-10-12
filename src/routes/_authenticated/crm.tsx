@@ -3,11 +3,18 @@ import { Kanban, ClipboardList, Home } from "lucide-react";
 import { ContactDrawer } from "@/components/crm/ContactDrawer";
 
 export const Route = createFileRoute("/_authenticated/crm")({
-  validateSearch: (s: Record<string, unknown>): { contact?: string } =>
-    typeof s.contact === "string" && s.contact ? { contact: s.contact } : {},
+  validateSearch: (s: Record<string, unknown>): { contact?: string; tab?: string } => ({
+    ...(typeof s.contact === "string" && s.contact ? { contact: s.contact } : {}),
+    ...(typeof s.tab === "string" ? { tab: s.tab } : {}),
+  }),
   head: () => ({
     meta: [
       { title: "FIT CRM — FIT Beyond Plus" },
+      { name: "description", content: "FIT Beyond Plus staff sales workspace and contact history." },
+      { property: "og:title", content: "FIT CRM — FIT Beyond Plus" },
+      { property: "og:description", content: "FIT Beyond Plus staff sales workspace and contact history." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -19,7 +26,7 @@ const nav = [
 ] as const;
 
 function CrmLayout() {
-  const { contact } = Route.useSearch();
+  const { contact, tab } = Route.useSearch();
   const navigate = useNavigate();
   return (
     <div className="flex min-h-[80vh] flex-col md:flex-row">
@@ -47,12 +54,13 @@ function CrmLayout() {
           </Link>
         </nav>
       </aside>
-      <main className="flex-1 min-w-0">
+      <section aria-label="CRM workspace" className="flex-1 min-w-0">
         <Outlet />
-      </main>
+      </section>
       <ContactDrawer
         contactId={contact ?? null}
-        onClose={() => navigate({ to: ".", search: (p: Record<string, unknown>) => ({ ...p, contact: undefined }) })}
+        initialTab={tab}
+        onClose={() => navigate({ to: ".", search: (p: Record<string, unknown>) => ({ ...p, contact: undefined, tab: undefined }) })}
       />
     </div>
   );
