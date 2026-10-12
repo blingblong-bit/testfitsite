@@ -195,8 +195,8 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
 
         <TabsContent value="conversation" className="space-y-3">
           <div className="max-h-[50vh] overflow-y-auto space-y-2">
-            {data.sms.length === 0 && <p className="text-sm text-muted-foreground">No texts yet.</p>}
-            {data.sms.map((m) => {
+            {!data.sms.some((m) => m.direction === "inbound" || m.direction === "outbound") && <p className="text-sm text-muted-foreground">No texts yet.</p>}
+            {data.sms.filter((m) => m.direction === "inbound" || m.direction === "outbound").map((m) => {
               const kind = (m.metadata as { kind?: string } | null)?.kind;
               const out = m.direction === "outbound";
               return (
@@ -328,6 +328,7 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
           <Row k="High intent" v={lead.high_intent ? `Yes — ${lead.high_intent_note ?? ""}` : "No"} />
           {activity.filter((a) => /automation|sequence|welcome|stage/.test(a.kind)).map((a) => <div key={a.id} className="border-l-2 border-border pl-3 py-2"><p>{a.summary}</p><p className="text-xs text-muted-foreground">{fmtChicago(a.created_at)}</p></div>)}
           {data.sms.filter((m) => m.direction === "outbound" && (m.metadata as { kind?: string } | null)?.kind !== "manual").slice(-10).reverse().map((m) => <div key={m.id} className="border-l-2 border-border pl-3 py-2"><p className="whitespace-pre-wrap">{m.body}</p><p className="text-xs text-muted-foreground">Automated · {fmtChicago(m.created_at)} · {m.delivery_status ?? m.status}</p></div>)}
+          {data.sms.filter((m) => m.direction === "system").slice(-10).reverse().map((m) => <div key={m.id} className="border-l-2 border-border pl-3 py-2"><p className="font-medium">System event — not a customer message</p><p className="whitespace-pre-wrap">{m.body}</p><p className="text-xs text-muted-foreground">{fmtChicago(m.created_at)} · {m.status}</p></div>)}
         </TabsContent>
       </Tabs>
       <StageMoveDialog pending={pending} onCancel={cancel} onConfirm={confirm} />
