@@ -199,6 +199,177 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_activity: {
+        Row: {
+          actor_id: string | null
+          contact_id: string
+          created_at: string
+          id: string
+          idempotency_key: string | null
+          kind: string
+          metadata: Json | null
+          migration_version: string | null
+          opportunity_id: string | null
+          source: string | null
+          summary: string | null
+          utm: Json | null
+        }
+        Insert: {
+          actor_id?: string | null
+          contact_id: string
+          created_at?: string
+          id?: string
+          idempotency_key?: string | null
+          kind: string
+          metadata?: Json | null
+          migration_version?: string | null
+          opportunity_id?: string | null
+          source?: string | null
+          summary?: string | null
+          utm?: Json | null
+        }
+        Update: {
+          actor_id?: string | null
+          contact_id?: string
+          created_at?: string
+          id?: string
+          idempotency_key?: string | null
+          kind?: string
+          metadata?: Json | null
+          migration_version?: string | null
+          opportunity_id?: string | null
+          source?: string | null
+          summary?: string | null
+          utm?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_activity_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activity_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_migration_ledger: {
+        Row: {
+          attempts: number
+          error: string | null
+          lead_id: string
+          migration_version: string
+          opportunity_id: string | null
+          planned_stage: string | null
+          review_reason: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          error?: string | null
+          lead_id: string
+          migration_version: string
+          opportunity_id?: string | null
+          planned_stage?: string | null
+          review_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          error?: string | null
+          lead_id?: string
+          migration_version?: string
+          opportunity_id?: string | null
+          planned_stage?: string | null
+          review_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_migration_snapshot: {
+        Row: {
+          captured_at: string
+          lead_id: string
+          migration_version: string
+          row_data: Json
+        }
+        Insert: {
+          captured_at?: string
+          lead_id: string
+          migration_version: string
+          row_data: Json
+        }
+        Update: {
+          captured_at?: string
+          lead_id?: string
+          migration_version?: string
+          row_data?: Json
+        }
+        Relationships: []
+      }
+      crm_tasks: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          contact_id: string
+          created_at: string
+          due_at: string | null
+          id: string
+          opportunity_id: string | null
+          owner_id: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          contact_id: string
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          opportunity_id?: string | null
+          owner_id?: string | null
+          title: string
+          type?: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          contact_id?: string
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          opportunity_id?: string | null
+          owner_id?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_tasks_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       day_pass_pending_checkins: {
         Row: {
           approved_at: string | null
@@ -418,6 +589,8 @@ export type Database = {
         Row: {
           attribution_channel: string | null
           became_member: boolean
+          comm_pref: string | null
+          contact_type: string | null
           converted_at: string | null
           created_at: string
           crm_status: string | null
@@ -438,6 +611,7 @@ export type Database = {
           last_contacted_at: string | null
           last_response_at: string | null
           last_sms_at: string | null
+          latest_source: string | null
           lead_score: number
           lead_type: string
           lost_reasons: string[] | null
@@ -448,18 +622,23 @@ export type Database = {
           next_follow_up_date: string | null
           notes: string | null
           objections: string[] | null
+          original_source: string | null
+          owner_id: string | null
           payment_method: string | null
           payment_status: string | null
           phone: string | null
           primary_goal: string | null
           referral_code: string | null
           referred_by: string | null
+          review_flag: boolean
+          review_reason: string | null
           sequence_status: string | null
           should_notify: boolean
           sms_opted_out: boolean
           source: string
           spam_reason: string | null
           status: string | null
+          tags: string[]
           tour_completed: boolean
           tour_date: string | null
           tour_scheduled: boolean
@@ -472,6 +651,8 @@ export type Database = {
         Insert: {
           attribution_channel?: string | null
           became_member?: boolean
+          comm_pref?: string | null
+          contact_type?: string | null
           converted_at?: string | null
           created_at?: string
           crm_status?: string | null
@@ -492,6 +673,7 @@ export type Database = {
           last_contacted_at?: string | null
           last_response_at?: string | null
           last_sms_at?: string | null
+          latest_source?: string | null
           lead_score?: number
           lead_type?: string
           lost_reasons?: string[] | null
@@ -502,18 +684,23 @@ export type Database = {
           next_follow_up_date?: string | null
           notes?: string | null
           objections?: string[] | null
+          original_source?: string | null
+          owner_id?: string | null
           payment_method?: string | null
           payment_status?: string | null
           phone?: string | null
           primary_goal?: string | null
           referral_code?: string | null
           referred_by?: string | null
+          review_flag?: boolean
+          review_reason?: string | null
           sequence_status?: string | null
           should_notify?: boolean
           sms_opted_out?: boolean
           source: string
           spam_reason?: string | null
           status?: string | null
+          tags?: string[]
           tour_completed?: boolean
           tour_date?: string | null
           tour_scheduled?: boolean
@@ -526,6 +713,8 @@ export type Database = {
         Update: {
           attribution_channel?: string | null
           became_member?: boolean
+          comm_pref?: string | null
+          contact_type?: string | null
           converted_at?: string | null
           created_at?: string
           crm_status?: string | null
@@ -546,6 +735,7 @@ export type Database = {
           last_contacted_at?: string | null
           last_response_at?: string | null
           last_sms_at?: string | null
+          latest_source?: string | null
           lead_score?: number
           lead_type?: string
           lost_reasons?: string[] | null
@@ -556,18 +746,23 @@ export type Database = {
           next_follow_up_date?: string | null
           notes?: string | null
           objections?: string[] | null
+          original_source?: string | null
+          owner_id?: string | null
           payment_method?: string | null
           payment_status?: string | null
           phone?: string | null
           primary_goal?: string | null
           referral_code?: string | null
           referred_by?: string | null
+          review_flag?: boolean
+          review_reason?: string | null
           sequence_status?: string | null
           should_notify?: boolean
           sms_opted_out?: boolean
           source?: string
           spam_reason?: string | null
           status?: string | null
+          tags?: string[]
           tour_completed?: boolean
           tour_date?: string | null
           tour_scheduled?: boolean
@@ -602,6 +797,84 @@ export type Database = {
           month?: string
         }
         Relationships: []
+      }
+      opportunities: {
+        Row: {
+          appointment_id: string | null
+          closed_at: string | null
+          contact_id: string
+          created_at: string
+          id: string
+          interest: string
+          last_activity_at: string | null
+          legacy_lead_id: string | null
+          migration_version: string | null
+          no_action_required: boolean
+          owner_id: string | null
+          pipeline: string
+          source: string | null
+          stage: string
+          status: string
+          updated_at: string
+          value: number | null
+          won_lost_reason: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          closed_at?: string | null
+          contact_id: string
+          created_at?: string
+          id?: string
+          interest?: string
+          last_activity_at?: string | null
+          legacy_lead_id?: string | null
+          migration_version?: string | null
+          no_action_required?: boolean
+          owner_id?: string | null
+          pipeline?: string
+          source?: string | null
+          stage: string
+          status?: string
+          updated_at?: string
+          value?: number | null
+          won_lost_reason?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          closed_at?: string | null
+          contact_id?: string
+          created_at?: string
+          id?: string
+          interest?: string
+          last_activity_at?: string | null
+          legacy_lead_id?: string | null
+          migration_version?: string | null
+          no_action_required?: boolean
+          owner_id?: string | null
+          pipeline?: string
+          source?: string | null
+          stage?: string
+          status?: string
+          updated_at?: string
+          value?: number | null
+          won_lost_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       referrals: {
         Row: {
@@ -837,6 +1110,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      crm_migrate_v1: { Args: { dry_run: boolean }; Returns: Json }
+      crm_v1_classify: {
+        Args: { _lead_id: string }
+        Returns: {
+          contact_type: string
+          interest: string
+          last_activity: string
+          outcome: string
+          review_reason: string
+          stage: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
