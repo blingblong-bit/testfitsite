@@ -6,7 +6,7 @@
 
 ## FIT CRM redesign
 - [x] Phase A — backup, schema, dry run, migration, reconciliation
-- [ ] Phase B — Opportunities board + contact drawer (waiting on user approval of Phase A report)
+- [x] Phase B — Opportunities board + contact drawer
 - [ ] Phase C — Contacts + Smart Lists (incl. Migration Review)
 - [ ] Phase D — Tasks + Dashboard
 - [ ] Later — Conversations inbox, page relocation

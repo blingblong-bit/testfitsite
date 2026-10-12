@@ -1110,6 +1110,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      crm_interest_of: {
+        Args: { _interest: string; _source: string }
+        Returns: string
+      }
       crm_migrate_v1: { Args: { dry_run: boolean }; Returns: Json }
       crm_v1_classify: {
         Args: { _lead_id: string }
