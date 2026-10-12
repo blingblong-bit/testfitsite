@@ -8,6 +8,6 @@
 - [x] Phase A — backup, schema, dry run, migration, reconciliation
 - [x] Phase B — Opportunities board + contact drawer
 - [x] Phase B usability review — desktop/phone searches, drawers, filters, stage overview, held review contacts; no customer moves or texts
-- [ ] Phase C — Contacts + Smart Lists (incl. Migration Review); approved after Phase B usability fixes, not started in this review
+- [ ] Phase C — Contacts + Smart Lists (incl. Migration Review); authorized, implement global search/chips and verify desktop/phone plus read-only reconciliation
 - [ ] Phase D — Tasks + Dashboard
 - [ ] Later — Conversations inbox, page relocation
