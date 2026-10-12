@@ -212,7 +212,7 @@ function Column({
   return (
     <div
       ref={setNodeRef}
-      className={`w-72 shrink-0 rounded-lg border bg-card/50 ${isOver ? "border-primary" : "border-border"}`}
+      className={`w-[85vw] sm:w-72 shrink-0 rounded-lg border bg-card/50 ${isOver ? "border-primary" : "border-border"}`}
     >
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <h2 className="text-xs uppercase tracking-wider">{stage}</h2>
