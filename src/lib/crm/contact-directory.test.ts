@@ -1,7 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, it as test } from "node:test";
+import { strict as assert } from "node:assert";
 import { inSmartList, isTestOrSpam, matchesContactSearch, type DirectoryContact } from "./contact-directory";
 
 const contact: DirectoryContact = { name: "Haleigh Woodcox", email: "", phone: "(931) 555-1234", contact_type: null, review_flag: true, lead_type: "customer_lead", status: null, tags: [] };
+const expect = (actual: unknown) => ({ toBe: (expected: unknown) => assert.equal(actual, expected) });
 describe("read-only contact directory", () => {
   test("held contacts remain globally searchable and in Migration Review", () => {
     expect(inSmartList(contact, "review")).toBe(true);
