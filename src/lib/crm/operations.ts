@@ -54,7 +54,7 @@ export function deriveOperations(data: OperationsData, now: Date) {
   const today = chicagoDateOf(now);
   const operational = data.contacts.filter((c) => !isTestOrSpam(c) && !c.review_flag);
   const byId = new Map(operational.map((c) => [c.id, c]));
-  const groups = Object.fromEntries(ATTENTION_REASONS.map((r) => [r.id, []])) as Record<AttentionReason, AttentionItem[]>;
+  const groups: Record<AttentionReason, AttentionItem[]> = { overdue: [], appointments: [], trials: [], new: [], followups: [], stalled: [] };
   const add = (id: string, reason: AttentionReason, at: string, detail: string, opportunityId?: string) => {
     const contact = byId.get(id);
     if (contact) groups[reason].push({ contact, reason, at, detail, opportunityId });
@@ -71,7 +71,7 @@ export function deriveOperations(data: OperationsData, now: Date) {
     if (active.some((o) => ["New Lead", "Attempting Contact"].includes(o.stage)) && !hasHumanContact(c, data)) {
       add(c.id, "new", c.created_at, "No recorded staff call, email, or manual text", active[0]?.id);
     }
-    if (c.next_follow_up_date === today && open.length && c.sequence_status !== "completed" && c.sequence_status !== "stopped") {
+    if (c.next_follow_up_date === today && active.length) {
       add(c.id, "followups", `${today}T12:00:00Z`, "Scheduled follow-up", open[0]?.id);
     }
     if (c.contact_type === "Member" || c.became_member || c.contact_type === "Vendor/Non-Sales") continue;
