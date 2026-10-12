@@ -8,3 +8,4 @@
 - Internal lead alerts dedupe on `lead_alert_log.submission_id`. Why: one alert per form submission, retries blocked.
 - CRM migrations are versioned (`crm_migration_snapshot` + `crm_migration_ledger`) and resume only pending/failed rows. Why: safe recovery from partial failures.
 - CRM contact lookup includes held contacts independently of opportunity queries, while pipeline results exclude review-flagged contacts. Why: staff can review a person without creating or displaying a sales attempt.
+- Contacts and Smart Lists share a paginated, read-only directory query; global search clears list/filter context and searches all contacts, including test/spam. Why: no contact can disappear behind sales filters or query row limits.
