@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { syncStaffTourAppointment } from "@/lib/appointments.functions";
+import { syncStaffTourAppointment, sendScheduleLink } from "@/lib/appointments.functions";
 import { chicagoWallToUTC } from "@/lib/appointment-availability";
 import { fmtChicago } from "@/lib/crm/queries";
 
@@ -42,11 +42,31 @@ function fromChicagoInput(v: string): string | null {
   return chicagoWallToUTC(+m[1], +m[2], +m[3], +m[4], +m[5]);
 }
 
-export function TourScheduler({ lead, appointments, onChanged }: { lead: Lead; appointments: Appt[]; onChanged: () => void }) {
+type Sms = { created_at: string; metadata: unknown };
+
+export function TourScheduler({ lead, appointments, sms = [], onChanged }: { lead: Lead & { sms_opted_out?: boolean | null }; appointments: Appt[]; sms?: Sms[]; onChanged: () => void }) {
   const sync = useServerFn(syncStaffTourAppointment);
+  const sendLink = useServerFn(sendScheduleLink);
   const active = !!lead.tour_scheduled && !lead.tour_completed && !!lead.tour_date;
   const [when, setWhen] = useState(toChicagoInput(active ? lead.tour_date : null));
   const [busy, setBusy] = useState(false);
+  const link = `https://fitbeyondplus.com/schedule-visit?lead=${lead.id}`;
+  const lastLink = [...sms].reverse().find((m) => (m.metadata as { kind?: string } | null)?.kind === "schedule_link");
+  const canText = !!lead.phone && !lead.sms_opted_out;
+
+  async function copyLink() {
+    try { await navigator.clipboard.writeText(link); toast.success("Scheduling link copied"); }
+    catch { toast.message(link); }
+  }
+  async function textLink() {
+    if (!confirm("Text this person their personal scheduling link? Their automated texts will pause.")) return;
+    setBusy(true);
+    const r = await sendLink({ data: { lead_id: lead.id } });
+    setBusy(false);
+    if (r.ok) toast.success(r.test_mode ? "Test contact — logged, not texted" : "Scheduling link texted");
+    else toast.error(r.error === "already_sent" ? "Already sent a moment ago" : r.error === "forbidden" ? "Staff only" : `Not sent: ${r.error}`);
+    onChanged();
+  }
 
   async function save(patch: Partial<Lead>, ok: string) {
     setBusy(true);
@@ -91,6 +111,20 @@ export function TourScheduler({ lead, appointments, onChanged }: { lead: Lead; a
           {!lead.phone ? "No phone on file — reminders can't be sent." : "Reminder texts go out the day before, 8 AM the morning of, and about an hour before."}
         </p>
       </div>
+
+      {!active && (
+        <div className="rounded-lg border border-border p-3 space-y-2">
+          <p className="font-semibold">Let them pick a time</p>
+          <p className="text-xs text-muted-foreground">Their personal link opens the tour picker with their info already filled in. Good for people who aren't replying.</p>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={copyLink}>Copy link</Button>
+            <Button disabled={busy || !canText} onClick={textLink}>Text them the link</Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {!canText ? (lead.sms_opted_out ? "Opted out of texts — copy the link instead." : "No phone on file — copy the link instead.") : lastLink ? `Link texted ${fmtChicago(lastLink.created_at)}` : "Link not texted yet."}
+          </p>
+        </div>
+      )}
 
       {pendingRequests.length > 0 && (
         <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
