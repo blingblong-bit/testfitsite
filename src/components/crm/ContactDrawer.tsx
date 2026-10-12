@@ -13,6 +13,7 @@ import { contactQuery, currentUserQuery, fmtChicago } from "@/lib/crm/queries";
 import { useMoveStage } from "@/lib/crm/use-move-stage";
 import { StageMoveDialog } from "./StageMoveDialog";
 import { CallFromFitButton } from "./CallFromFitButton";
+import { TourScheduler } from "./TourScheduler";
 
 const input =
   "w-full rounded-md bg-secondary border border-border px-3 py-2 text-sm focus:outline-none focus:border-primary";
@@ -135,7 +136,7 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
             <ListTodo className="h-4 w-4" /> Task
           </Button>
           <Button variant="outline" onClick={() => setTab("appointments")} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-secondary">
-            <CalendarPlus className="h-4 w-4" /> Appointment
+            <CalendarPlus className="h-4 w-4" /> Book Tour
           </Button>
         </div>
         {!lead.review_flag && openOpp && (
@@ -268,19 +269,8 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
           ))}
         </TabsContent>
 
-        <TabsContent value="appointments" className="space-y-2 text-sm">
-          {appointments.length === 0 && <p className="text-muted-foreground">No appointments.</p>}
-          {appointments.map((a) => (
-            <div key={a.id} className="rounded-lg border border-border p-3">
-              <p>
-                {a.type} · {fmtChicago(a.confirmed_time ?? a.requested_time)}
-              </p>
-              <p className="text-xs text-muted-foreground">{a.status}</p>
-            </div>
-          ))}
-          <p className="text-xs text-muted-foreground">
-            To book or change a tour, use Book Tour on this person in the Lead Tracker — reminders stay in sync from there.
-          </p>
+        <TabsContent value="appointments" className="text-sm">
+          <TourScheduler lead={lead} appointments={appointments} onChanged={refresh} />
         </TabsContent>
 
         <TabsContent value="notes" className="space-y-3">
