@@ -55,6 +55,7 @@ import { Route as AuthenticatedAdminFreeWeekArrivalsRouteImport } from './routes
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 import { Route as AuthenticatedAdminReengagementRouteImport } from './routes/_authenticated/admin.reengagement'
 import { Route as AuthenticatedCrmIndexRouteImport } from './routes/_authenticated/crm.index'
+import { Route as AuthenticatedCrmOpportunitiesRouteImport } from './routes/_authenticated/crm.opportunities'
 import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as ApiPublicHooksProcessAppointmentRemindersRouteImport } from './routes/api/public/hooks/process-appointment-reminders'
 import { Route as ApiPublicHooksSnapshotMonthRouteImport } from './routes/api/public/hooks/snapshot-month'
@@ -304,6 +305,12 @@ const AuthenticatedCrmIndexRoute = AuthenticatedCrmIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedCrmRoute,
 } as any)
+const AuthenticatedCrmOpportunitiesRoute =
+  AuthenticatedCrmOpportunitiesRouteImport.update({
+    id: '/opportunities',
+    path: '/opportunities',
+    getParentRoute: () => AuthenticatedCrmRoute,
+  } as any)
 const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
   id: '/lovable/email/events',
   path: '/lovable/email/events',
@@ -401,6 +408,7 @@ export interface FileRoutesByFullPath {
   '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
+  '/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/crm/': typeof AuthenticatedCrmIndexRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
@@ -453,6 +461,7 @@ export interface FileRoutesByTo {
   '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
+  '/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/crm': typeof AuthenticatedCrmIndexRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
@@ -511,6 +520,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
+  '/_authenticated/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/_authenticated/crm/': typeof AuthenticatedCrmIndexRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
@@ -569,6 +579,7 @@ export interface FileRouteTypes {
     | '/admin/free-week-arrivals'
     | '/admin/leads'
     | '/admin/reengagement'
+    | '/crm/opportunities'
     | '/lovable/email/events'
     | '/crm/'
     | '/api/public/hooks/process-appointment-reminders'
@@ -621,6 +632,7 @@ export interface FileRouteTypes {
     | '/admin/free-week-arrivals'
     | '/admin/leads'
     | '/admin/reengagement'
+    | '/crm/opportunities'
     | '/lovable/email/events'
     | '/crm'
     | '/api/public/hooks/process-appointment-reminders'
@@ -678,6 +690,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/free-week-arrivals'
     | '/_authenticated/admin/leads'
     | '/_authenticated/admin/reengagement'
+    | '/_authenticated/crm/opportunities'
     | '/lovable/email/events'
     | '/_authenticated/crm/'
     | '/api/public/hooks/process-appointment-reminders'
@@ -1052,6 +1065,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCrmIndexRouteImport
       parentRoute: typeof AuthenticatedCrmRoute
     }
+    '/_authenticated/crm/opportunities': {
+      id: '/_authenticated/crm/opportunities'
+      path: '/opportunities'
+      fullPath: '/crm/opportunities'
+      preLoaderRoute: typeof AuthenticatedCrmOpportunitiesRouteImport
+      parentRoute: typeof AuthenticatedCrmRoute
+    }
     '/lovable/email/events': {
       id: '/lovable/email/events'
       path: '/lovable/email/events'
@@ -1119,10 +1139,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedCrmRouteChildren {
+  AuthenticatedCrmOpportunitiesRoute: typeof AuthenticatedCrmOpportunitiesRoute
   AuthenticatedCrmIndexRoute: typeof AuthenticatedCrmIndexRoute
 }
 
 const AuthenticatedCrmRouteChildren: AuthenticatedCrmRouteChildren = {
+  AuthenticatedCrmOpportunitiesRoute: AuthenticatedCrmOpportunitiesRoute,
   AuthenticatedCrmIndexRoute: AuthenticatedCrmIndexRoute,
 }
 
