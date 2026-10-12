@@ -628,3 +628,70 @@ export const getLeadContactByToken = createServerFn({ method: "POST" })
       };
     },
   );
+
+// ---------- staff: text a personal self-scheduling link ----------
+
+const SCHEDULE_LINK_TEST_EMAIL = "smstest@fitbeyondplus.com";
+
+export const sendScheduleLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ lead_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const staffOk =
+      (await requireAdmin(context)) ||
+      Boolean(
+        (await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" })).data,
+      );
+    if (!staffOk) return { ok: false as const, error: "forbidden" };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: lead } = await supabaseAdmin
+      .from("leads")
+      .select("id, name, email, phone, sms_opted_out")
+      .eq("id", data.lead_id)
+      .maybeSingle();
+    if (!lead) return { ok: false as const, error: "not_found" };
+    if (!lead.phone || lead.phone.replace(/\D/g, "").length < 10)
+      return { ok: false as const, error: "no_phone" };
+    if (lead.sms_opted_out) return { ok: false as const, error: "opted_out" };
+
+    // Claim a per-minute key first so double clicks/retries can't send twice.
+    const minute = new Date().toISOString().slice(0, 16);
+    const { error: claimErr } = await supabaseAdmin.from("contact_activity").insert({
+      contact_id: lead.id,
+      kind: "schedule_link",
+      summary: "Staff texted a self-scheduling link",
+      actor_id: context.userId,
+      idempotency_key: `schedule_link:${lead.id}:${minute}`,
+    });
+    if (claimErr) return { ok: false as const, error: "already_sent" };
+
+    const first = (lead.name ?? "").trim().split(/\s+/)[0] || "there";
+    const link = `https://fitbeyondplus.com/schedule-visit?lead=${lead.id}`;
+    const message = `Hey ${first}! FIT Beyond Plus here — you can pick a time to come by for a tour or day pass right here: ${link} — your info is already attached, so just choose whatever time works best for you 💪`;
+    const to = normalizePhoneE164(lead.phone);
+    const isTest = (lead.email ?? "").trim().toLowerCase() === SCHEDULE_LINK_TEST_EMAIL;
+
+    let sid: string | null = null;
+    if (!isTest) {
+      const r = await sendTwilioSms(to, message);
+      if (!r.ok) return { ok: false as const, error: r.error ?? "send_failed" };
+      sid = r.sid ?? null;
+    }
+    const now = new Date().toISOString();
+    await supabaseAdmin.from("sms_conversation_log").insert({
+      lead_id: lead.id,
+      phone: to,
+      direction: "outbound",
+      body: isTest ? `TEST MODE - SMS not sent | ${message}` : message,
+      from_ai: false,
+      provider_message_id: sid,
+      status: isTest ? "test_mode" : "sent",
+      metadata: { kind: "schedule_link", sent_by: "staff", test_mode: isTest },
+    });
+    await supabaseAdmin
+      .from("leads")
+      .update({ last_sms_at: now, last_contacted_at: now, last_contact_method: "sms", sequence_status: "paused" })
+      .eq("id", lead.id);
+    return { ok: true as const, test_mode: isTest };
+  });
