@@ -132,7 +132,7 @@ function OpportunitiesPage() {
       {(chips.length > 0 || q) && (
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
           {chips.map((c) => (
-            <Button variant="ghost" key={c.label} onClick={c.clear} className="inline-flex items-center gap-1 rounded-full border border-primary/50 px-3 py-1 text-primary">
+            <Button variant="ghost" key={c.label} onClick={c.clear} className="inline-flex h-auto max-w-full whitespace-normal items-center gap-1 rounded-full border border-primary/50 px-3 py-1 text-primary">
               {c.label} <X className="h-3 w-3" />
             </Button>
           ))}
@@ -298,7 +298,7 @@ function Card({
       className={`rounded-md border border-border bg-background p-3 text-sm ${closed ? "opacity-80" : "cursor-grab"} ${isDragging ? "z-50 shadow-lg" : ""}`}
     >
       {!closed && <Button variant="ghost" size="icon" {...listeners} {...attributes} title="Drag to move stage" aria-label={`Move ${opp.contact?.name ?? "opportunity"}`} className="float-right h-7 w-7 cursor-grab touch-none"><GripVertical /></Button>}
-      <Button variant="ghost" onClick={() => onOpen(opp.contact_id)} className="text-left font-medium hover:text-primary">
+      <Button variant="ghost" onClick={() => onOpen(opp.contact_id)} className="h-auto min-h-8 max-w-full px-0 py-1 whitespace-normal break-words text-left justify-start font-medium hover:text-primary">
         {opp.contact?.name ?? "—"}
       </Button>
       <p className="mt-1 text-xs text-muted-foreground">{opp.contact?.contact_type ?? "Unclassified"}{opp.contact?.phone ? ` · ${opp.contact.phone}` : ""}</p>

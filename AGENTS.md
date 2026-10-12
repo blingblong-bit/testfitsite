@@ -7,3 +7,4 @@
 - Stage-triggered automations claim a unique `contact_activity.idempotency_key` before running. Why: retries and repeated moves can't send duplicate texts.
 - Internal lead alerts dedupe on `lead_alert_log.submission_id`. Why: one alert per form submission, retries blocked.
 - CRM migrations are versioned (`crm_migration_snapshot` + `crm_migration_ledger`) and resume only pending/failed rows. Why: safe recovery from partial failures.
+- CRM contact lookup includes held contacts independently of opportunity queries, while pipeline results exclude review-flagged contacts. Why: staff can review a person without creating or displaying a sales attempt.

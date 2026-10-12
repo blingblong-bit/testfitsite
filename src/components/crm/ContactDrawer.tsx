@@ -321,12 +321,13 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
 
         <TabsContent value="automation" className="space-y-2 text-sm">
           <Row k="Sequence" v={lead.sequence_status ?? "Not enrolled"} />
-          <Row k="Next follow-up" v={fmtChicago(lead.next_follow_up_date)} />
+          <Row k="Next follow-up" v={lead.sequence_status === "active" && !lead.sms_opted_out ? fmtChicago(lead.next_follow_up_date) : "Not scheduled — sequence inactive"} />
           <Row k="Follow-ups sent" v={String(lead.followup_count ?? 0)} />
           <Row k="Last text" v={fmtChicago(lead.last_sms_at)} />
           <Row k="SMS opted out" v={lead.sms_opted_out ? "Yes" : "No"} />
           <Row k="High intent" v={lead.high_intent ? `Yes — ${lead.high_intent_note ?? ""}` : "No"} />
           {activity.filter((a) => /automation|sequence|welcome|stage/.test(a.kind)).map((a) => <div key={a.id} className="border-l-2 border-border pl-3 py-2"><p>{a.summary}</p><p className="text-xs text-muted-foreground">{fmtChicago(a.created_at)}</p></div>)}
+          {data.sms.filter((m) => m.direction === "outbound" && (m.metadata as { kind?: string } | null)?.kind !== "manual").slice(-10).reverse().map((m) => <div key={m.id} className="border-l-2 border-border pl-3 py-2"><p className="whitespace-pre-wrap">{m.body}</p><p className="text-xs text-muted-foreground">Automated · {fmtChicago(m.created_at)} · {m.delivery_status ?? m.status}</p></div>)}
         </TabsContent>
       </Tabs>
       <StageMoveDialog pending={pending} onCancel={cancel} onConfirm={confirm} />
