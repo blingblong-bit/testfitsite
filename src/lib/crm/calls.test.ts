@@ -1,3 +1,4 @@
+// @ts-nocheck -- bun:test types are not installed; run with `bun test`.
 import { describe, it, expect, mock } from "bun:test";
 import { createHmac } from "crypto";
 import { startCallCore, applyStatusCallback, toE164US, verifyTwilioSignature, nextStatus, connectTwiml } from "./calls.server";
