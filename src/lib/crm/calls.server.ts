@@ -84,8 +84,10 @@ export async function startCallCore(deps: StartCallDeps, input: { contactId: str
   const to = toE164US(c.phone);
   if (!to) return fail("invalid_phone", "This contact has no valid phone number.");
   if (to === staff || to === from) return fail("invalid_phone", "This contact has no valid phone number.");
-  const { data: bad } = await db.from("sms_conversation_log").select("id").eq("lead_id", c.id).in("error_code", ["21211", "21614", "30006"]).limit(1);
-  if (bad?.length) return fail("undeliverable", "This number was reported as invalid or a landline that can't be reached.");
+  // Block only numbers the carrier reported as explicitly invalid (21211).
+  // Landlines (21614/30006) and undelivered texts are still valid voice destinations.
+  const { data: bad } = await db.from("sms_conversation_log").select("id").eq("lead_id", c.id).eq("error_code", "21211").limit(1);
+  if (bad?.length) return fail("undeliverable", "This number was reported as invalid by the carrier.");
 
   if (input.opportunityId) {
     const { data: o } = await db.from("opportunities").select("id").eq("id", input.opportunityId).eq("contact_id", c.id).maybeSingle();

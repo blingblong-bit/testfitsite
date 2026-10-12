@@ -63,11 +63,19 @@ describe("Call from FIT", () => {
     const r2 = await startCallCore({ db, fetch: f as any, env }, { contactId: "c1", userId: "u1" });
     expect(r2.ok).toBe(false); expect(f).toHaveBeenCalledTimes(1);
   });
-  it("rejects spam, vendor, invalid and undeliverable numbers", async () => {
-    for (const [l, sms] of [[lead({ contact_type: "Spam" }), []], [lead({ contact_type: "Vendor/Non-Sales" }), []], [lead({ phone: "555" }), []], [lead(), [{ lead_id: "c1", error_code: "21614" }]]] as any) {
+  it("rejects spam, vendor, malformed and carrier-invalid numbers", async () => {
+    for (const [l, sms] of [[lead({ contact_type: "Spam" }), []], [lead({ contact_type: "Vendor/Non-Sales" }), []], [lead({ phone: "555" }), []], [lead(), [{ lead_id: "c1", error_code: "21211" }]]] as any) {
       const f = okFetch();
       const r = await startCallCore({ db: mockDb({ leads: [l], sms_conversation_log: sms }), fetch: f as any, env }, { contactId: "c1", userId: "u1" });
       expect(r.ok).toBe(false); expect(f).not.toHaveBeenCalled();
+    }
+  });
+  it("allows landlines and numbers with undelivered texts", async () => {
+    for (const code of ["21614", "30006", "30003"]) {
+      const db = mockDb({ leads: [lead()], sms_conversation_log: [{ lead_id: "c1", error_code: code }] });
+      const f = okFetch();
+      const r = await startCallCore({ db, fetch: f as any, env }, { contactId: "c1", userId: "u1" });
+      expect(r.ok).toBe(true); expect(f).toHaveBeenCalledTimes(1);
     }
   });
   it("records Twilio failures gracefully", async () => {
