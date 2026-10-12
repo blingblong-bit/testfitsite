@@ -111,6 +111,12 @@ export async function sendNewLeadAlert(
   const submissionId =
     opts.submissionId?.trim() ||
     `${kind}:${leadId}:${Math.floor(Date.now() / 600_000)}`;
+  // CRM: a returning lead's new submission is logged once and bumps or opens
+  // its opportunity. Brand-new leads are handled by the database insert trigger.
+  if (kind === "reengaged" && !opts.isTest) {
+    const { recordReengagement } = await import("./crm/crm.server");
+    await recordReengagement(leadId, submissionId);
+  }
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const to = e164(process.env.LEAD_ALERT_PHONE ?? "");
