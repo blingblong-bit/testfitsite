@@ -41,6 +41,8 @@ describe("daily CRM operations", () => {
     assert.equal(result.attention[0]?.reason, "overdue");
   });
   it("never creates tasks and excludes nurture, closed, held and spam from stalled", () => {
+    const migrated = base(); migrated.opportunities = [{ ...opportunity, no_action_required: true }];
+    assert.equal(deriveOperations(migrated, now).groups.stalled.length, 1);
     for (const stage of ["Long-Term Nurture", "Joined — Won", "Closed — Lost"]) {
       const data = base(); data.opportunities = [{ ...opportunity, stage, status: stage === "Long-Term Nurture" ? "open" : stage.includes("Won") ? "won" : "lost" }];
       assert.equal(deriveOperations(data, now).groups.stalled.length, 0);

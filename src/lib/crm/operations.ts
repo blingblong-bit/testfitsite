@@ -67,7 +67,7 @@ export function deriveOperations(data: OperationsData, now: Date) {
   }
   for (const c of operational) {
     const open = data.opportunities.filter((o) => o.contact_id === c.id && o.status === "open");
-    const active = open.filter((o) => o.stage !== "Long-Term Nurture" && !o.no_action_required);
+    const active = open.filter((o) => o.stage !== "Long-Term Nurture");
     if (active.some((o) => ["New Lead", "Attempting Contact"].includes(o.stage)) && !hasHumanContact(c, data)) {
       add(c.id, "new", c.created_at, "No recorded staff call, email, or manual text", active[0]?.id);
     }
