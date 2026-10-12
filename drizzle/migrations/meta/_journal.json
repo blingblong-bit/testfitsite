@@ -43,6 +43,13 @@
       "when": 1791816399833,
       "tag": "0005_crm_phase_b_sync_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791822111403,
+      "tag": "0006_crm_call_log",
+      "breakpoints": true
     }
   ]
 }

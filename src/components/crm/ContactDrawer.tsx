@@ -12,6 +12,7 @@ import { assignOpportunityOwner, PIPELINE_STAGES, type PipelineStage } from "@/l
 import { contactQuery, currentUserQuery, fmtChicago } from "@/lib/crm/queries";
 import { useMoveStage } from "@/lib/crm/use-move-stage";
 import { StageMoveDialog } from "./StageMoveDialog";
+import { CallFromFitButton } from "./CallFromFitButton";
 
 const input =
   "w-full rounded-md bg-secondary border border-border px-3 py-2 text-sm focus:outline-none focus:border-primary";
@@ -123,11 +124,7 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
           </div>
         )}
         <div className="mt-3 flex flex-wrap gap-2">
-          {lead.phone && (
-            <a href={`tel:${lead.phone}`} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-secondary">
-              <Phone className="h-4 w-4" /> Call
-            </a>
-          )}
+          <CallFromFitButton contactId={lead.id} phone={lead.phone} />
           <Button variant="outline" onClick={() => setTab("conversation")} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-secondary">
             <MessageSquare className="h-4 w-4" /> Text
           </Button>

@@ -63,6 +63,8 @@ import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/e
 import { Route as ApiPublicHooksProcessAppointmentRemindersRouteImport } from './routes/api/public/hooks/process-appointment-reminders'
 import { Route as ApiPublicHooksSnapshotMonthRouteImport } from './routes/api/public/hooks/snapshot-month'
 import { Route as ApiPublicWebhooksCalendlyRouteImport } from './routes/api/public/webhooks/calendly'
+import { Route as ApiPublicWebhooksCrmCallRouteImport } from './routes/api/public/webhooks/crm-call'
+import { Route as ApiPublicWebhooksInboundCallForwardRouteImport } from './routes/api/public/webhooks/inbound-call-forward'
 import { Route as ApiPublicWebhooksMakeLeadUpdateRouteImport } from './routes/api/public/webhooks/make-lead-update'
 import { Route as ApiPublicWebhooksTwilioMissedCallRouteImport } from './routes/api/public/webhooks/twilio-missed-call'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -354,6 +356,18 @@ const ApiPublicWebhooksCalendlyRoute =
     path: '/api/public/webhooks/calendly',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWebhooksCrmCallRoute =
+  ApiPublicWebhooksCrmCallRouteImport.update({
+    id: '/api/public/webhooks/crm-call',
+    path: '/api/public/webhooks/crm-call',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWebhooksInboundCallForwardRoute =
+  ApiPublicWebhooksInboundCallForwardRouteImport.update({
+    id: '/api/public/webhooks/inbound-call-forward',
+    path: '/api/public/webhooks/inbound-call-forward',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWebhooksMakeLeadUpdateRoute =
   ApiPublicWebhooksMakeLeadUpdateRouteImport.update({
     id: '/api/public/webhooks/make-lead-update',
@@ -437,6 +451,8 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
+  '/api/public/webhooks/crm-call': typeof ApiPublicWebhooksCrmCallRoute
+  '/api/public/webhooks/inbound-call-forward': typeof ApiPublicWebhooksInboundCallForwardRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
   '/api/public/webhooks/twilio-missed-call': typeof ApiPublicWebhooksTwilioMissedCallRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -493,6 +509,8 @@ export interface FileRoutesByTo {
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
+  '/api/public/webhooks/crm-call': typeof ApiPublicWebhooksCrmCallRoute
+  '/api/public/webhooks/inbound-call-forward': typeof ApiPublicWebhooksInboundCallForwardRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
   '/api/public/webhooks/twilio-missed-call': typeof ApiPublicWebhooksTwilioMissedCallRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -555,6 +573,8 @@ export interface FileRoutesById {
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
+  '/api/public/webhooks/crm-call': typeof ApiPublicWebhooksCrmCallRoute
+  '/api/public/webhooks/inbound-call-forward': typeof ApiPublicWebhooksInboundCallForwardRoute
   '/api/public/webhooks/make-lead-update': typeof ApiPublicWebhooksMakeLeadUpdateRoute
   '/api/public/webhooks/twilio-missed-call': typeof ApiPublicWebhooksTwilioMissedCallRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -617,6 +637,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
+    | '/api/public/webhooks/crm-call'
+    | '/api/public/webhooks/inbound-call-forward'
     | '/api/public/webhooks/make-lead-update'
     | '/api/public/webhooks/twilio-missed-call'
     | '/lovable/email/auth/preview'
@@ -673,6 +695,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
+    | '/api/public/webhooks/crm-call'
+    | '/api/public/webhooks/inbound-call-forward'
     | '/api/public/webhooks/make-lead-update'
     | '/api/public/webhooks/twilio-missed-call'
     | '/lovable/email/auth/preview'
@@ -734,6 +758,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
+    | '/api/public/webhooks/crm-call'
+    | '/api/public/webhooks/inbound-call-forward'
     | '/api/public/webhooks/make-lead-update'
     | '/api/public/webhooks/twilio-missed-call'
     | '/lovable/email/auth/preview'
@@ -772,6 +798,8 @@ export interface RootRouteChildren {
   ApiPublicHooksProcessAppointmentRemindersRoute: typeof ApiPublicHooksProcessAppointmentRemindersRoute
   ApiPublicHooksSnapshotMonthRoute: typeof ApiPublicHooksSnapshotMonthRoute
   ApiPublicWebhooksCalendlyRoute: typeof ApiPublicWebhooksCalendlyRoute
+  ApiPublicWebhooksCrmCallRoute: typeof ApiPublicWebhooksCrmCallRoute
+  ApiPublicWebhooksInboundCallForwardRoute: typeof ApiPublicWebhooksInboundCallForwardRoute
   ApiPublicWebhooksMakeLeadUpdateRoute: typeof ApiPublicWebhooksMakeLeadUpdateRoute
   ApiPublicWebhooksTwilioMissedCallRoute: typeof ApiPublicWebhooksTwilioMissedCallRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -1159,6 +1187,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksCalendlyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/webhooks/crm-call': {
+      id: '/api/public/webhooks/crm-call'
+      path: '/api/public/webhooks/crm-call'
+      fullPath: '/api/public/webhooks/crm-call'
+      preLoaderRoute: typeof ApiPublicWebhooksCrmCallRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/inbound-call-forward': {
+      id: '/api/public/webhooks/inbound-call-forward'
+      path: '/api/public/webhooks/inbound-call-forward'
+      fullPath: '/api/public/webhooks/inbound-call-forward'
+      preLoaderRoute: typeof ApiPublicWebhooksInboundCallForwardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/make-lead-update': {
       id: '/api/public/webhooks/make-lead-update'
       path: '/api/public/webhooks/make-lead-update'
@@ -1327,6 +1369,9 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksProcessAppointmentRemindersRoute,
   ApiPublicHooksSnapshotMonthRoute: ApiPublicHooksSnapshotMonthRoute,
   ApiPublicWebhooksCalendlyRoute: ApiPublicWebhooksCalendlyRoute,
+  ApiPublicWebhooksCrmCallRoute: ApiPublicWebhooksCrmCallRoute,
+  ApiPublicWebhooksInboundCallForwardRoute:
+    ApiPublicWebhooksInboundCallForwardRoute,
   ApiPublicWebhooksMakeLeadUpdateRoute: ApiPublicWebhooksMakeLeadUpdateRoute,
   ApiPublicWebhooksTwilioMissedCallRoute:
     ApiPublicWebhooksTwilioMissedCallRoute,

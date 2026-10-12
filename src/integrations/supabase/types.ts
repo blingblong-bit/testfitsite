@@ -259,6 +259,57 @@ export type Database = {
           },
         ]
       }
+      crm_call_log: {
+        Row: {
+          answered_at: string | null
+          completed_at: string | null
+          contact_id: string
+          dial_call_sid: string | null
+          duration_seconds: number | null
+          error_code: string | null
+          error_message: string | null
+          id: string
+          initiated_at: string
+          initiated_by: string
+          opportunity_id: string | null
+          status: string
+          twilio_call_sid: string | null
+          updated_at: string
+        }
+        Insert: {
+          answered_at?: string | null
+          completed_at?: string | null
+          contact_id: string
+          dial_call_sid?: string | null
+          duration_seconds?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          initiated_at?: string
+          initiated_by: string
+          opportunity_id?: string | null
+          status?: string
+          twilio_call_sid?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answered_at?: string | null
+          completed_at?: string | null
+          contact_id?: string
+          dial_call_sid?: string | null
+          duration_seconds?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          initiated_at?: string
+          initiated_by?: string
+          opportunity_id?: string | null
+          status?: string
+          twilio_call_sid?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       crm_migration_ledger: {
         Row: {
           attempts: number

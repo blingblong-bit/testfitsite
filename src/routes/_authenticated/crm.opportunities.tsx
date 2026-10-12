@@ -16,6 +16,7 @@ import { boardQuery, contactLookupQuery, currentUserQuery, daysSince, fmtChicago
 import { useMoveStage } from "@/lib/crm/use-move-stage";
 import { Button } from "@/components/ui/button";
 import { StageMoveDialog } from "@/components/crm/StageMoveDialog";
+import { CallFromFitButton } from "@/components/crm/CallFromFitButton";
 
 export const Route = createFileRoute("/_authenticated/crm/opportunities")({
   head: () => ({
@@ -324,12 +325,8 @@ function Card({
         <span>Idle {idleLabel(opp)}</span>
         {opp.appointmentAt && <span className="text-primary">Appt {fmtChicago(opp.appointmentAt)}</span>}
       </div>
-      <div className="mt-2 flex items-center gap-1" onPointerDown={(e) => e.stopPropagation()}>
-        {opp.contact?.phone && (
-          <a href={`tel:${opp.contact.phone}`} title="Call contact" aria-label="Call" className="rounded p-1.5 hover:bg-secondary">
-            <Phone className="h-4 w-4" />
-          </a>
-        )}
+      <div className="mt-2 flex flex-wrap items-center gap-1" onPointerDown={(e) => e.stopPropagation()}>
+        <CallFromFitButton contactId={opp.contact_id} opportunityId={opp.id} phone={opp.contact?.phone} compact />
         <Button variant="ghost" onClick={() => onOpen(opp.contact_id, "conversation")} title="Open conversation" aria-label="Text" className="rounded p-1.5 hover:bg-secondary">
           <MessageSquare className="h-4 w-4" />
         </Button>
