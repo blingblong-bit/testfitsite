@@ -112,6 +112,20 @@ export function TourScheduler({ lead, appointments, sms = [], onChanged }: { lea
         </p>
       </div>
 
+      {!active && (
+        <div className="rounded-lg border border-border p-3 space-y-2">
+          <p className="font-semibold">Let them pick a time</p>
+          <p className="text-xs text-muted-foreground">Their personal link opens the tour picker with their info already filled in. Good for people who aren't replying.</p>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={copyLink}>Copy link</Button>
+            <Button disabled={busy || !canText} onClick={textLink}>Text them the link</Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {!canText ? (lead.sms_opted_out ? "Opted out of texts — copy the link instead." : "No phone on file — copy the link instead.") : lastLink ? `Link texted ${fmtChicago(lastLink.created_at)}` : "Link not texted yet."}
+          </p>
+        </div>
+      )}
+
       {pendingRequests.length > 0 && (
         <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
           <p className="font-semibold">Website request waiting</p>
