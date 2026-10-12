@@ -1,92 +1,67 @@
-# FIT CRM Redesign — Contacts, Opportunities, Tasks (GoHighLevel-style)
+# FIT CRM Redesign — Contacts, Opportunities, Tasks (revised)
 
-This is the approval plan your brief asked for. No data is migrated and no pages are replaced until you approve it.
+This plan includes all nine revisions. Nothing is migrated and no page is replaced until you approve it. The dry-run results below are real counts from today's data (73 records).
 
-## 1. Page structure
+## 1. Page structure (initial rollout)
 
-A new staff CRM area at `/crm`. It has a left sidebar and a compact top toolbar. Global search (name / phone / email) is always visible and ignores every filter.
+The new staff area lives at `/crm`. It has a left sidebar and a compact top toolbar. Global search (name / phone / email) is always visible and never applies any filter.
 
 ```text
 +-----------+--------------------------------------------------+
 | FIT CRM   |  [Global search........]   [+ New]   Jalen v     |
 |-----------+--------------------------------------------------+
-| Dashboard |                                                  |
-| Convers.  |            page content                          |
-| Opportun. |                                     +----------+ |
-| Contacts  |                                     | Contact  | |
-| Tasks     |                                     | drawer   | |
-| Appts     |                                     | (tabs)   | |
-| Reports   |                                     +----------+ |
+| Dashboard |                                     +----------+ |
+| Opportun. |            page content             | Contact  | |
+| Contacts  |                                     | drawer   | |
+| Tasks     |                                     | (tabs)   | |
+| Appts     |                                     +----------+ |
 | Settings  |                                                  |
 +-----------+--------------------------------------------------+
 ```
 
-- **Dashboard**: six counts (new and not yet contacted, overdue tasks, follow-ups due today, appointments today, trials ending in 48h or less, stalled 5+ days), with one "Needs Attention" queue below. No all-time stats.
-- **Conversations**: a 4-panel inbox for SMS, which is the only two-way channel connected today. Email sends from the system but replies are not received, so the inbox is SMS only. Left panel is Unread / Awaiting reply / Staff / Automated / All. Then the thread list, the open thread, and an expandable contact panel.
-- **Opportunities**: the FIT Sales pipeline as a drag-and-drop Kanban board, with a List view toggle. Cards are minimal: name, interest, source, owner, next task and due date, days since last activity, appointment date, and call / text / task / open icons.
-- **Contacts**: a table plus Smart Lists. Every active filter shows as a removable chip, with "Clear all".
+- **Dashboard**:
+  - Six counts: new leads not contacted, overdue tasks, follow-ups due today, appointments today, trials ending within 48h, and leads stalled 5+ days.
+  - One "Needs Attention" queue below the counts. No all-time stats.
+- **Opportunities**: the FIT Sales Kanban board with drag and drop, plus a List toggle.
+  - Cards are minimal: name, interest, source, owner, next task and due date, days since last activity, appointment date.
+  - Each card has call / text / task / open icons.
+- **Contacts**: a table plus Smart Lists. Active filters show as removable chips with "Clear all". The Migration Review Smart List is included.
 - **Tasks**: Overdue / Due Today / Upcoming / Completed.
-- **Appointments**: today and upcoming tours and assessments, plus the existing approval queue.
-- **Reports**: the current Business Analytics, monthly reporting, Missed Calls and Referrals move here unchanged.
-- **Settings**: owners and staff list, stall threshold (default 5 days), pipeline stage labels.
-- **Contact drawer** (opens from anywhere): Details, Conversation, Opportunity, Tasks, Appointments, Notes, Automation. From the drawer staff can call, text, add a note, create a task, book an appointment or change the stage.
-- **Mobile**: the sidebar collapses to a bottom bar. Call, text, open, move stage (via a select, not drag) and complete task all stay usable.
+- **Appointments**: today and upcoming, plus a link to the existing approval queue.
+- **Settings**: owners, stall threshold (default 5 days).
+- **Contact drawer**: tabs for Details, Conversation (existing SMS thread), Opportunities, Tasks, Appointments, Notes, Activity and Automation.
+  - Staff can call, text, add a note, create a task, book an appointment, or change the stage, all from the drawer.
+- **Mobile**: the sidebar becomes a bottom bar. On mobile, stages change with a select instead of drag.
 
-The old Lead Tracker stays at `/admin/leads` during rollout. Once you approve the new CRM, it is retired with a redirect.
+**These stay where they are for now:** Business Analytics, Referrals, Missed Calls, monthly reporting, the old Lead Tracker at `/admin/leads`, and every other existing page. The Conversations inbox, Reports, and moving pages come later, once the core CRM is verified.
 
-## 2. Data model (additive only; nothing renamed or dropped)
+## 2. Data model (additive only)
 
-- **Contact = the existing `leads` row**, keeping its id, history and attribution. New columns:
-  - `contact_type` (Prospect, Day-Pass Customer, Trial, Member, Former Member, Vendor, Spam)
-  - `tags text[]`
-  - `owner_id uuid`
-  - `comm_pref` (sms / call / email / no_sms)
-  - `needs_review boolean` plus `review_reason`
-- **New `opportunities`**:
-  - `contact_id`, `pipeline` (default "FIT Sales"), `stage`
-  - `interest` (Membership, Personal Training, Combat Sports, Classes, Day Pass, Free Week, Other)
-  - `status` (open / won / lost / nurture), `value numeric`, `owner_id`, `source`
-  - `next_task_id`, or `no_action_required boolean`
-  - `last_activity_at`, `appointment_id`, `won_lost_reason`, timestamps
-  - Rule: a contact has at most one open opportunity per interest.
-- **New `crm_tasks`**: `contact_id`, `opportunity_id`, `type` (call_new_lead, follow_up_tour, check_trial, ask_decision, reactivate, custom), `title`, `due_at`, `owner_id`, `completed_at`, `completed_by`.
-- **New `contact_activity`**: one row per form submission, stage change, note, task completion and owner change. Texts, appointments and alert logs are already stored, so they are read from their own tables, not copied.
-- **Attention is calculated, never stored.** It is the existing command-center logic, extended with: new lead not called, overdue task, appointment within 2h, trial ending, no activity for the stall threshold, and replied and awaiting a response. "High Priority" and "Sequence Paused" stop being categories. Paused shows only in the Automation tab.
-- All new tables are readable and writable by staff/admin only (has_role check), like `leads` today.
+**Contact = the existing `leads` row.** Its id, messages, notes, appointments and attribution all stay. New columns:
 
-## 3. Migration mapping (73 current records)
+- `contact_type`: Prospect, Member, Former Member, Vendor/Non-Sales, or Spam. Nothing else.
+- `original_source`: backfilled from the current first-touch source, and never overwritten.
+- `latest_source`: updated on each new form submission.
+- `tags text[]`: holds things like day-pass, free-week, trial, opted-out.
+- `owner_id`, `comm_pref`.
 
-Each current record maps to a contact type, a pipeline stage and an opportunity status:
+**New `opportunities` table:**
 
-| Current record | Count | Contact type | Pipeline stage | Status |
-|---|---|---|---|---|
-| Joined / became_member (customer_lead) | 9 | Member | Joined — Won | won |
-| existing_member (Joined) | 3 | Member | — no opportunity | — |
-| existing_member marked "Waiting on Response" | 1 | Member | — | flagged Missing Info |
-| Tour Completed, became_member = true | 1 | Member | Joined — Won | won (flag: status conflict) |
-| Tour Completed, has day-pass purchase | — | Day-Pass Customer | Decision & Follow-Up | open |
-| Tour Completed, no purchase | ~6 | Prospect | Decision & Follow-Up | open |
-| Tour Scheduled | 1 | Prospect | Tour or Assessment Booked | open |
-| Contacted, active sequence | 3 | Prospect | Attempting Contact | open |
-| Contacted / Waiting, has an inbound reply | — | Prospect | Engaged | open |
-| Contacted, no reply, paused | ~21 | Prospect | Attempting Contact | open (sequence state stays as automation info) |
-| Contacted / Waiting, sequence completed, no reply 14+ days | ~10 | Prospect | Long-Term Nurture | nurture |
-| Nurture | 0 | Prospect | Long-Term Nurture | nurture |
-| Opted out of SMS | 5 | Prospect, comm_pref = no_sms | stage kept by the rules above | open |
-| Undeliverable | 1 | Prospect | Attempting Contact | open + flagged Missing Info (bad phone) |
-| Active free week (referral record) | — | Trial | Trial or Day Pass Active | open |
-| Lost Lead (customer) | 2 | Prospect | Closed — Lost | lost (existing loss reasons kept) |
-| Spam / Lost | 3 | Spam | — no opportunity | — |
-| vendor_solicitation | 0 | Vendor | — | — |
-| New Lead, no outbound yet | 0 today | Prospect | New Lead | open |
+- Columns: `contact_id`, `pipeline` ("FIT Sales"), `stage`, `interest`, `status` (open / won / lost only), `value`, `owner_id`, `source`, `no_action_required`, `last_activity_at`, `appointment_id`, `won_lost_reason`, `closed_at`, timestamps.
+- Interest values: Membership, Personal Training, Combat Sports, Classes, Day Pass, Free Week, Other.
+- Long-Term Nurture and Migration Review are open stages, not statuses.
+- A database rule allows only one open opportunity per contact and interest: `UNIQUE (contact_id, interest) WHERE status = 'open'`. Historical won/lost opportunities can repeat without limit.
 
-- Engaged vs Attempting Contact is decided per record from the actual text history (any inbound reply = Engaged). Rows marked ~ are estimates; the dry run gives exact counts.
-- Interest comes from existing `interest` / `source` using the same rules as the alert. Unknown values become Other and are flagged.
-- Owner defaults to you (the owner account). The other staff account can be assigned in Settings.
-- Next action: open opportunities get one starter task based on their stage (e.g. Attempting Contact gets "Call new lead", due today). Otherwise they get "No action required" when automation is running normally.
-- **Dry run first:** before writing anything, I'll show you the exact count per stage plus the list of flagged records.
+**New `crm_tasks` table:** contact, opportunity, type, title, due date and time, owner, completed_at, completed_by.
 
-## 4. FIT Sales pipeline stages (exact)
+**New `contact_activity` table:**
+
+- One row per form submission (with that submission's own source and UTM values), stage change, note, task completion, owner change and automation fired.
+- It also records each stage-triggered automation with a unique key, so retrying an action never repeats it.
+
+Attention is calculated live, never stored. "Sequence Paused" appears only in the Automation tab and never decides pipeline placement. Only staff and admins can access the new tables.
+
+## 3. Pipeline stages (exact)
 
 1. New Lead
 2. Attempting Contact
@@ -98,38 +73,102 @@ Each current record maps to a contact type, a pipeline stage and an opportunity 
 8. Joined — Won
 9. Closed — Lost
 
-Dragging a card to Joined — Won runs the existing "Mark Joined" behavior, including the welcome text. Dragging to Closed — Lost asks for a reason. Booking a tour or redeeming a day pass or free week moves the stage forward automatically. Stages never move backward automatically.
+**Migration Review** is a holding column, not a sales stage. Records leave it only when staff resolve them.
 
-## 5. Automations that stay unchanged
+Moving to Joined — Won or Closed — Lost always asks for confirmation:
 
-- Instant "NEW / RE-ENGAGED FIT LEAD — CALL NOW" alerts and the per-submission duplicate protection.
-- Welcome text trigger, initial outreach by intent, 4-step follow-up drip, quiet hours and pacing, AI inbound replies and escalation, staff-takeover detection.
-- Tour reminders, day-pass check-in, free-week claims and rewards, missed-call text-back, delivery status tracking.
-- Lead and customer emails, first-touch attribution, Antaris member sync (read-only).
-- Contact, combat sports, schedule-a-visit and day-pass forms. Customers see nothing different.
+- **Joined — Won** lists exactly what will fire: member welcome text, stopping the follow-up sequence, setting the member flag and join date.
+- **Closed — Lost** requires a reason.
 
-Only additions: each form submission also writes a `contact_activity` row. A re-engaged submission creates or reopens the opportunity for that interest and marks it for attention. Antaris member sync also sets contact type to Member and wins any open opportunity.
+Every stage-triggered text or automation runs at most once per opportunity. Dragging back and forth or retrying never sends a duplicate.
 
-## 6. Conflicts and risks found
+## 4. Migration mapping rules
 
-- **Duplicates:** 2 phone numbers are shared by two records each. These are flagged for a manual merge, never auto-merged. A merge tool in the drawer moves messages, appointments and history to the kept record.
-- **Status conflicts:** 2 records are marked member but not "Joined" (including one existing member shown as "Waiting on Response"). They are flagged Missing Information.
-- **Asa McMellon** (an active member in Antaris, still a prospect in the tracker) and similar cases are fixed by the member-sync rule above.
-- **Only one connected channel:** inbound email and calls are not connected, so the inbox shows SMS plus logged missed calls.
-- **Owners:** only 2 staff logins exist. "Owner" works for anyone with a staff login; a third person needs an account first.
-- **Size:** this is a large rebuild. To limit risk it ships in phases, each verified before the next:
-  - A: database tables + dry run + migration
-  - B: Opportunities board + drawer
-  - C: Contacts + Smart Lists
-  - D: Tasks + Dashboard
-  - E: Conversations
-  - F: Reports / Settings move, retire the old page
-- **Reversible:** new columns and tables can be ignored or emptied without touching existing lead data. The old Lead Tracker keeps working until phase F.
+These rules are applied in order, using real message and activity history:
+
+1. Spam: contact type Spam, no opportunity.
+2. Vendor: contact type Vendor/Non-Sales, no opportunity.
+3. Any conflicting or ambiguous record goes to **Migration Review**: shared phone, member flag contradicting status, undeliverable phone.
+4. Existing member already marked Joined: contact type Member, no opportunity.
+5. Joined / became member: Member, Membership opportunity **won**.
+6. Lost Lead: **lost** opportunity, existing loss reasons kept.
+7. Future confirmed tour, or Tour Scheduled: Tour or Assessment Booked.
+8. Active free week: Trial or Day Pass Active, tagged free-week.
+9. Tour completed with activity in the last 14 days: Decision and Follow-Up.
+10. No response and no meaningful activity for 14+ days: Long-Term Nurture (open).
+11. Any inbound reply with recent activity: Engaged.
+12. Otherwise, recent unanswered outreach: Attempting Contact.
+
+"Activity" means the latest of: lead created, last contact, last response, any text in or out, and any appointment.
+
+**No tasks are created for migrated records.** Open opportunities start with "No action required". Attention still raises anyone who truly needs it now, such as unanswered replies or upcoming tours. Reactivating the 42 nurture leads will be planned separately, in batches.
+
+Day-pass purchases become a "day-pass" tag plus a Day Pass opportunity only when one is still active. Past purchases stay in the purchase history.
+
+## 5. Dry-run results (exact, today)
+
+| Stage | Records |
+|---|---|
+| Long-Term Nurture (open) | 42 |
+| Joined — Won | 8 |
+| Attempting Contact | 7 |
+| Migration Review | 4 |
+| Engaged | 3 |
+| Closed — Lost | 2 |
+| Tour or Assessment Booked | 1 |
+| Trial or Day Pass Active | 0 |
+| Decision and Follow-Up | 0 |
+| New Lead | 0 |
+| No opportunity — Member contact | 3 |
+| No opportunity — Spam contact | 3 |
+| **Total** | **73** |
+
+### Complete Migration Review list (4)
+
+| Name | Phone | Issue |
+|---|---|---|
+| Haleigh Woodcox | (931) 691-5415 | Joined member, but her phone number is shared with another record. Needs a merge decision. |
+| Toye Ray | (931) 434-4708 | Phone is undeliverable (carrier error 30003). Needs a working number. |
+| Seth Vaughn | (931) 434-9110 | Marked as a member, but status is "Tour Completed" and the follow-up sequence is still active. Confirm whether he joined. |
+| Luz Sanchez | (931) 434-4135 | Existing member, but marked "Waiting on Response" with a paused sequence. Confirm she's a member, not a prospect. |
+
+Note: earlier I counted two shared phone numbers. The second pair involves a spam record and is excluded, so only Haleigh's needs review.
+
+## 6. Ongoing rules (after launch)
+
+- **Returning form submission:**
+  - Logs a `contact_activity` row with that submission's source and UTMs, updates `latest_source` only, and sends the existing RE-ENGAGED alert.
+  - If an open opportunity with the same interest exists, it bumps its activity date and flags it for attention.
+  - Otherwise it creates a new opportunity.
+  - It never reopens or overwrites a won or lost opportunity. A previously lost contact gets a fresh opportunity.
+- **Antaris member sync:** may set the contact type to Member and mark an open **Membership** opportunity won. It never closes Personal Training, Combat Sports, Classes or other opportunities.
+
+## 7. Automations that stay unchanged
+
+- New/Re-engaged lead alerts and their per-submission duplicate protection.
+- Welcome text, intent-based first outreach, the follow-up drip, pacing and quiet hours.
+- AI replies and escalation, staff-takeover detection, tour reminders.
+- Day-pass check-in, free-week claims and rewards, missed-call text-back, delivery tracking.
+- Emails, attribution, Antaris read-only sync, and every customer-facing form.
+
+## 8. Risks
+
+- This is a large rebuild, so it ships in four verified phases:
+  - A: migration and dry run
+  - B: Opportunities board and contact drawer
+  - C: Contacts and Smart Lists
+  - D: Tasks and Dashboard
+- Only 2 staff logins exist, so owners are limited to those two until more accounts are added.
+- The data is reversible: new tables and columns can be emptied without touching existing lead data, and the old Lead Tracker keeps working throughout.
 
 ## Technical details
 
-- Routes: `src/routes/_authenticated/crm.tsx` (layout with sidebar + `<Outlet/>`), plus `crm.index.tsx`, `crm.conversations.tsx`, `crm.opportunities.tsx`, `crm.contacts.tsx`, `crm.tasks.tsx`, `crm.appointments.tsx`, `crm.reports.tsx`, `crm.settings.tsx`. The drawer is driven by a `?contact=<id>` search param so it works from any page.
-- Shared logic in `src/lib/crm/` (`stage-mapping.ts`, `attention.ts` extending `lead-command-center.ts`, `smart-lists.ts`) and server functions in `src/lib/crm/*.functions.ts` (requireSupabaseAuth + has_role).
-- Drag and drop with `@dnd-kit/core`. Board data comes from TanStack Query with optimistic stage moves.
-- Migration: one additive DDL migration (new tables/columns, grants, RLS). The data mapping runs as a staff-triggered server function with a dry-run mode that only reports, followed by the real run. It is idempotent: it skips contacts that already have opportunities.
-- Lead insert paths (`insert-or-update-lead`, appointments, day pass, referrals) gain a small `recordSubmission()` call next to the existing alert call. Nothing else changes in them.
+- **Migration (DDL):**
+  - Add the new columns to `leads`.
+  - Create `opportunities`, `crm_tasks` and `contact_activity` with GRANTs, RLS and `has_role` policies.
+  - Add the partial unique index `opportunities_one_open_per_interest ON (contact_id, interest) WHERE status='open'`.
+  - Add a unique `contact_activity(idempotency_key)`.
+- **Data mapping:** a staff-only server function `runCrmMigration({ dryRun })` that runs the rules in section 4 and is idempotent (it skips contacts that already have opportunities). The dry run returns the counts above. The real run is executed only after your approval.
+- **Routes:** a `src/routes/_authenticated/crm.tsx` layout plus `crm.index`, `crm.opportunities`, `crm.contacts`, `crm.tasks`, `crm.appointments` and `crm.settings`. The drawer opens from the `?contact=` URL parameter.
+- **Code locations:** shared logic in `src/lib/crm/` (stage-mapping, attention, smart-lists, automations with idempotency keys); server functions in `src/lib/crm/*.functions.ts`. Drag and drop uses `@dnd-kit/core`.
+- **Lead insert paths** (the four form handlers) get one `recordSubmission()` call next to the existing alert. The Antaris sync gets the Membership-only win rule.
