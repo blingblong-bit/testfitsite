@@ -3,7 +3,7 @@ import { strict as assert } from "node:assert";
 import { deriveOperations, hasHumanContact, isHumanMessage, taskView, type OperationsData, type CrmTask } from "./operations";
 
 const now = new Date("2026-10-12T15:25:00Z");
-const contact = { id: "one", name: "Person", email: "", phone: null, contact_type: "Prospect", lead_type: "customer_lead", status: null, review_flag: false, tags: [], created_at: "2026-10-01T15:00:00Z", became_member: false, last_contact_method: null, next_follow_up_date: null } as OperationsData["contacts"][number];
+const contact = { id: "one", name: "Person", email: "", phone: null, contact_type: "Prospect", lead_type: "customer_lead", status: null, review_flag: false, tags: [], created_at: "2026-10-01T15:00:00Z", became_member: false, last_contact_method: null, next_follow_up_date: null } as unknown as OperationsData["contacts"][number];
 const opportunity = { id: "opp", contact_id: "one", status: "open", stage: "New Lead", no_action_required: false, last_activity_at: "2026-10-01T15:00:00Z" } as OperationsData["opportunities"][number];
 const message = { lead_id: "one", direction: "outbound", from_ai: false, metadata: { kind: "initial_lead_sms" }, created_at: "2026-10-12T15:00:00Z", status: "sent", delivery_status: "delivered" };
 const base = (): OperationsData => ({ contacts: [contact], opportunities: [opportunity], tasks: [], appointments: [], referrals: [], messages: [], activity: [] });
