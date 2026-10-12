@@ -1,5 +1,5 @@
-import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { Kanban, ClipboardList, Home, Users } from "lucide-react";
+import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
+import { Kanban, ClipboardList, Home, Users, ListTodo, LayoutDashboard } from "lucide-react";
 import { ContactDrawer } from "@/components/crm/ContactDrawer";
 
 export const Route = createFileRoute("/_authenticated/crm")({
@@ -22,6 +22,8 @@ export const Route = createFileRoute("/_authenticated/crm")({
 });
 
 const nav = [
+  { to: "/crm/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/crm/tasks", label: "Tasks", icon: ListTodo },
   { to: "/crm/opportunities", label: "Opportunities", icon: Kanban },
   { to: "/crm/contacts", label: "Contacts", icon: Users },
 ] as const;
@@ -29,6 +31,7 @@ const nav = [
 function CrmLayout() {
   const { contact, tab } = Route.useSearch();
   const navigate = useNavigate();
+  const pathname = useLocation({ select: (location) => location.pathname });
   return (
     <div className="flex min-h-[80vh] flex-col md:flex-row">
       <aside className="md:w-56 shrink-0 border-b md:border-b-0 md:border-r border-border bg-card/40">
@@ -61,7 +64,7 @@ function CrmLayout() {
       <ContactDrawer
         contactId={contact ?? null}
         initialTab={tab}
-        onClose={() => navigate({ to: ".", search: (p: Record<string, unknown>) => ({ ...p, contact: undefined, tab: undefined }) })}
+        onClose={() => navigate({ to: pathname, search: (p: Record<string, unknown>) => ({ ...p, contact: undefined, tab: undefined }) })}
       />
     </div>
   );

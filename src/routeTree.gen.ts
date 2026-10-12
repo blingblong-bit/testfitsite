@@ -56,7 +56,9 @@ import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminReengagementRouteImport } from './routes/_authenticated/admin.reengagement'
 import { Route as AuthenticatedCrmIndexRouteImport } from './routes/_authenticated/crm.index'
 import { Route as AuthenticatedCrmContactsRouteImport } from './routes/_authenticated/crm.contacts'
+import { Route as AuthenticatedCrmDashboardRouteImport } from './routes/_authenticated/crm.dashboard'
 import { Route as AuthenticatedCrmOpportunitiesRouteImport } from './routes/_authenticated/crm.opportunities'
+import { Route as AuthenticatedCrmTasksRouteImport } from './routes/_authenticated/crm.tasks'
 import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as ApiPublicHooksProcessAppointmentRemindersRouteImport } from './routes/api/public/hooks/process-appointment-reminders'
 import { Route as ApiPublicHooksSnapshotMonthRouteImport } from './routes/api/public/hooks/snapshot-month'
@@ -312,12 +314,23 @@ const AuthenticatedCrmContactsRoute =
     path: '/contacts',
     getParentRoute: () => AuthenticatedCrmRoute,
   } as any)
+const AuthenticatedCrmDashboardRoute =
+  AuthenticatedCrmDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedCrmRoute,
+  } as any)
 const AuthenticatedCrmOpportunitiesRoute =
   AuthenticatedCrmOpportunitiesRouteImport.update({
     id: '/opportunities',
     path: '/opportunities',
     getParentRoute: () => AuthenticatedCrmRoute,
   } as any)
+const AuthenticatedCrmTasksRoute = AuthenticatedCrmTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthenticatedCrmRoute,
+} as any)
 const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
   id: '/lovable/email/events',
   path: '/lovable/email/events',
@@ -416,7 +429,9 @@ export interface FileRoutesByFullPath {
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
   '/crm/contacts': typeof AuthenticatedCrmContactsRoute
+  '/crm/dashboard': typeof AuthenticatedCrmDashboardRoute
   '/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
+  '/crm/tasks': typeof AuthenticatedCrmTasksRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/crm/': typeof AuthenticatedCrmIndexRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
@@ -470,7 +485,9 @@ export interface FileRoutesByTo {
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
   '/crm/contacts': typeof AuthenticatedCrmContactsRoute
+  '/crm/dashboard': typeof AuthenticatedCrmDashboardRoute
   '/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
+  '/crm/tasks': typeof AuthenticatedCrmTasksRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/crm': typeof AuthenticatedCrmIndexRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
@@ -530,7 +547,9 @@ export interface FileRoutesById {
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
   '/_authenticated/crm/contacts': typeof AuthenticatedCrmContactsRoute
+  '/_authenticated/crm/dashboard': typeof AuthenticatedCrmDashboardRoute
   '/_authenticated/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
+  '/_authenticated/crm/tasks': typeof AuthenticatedCrmTasksRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/_authenticated/crm/': typeof AuthenticatedCrmIndexRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
@@ -590,7 +609,9 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/reengagement'
     | '/crm/contacts'
+    | '/crm/dashboard'
     | '/crm/opportunities'
+    | '/crm/tasks'
     | '/lovable/email/events'
     | '/crm/'
     | '/api/public/hooks/process-appointment-reminders'
@@ -644,7 +665,9 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/reengagement'
     | '/crm/contacts'
+    | '/crm/dashboard'
     | '/crm/opportunities'
+    | '/crm/tasks'
     | '/lovable/email/events'
     | '/crm'
     | '/api/public/hooks/process-appointment-reminders'
@@ -703,7 +726,9 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/leads'
     | '/_authenticated/admin/reengagement'
     | '/_authenticated/crm/contacts'
+    | '/_authenticated/crm/dashboard'
     | '/_authenticated/crm/opportunities'
+    | '/_authenticated/crm/tasks'
     | '/lovable/email/events'
     | '/_authenticated/crm/'
     | '/api/public/hooks/process-appointment-reminders'
@@ -1085,11 +1110,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCrmContactsRouteImport
       parentRoute: typeof AuthenticatedCrmRoute
     }
+    '/_authenticated/crm/dashboard': {
+      id: '/_authenticated/crm/dashboard'
+      path: '/dashboard'
+      fullPath: '/crm/dashboard'
+      preLoaderRoute: typeof AuthenticatedCrmDashboardRouteImport
+      parentRoute: typeof AuthenticatedCrmRoute
+    }
     '/_authenticated/crm/opportunities': {
       id: '/_authenticated/crm/opportunities'
       path: '/opportunities'
       fullPath: '/crm/opportunities'
       preLoaderRoute: typeof AuthenticatedCrmOpportunitiesRouteImport
+      parentRoute: typeof AuthenticatedCrmRoute
+    }
+    '/_authenticated/crm/tasks': {
+      id: '/_authenticated/crm/tasks'
+      path: '/tasks'
+      fullPath: '/crm/tasks'
+      preLoaderRoute: typeof AuthenticatedCrmTasksRouteImport
       parentRoute: typeof AuthenticatedCrmRoute
     }
     '/lovable/email/events': {
@@ -1160,13 +1199,17 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedCrmRouteChildren {
   AuthenticatedCrmContactsRoute: typeof AuthenticatedCrmContactsRoute
+  AuthenticatedCrmDashboardRoute: typeof AuthenticatedCrmDashboardRoute
   AuthenticatedCrmOpportunitiesRoute: typeof AuthenticatedCrmOpportunitiesRoute
+  AuthenticatedCrmTasksRoute: typeof AuthenticatedCrmTasksRoute
   AuthenticatedCrmIndexRoute: typeof AuthenticatedCrmIndexRoute
 }
 
 const AuthenticatedCrmRouteChildren: AuthenticatedCrmRouteChildren = {
   AuthenticatedCrmContactsRoute: AuthenticatedCrmContactsRoute,
+  AuthenticatedCrmDashboardRoute: AuthenticatedCrmDashboardRoute,
   AuthenticatedCrmOpportunitiesRoute: AuthenticatedCrmOpportunitiesRoute,
+  AuthenticatedCrmTasksRoute: AuthenticatedCrmTasksRoute,
   AuthenticatedCrmIndexRoute: AuthenticatedCrmIndexRoute,
 }
 

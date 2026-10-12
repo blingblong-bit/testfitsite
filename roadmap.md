@@ -9,5 +9,5 @@
 - [x] Phase B — Opportunities board + contact drawer
 - [x] Phase B usability review — desktop/phone searches, drawers, filters, stage overview, held review contacts; no customer moves or texts
 - [x] Phase C — Contacts + Smart Lists; global search, removable chips, Clear all, existing drawer verified on desktop/440px/375px; 77 contacts, 4 held, 63 opportunities, zero data changes or texts
-- [ ] Phase D — Tasks + Dashboard
+- [x] Phase D — Tasks + daily Dashboard; six operational filters, deduplicated attention, manual task create/edit/complete/reopen and contact/opportunity links verified on desktop/440px/375px; QA task removed, 77 contacts/42 nurture/4 held unchanged, no texts
 - [ ] Later — Conversations inbox, page relocation

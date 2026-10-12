@@ -9,3 +9,5 @@
 - CRM migrations are versioned (`crm_migration_snapshot` + `crm_migration_ledger`) and resume only pending/failed rows. Why: safe recovery from partial failures.
 - CRM contact lookup includes held contacts independently of opportunity queries, while pipeline results exclude review-flagged contacts. Why: staff can review a person without creating or displaying a sales attempt.
 - Contacts and Smart Lists share a paginated, read-only directory query; global search clears list/filter context and searches all contacts, including test/spam. Why: no contact can disappear behind sales filters or query row limits.
+- Daily CRM operations are derived read-only from paginated sources; staff task actions write only crm_tasks and never seed tasks on load. Why: operational views must not change sales history or trigger customer automation.
+- Human contact requires an explicit staff/manual message, staff contact activity, or legacy non-text staff method; automated SMS timestamps are not evidence. Why: automatic outreach must not hide leads needing human follow-up.
