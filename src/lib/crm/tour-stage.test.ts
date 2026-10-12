@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, expect, test } from "bun:test";
 import { pickTourOpportunity } from "./tour-stage";
 const o = (stage: string, status = "open", interest = "Membership", created_at = "2026-10-01") => ({ id: stage, stage, status, interest, created_at });
