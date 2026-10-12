@@ -55,6 +55,7 @@ import { Route as AuthenticatedAdminFreeWeekArrivalsRouteImport } from './routes
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 import { Route as AuthenticatedAdminReengagementRouteImport } from './routes/_authenticated/admin.reengagement'
 import { Route as AuthenticatedCrmIndexRouteImport } from './routes/_authenticated/crm.index'
+import { Route as AuthenticatedCrmContactsRouteImport } from './routes/_authenticated/crm.contacts'
 import { Route as AuthenticatedCrmOpportunitiesRouteImport } from './routes/_authenticated/crm.opportunities'
 import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as ApiPublicHooksProcessAppointmentRemindersRouteImport } from './routes/api/public/hooks/process-appointment-reminders'
@@ -305,6 +306,12 @@ const AuthenticatedCrmIndexRoute = AuthenticatedCrmIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedCrmRoute,
 } as any)
+const AuthenticatedCrmContactsRoute =
+  AuthenticatedCrmContactsRouteImport.update({
+    id: '/contacts',
+    path: '/contacts',
+    getParentRoute: () => AuthenticatedCrmRoute,
+  } as any)
 const AuthenticatedCrmOpportunitiesRoute =
   AuthenticatedCrmOpportunitiesRouteImport.update({
     id: '/opportunities',
@@ -408,6 +415,7 @@ export interface FileRoutesByFullPath {
   '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
+  '/crm/contacts': typeof AuthenticatedCrmContactsRoute
   '/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/crm/': typeof AuthenticatedCrmIndexRoute
@@ -461,6 +469,7 @@ export interface FileRoutesByTo {
   '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
+  '/crm/contacts': typeof AuthenticatedCrmContactsRoute
   '/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/crm': typeof AuthenticatedCrmIndexRoute
@@ -520,6 +529,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
+  '/_authenticated/crm/contacts': typeof AuthenticatedCrmContactsRoute
   '/_authenticated/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/_authenticated/crm/': typeof AuthenticatedCrmIndexRoute
@@ -579,6 +589,7 @@ export interface FileRouteTypes {
     | '/admin/free-week-arrivals'
     | '/admin/leads'
     | '/admin/reengagement'
+    | '/crm/contacts'
     | '/crm/opportunities'
     | '/lovable/email/events'
     | '/crm/'
@@ -632,6 +643,7 @@ export interface FileRouteTypes {
     | '/admin/free-week-arrivals'
     | '/admin/leads'
     | '/admin/reengagement'
+    | '/crm/contacts'
     | '/crm/opportunities'
     | '/lovable/email/events'
     | '/crm'
@@ -690,6 +702,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/free-week-arrivals'
     | '/_authenticated/admin/leads'
     | '/_authenticated/admin/reengagement'
+    | '/_authenticated/crm/contacts'
     | '/_authenticated/crm/opportunities'
     | '/lovable/email/events'
     | '/_authenticated/crm/'
@@ -1065,6 +1078,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCrmIndexRouteImport
       parentRoute: typeof AuthenticatedCrmRoute
     }
+    '/_authenticated/crm/contacts': {
+      id: '/_authenticated/crm/contacts'
+      path: '/contacts'
+      fullPath: '/crm/contacts'
+      preLoaderRoute: typeof AuthenticatedCrmContactsRouteImport
+      parentRoute: typeof AuthenticatedCrmRoute
+    }
     '/_authenticated/crm/opportunities': {
       id: '/_authenticated/crm/opportunities'
       path: '/opportunities'
@@ -1139,11 +1159,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedCrmRouteChildren {
+  AuthenticatedCrmContactsRoute: typeof AuthenticatedCrmContactsRoute
   AuthenticatedCrmOpportunitiesRoute: typeof AuthenticatedCrmOpportunitiesRoute
   AuthenticatedCrmIndexRoute: typeof AuthenticatedCrmIndexRoute
 }
 
 const AuthenticatedCrmRouteChildren: AuthenticatedCrmRouteChildren = {
+  AuthenticatedCrmContactsRoute: AuthenticatedCrmContactsRoute,
   AuthenticatedCrmOpportunitiesRoute: AuthenticatedCrmOpportunitiesRoute,
   AuthenticatedCrmIndexRoute: AuthenticatedCrmIndexRoute,
 }
