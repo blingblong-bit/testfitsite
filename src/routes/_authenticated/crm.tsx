@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { Kanban, ClipboardList, Home, Users } from "lucide-react";
+import { Kanban, ClipboardList, Home, Users, ListTodo, LayoutDashboard } from "lucide-react";
 import { ContactDrawer } from "@/components/crm/ContactDrawer";
 
 export const Route = createFileRoute("/_authenticated/crm")({
@@ -22,6 +22,8 @@ export const Route = createFileRoute("/_authenticated/crm")({
 });
 
 const nav = [
+  { to: "/crm/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/crm/tasks", label: "Tasks", icon: ListTodo },
   { to: "/crm/opportunities", label: "Opportunities", icon: Kanban },
   { to: "/crm/contacts", label: "Contacts", icon: Users },
 ] as const;
