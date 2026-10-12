@@ -12,7 +12,7 @@ export type BoardOpportunity = {
   last_activity_at: string | null;
   no_action_required: boolean;
   created_at: string;
-  contact: { name: string; phone: string | null; email: string; review_flag: boolean; contact_type: string | null } | null;
+  contact: { name: string; phone: string | null; email: string; review_flag: boolean; contact_type: string | null; last_response_at: string | null; last_contacted_at: string | null } | null;
   nextTask: { title: string; due_at: string | null } | null;
   appointmentAt: string | null;
 };
@@ -29,7 +29,7 @@ export const boardQuery = queryOptions({
     const { data: opps, error } = await supabase
       .from("opportunities")
       .select(
-        "id, contact_id, stage, status, interest, source, owner_id, last_activity_at, no_action_required, created_at, contact:leads!opportunities_contact_id_fkey(name, phone, email, review_flag, contact_type)",
+        "id, contact_id, stage, status, interest, source, owner_id, last_activity_at, no_action_required, created_at, contact:leads!opportunities_contact_id_fkey(name, phone, email, review_flag, contact_type, last_response_at, last_contacted_at)",
       )
       .order("last_activity_at", { ascending: false, nullsFirst: false })
       .limit(1000);
@@ -132,4 +132,20 @@ export function fmtChicago(iso: string | null, withTime = true): string {
     day: "numeric",
     ...(withTime ? { hour: "numeric", minute: "2-digit" } : {}),
   });
+}
+
+/** True when the contact's latest reply is newer than our latest contact with them. */
+export function hasUnansweredReply(o: BoardOpportunity): boolean {
+  const r = o.contact?.last_response_at;
+  if (!r || o.status !== "open") return false;
+  const c = o.contact?.last_contacted_at;
+  return !c || new Date(r).getTime() > new Date(c).getTime();
+}
+
+/** Unanswered replies first (newest reply on top), then the original order. */
+export function sortByReplies(items: BoardOpportunity[]): BoardOpportunity[] {
+  return items
+    .map((o, i) => ({ o, i, r: hasUnansweredReply(o) ? new Date(o.contact!.last_response_at!).getTime() : -1 }))
+    .sort((a, b) => (b.r - a.r) || (a.i - b.i))
+    .map((x) => x.o);
 }

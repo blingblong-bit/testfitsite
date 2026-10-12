@@ -12,7 +12,7 @@ import {
 } from "@dnd-kit/core";
 import { Phone, MessageSquare, ListTodo, ExternalLink, Search, X, LayoutGrid, List, GripVertical, Flag } from "lucide-react";
 import { PIPELINE_STAGES, type PipelineStage } from "@/lib/crm/opportunities.functions";
-import { boardQuery, contactLookupQuery, currentUserQuery, daysSince, fmtChicago, type BoardOpportunity } from "@/lib/crm/queries";
+import { boardQuery, contactLookupQuery, currentUserQuery, daysSince, fmtChicago, hasUnansweredReply, sortByReplies, type BoardOpportunity } from "@/lib/crm/queries";
 import { useMoveStage } from "@/lib/crm/use-move-stage";
 import { Button } from "@/components/ui/button";
 import { StageMoveDialog } from "@/components/crm/StageMoveDialog";
@@ -69,9 +69,10 @@ function OpportunitiesPage() {
       if (stageFilter && o.stage !== stageFilter) return false;
       if (mine && o.owner_id !== me) return false;
       return true;
-    });
+    }).filter(Boolean);
   }, [data, q, interest, stageFilter, mine, me]);
 
+  const sorted = useMemo(() => sortByReplies(filtered), [filtered]);
   const held = contacts.filter((c) => c.review_flag);
   const needle = q.trim().toLowerCase();
   const digits = needle.replace(/\D/g, "");
@@ -177,7 +178,7 @@ function OpportunitiesPage() {
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <div className="mt-5 flex items-start gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
             {PIPELINE_STAGES.filter((stage) => !stageFilter || stage === stageFilter).map((stage) => (
-              <Column key={stage} stage={stage} items={filtered.filter((o) => o.stage === stage)} me={me ?? null} onOpen={open} onMove={requestMove} />
+              <Column key={stage} stage={stage} items={sorted.filter((o) => o.stage === stage)} me={me ?? null} onOpen={open} onMove={requestMove} />
             ))}
           </div>
         </DndContext>
@@ -187,9 +188,9 @@ function OpportunitiesPage() {
         <div className="mt-5 rounded-lg border border-border">
           <div className="sm:hidden divide-y divide-border">
             {!filtered.length && <p className="p-4 text-sm text-muted-foreground">No opportunities match these filters.</p>}
-            {filtered.map((o) => <Button key={o.id} variant="ghost" onClick={() => open(o.contact_id)} className="h-auto w-full justify-start whitespace-normal px-4 py-3 text-left">
+            {sorted.map((o) => <Button key={o.id} variant="ghost" onClick={() => open(o.contact_id)} className="h-auto w-full justify-start whitespace-normal px-4 py-3 text-left">
               <span className="w-full min-w-0 space-y-1">
-                <span className="block font-medium">{o.contact?.name ?? "—"}</span>
+                <span className="flex items-center gap-2 font-medium">{hasUnansweredReply(o) && <ReplyDot opp={o} />}{o.contact?.name ?? "—"}</span>
                 <span className="block text-xs text-muted-foreground">{o.contact?.contact_type ?? "Unclassified"} · {o.interest}</span>
                 <span className="block text-xs text-primary">{o.stage}</span>
                 <span className="block text-xs">{taskLabel(o)}</span>
@@ -211,11 +212,11 @@ function OpportunitiesPage() {
             </thead>
             <tbody>
               {!filtered.length && <tr><td colSpan={7} className="p-6 text-muted-foreground">No opportunities match these filters.</td></tr>}
-              {filtered.map((o) => (
+              {sorted.map((o) => (
                 <tr key={o.id} className="border-t border-border hover:bg-secondary/40">
                   <td className="p-3">
                     <Button variant="ghost" onClick={() => open(o.contact_id)} className="font-medium hover:text-primary">
-                      {o.contact?.name ?? "—"}
+                      {hasUnansweredReply(o) && <ReplyDot opp={o} />}{o.contact?.name ?? "—"}
                     </Button>
                   </td>
                   <td className="p-3">{o.interest}</td>
@@ -309,12 +310,14 @@ function Card({
     <div
       ref={setNodeRef}
       style={style}
-      className={`rounded-md border border-border bg-background p-3 text-sm ${closed ? "opacity-80" : "cursor-grab"} ${isDragging ? "z-50 shadow-lg" : ""}`}
+      className={`relative rounded-md border ${hasUnansweredReply(opp) ? "border-destructive/60" : "border-border"} bg-background p-3 text-sm ${closed ? "opacity-80" : "cursor-grab"} ${isDragging ? "z-50 shadow-lg" : ""}`}
     >
+      {hasUnansweredReply(opp) && <span className="absolute -top-1.5 -right-1.5"><ReplyDot opp={opp} /></span>}
       {!closed && <Button variant="ghost" size="icon" {...listeners} {...attributes} title="Drag to move stage" aria-label={`Move ${opp.contact?.name ?? "opportunity"}`} className="float-right h-7 w-7 cursor-grab touch-none"><GripVertical /></Button>}
       <Button variant="ghost" onClick={() => onOpen(opp.contact_id)} className="h-auto min-h-8 max-w-full px-0 py-1 whitespace-normal break-words text-left justify-start font-medium hover:text-primary">
         {opp.contact?.name ?? "—"}
       </Button>
+      {hasUnansweredReply(opp) && <p className="text-xs font-medium text-destructive">Replied {fmtChicago(opp.contact!.last_response_at!)} · needs a response</p>}
       <p className="mt-1 text-xs text-muted-foreground">{opp.contact?.contact_type ?? "Unclassified"}{opp.contact?.phone ? ` · ${opp.contact.phone}` : ""}</p>
       <p className="mt-1 text-xs text-muted-foreground">
         {opp.interest} · {opp.source ?? "—"}
@@ -367,5 +370,15 @@ function StageSelect({
         <option key={s}>{s}</option>
       ))}
     </select>
+  );
+}
+
+function ReplyDot({ opp }: { opp: BoardOpportunity }) {
+  const when = opp.contact?.last_response_at ? fmtChicago(opp.contact.last_response_at) : "";
+  return (
+    <span role="img" aria-label={`Replied ${when} — needs a response`} title={`Replied ${when} — needs a response`} className="relative inline-flex h-3 w-3 shrink-0">
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-60" />
+      <span className="relative inline-flex h-3 w-3 rounded-full bg-destructive ring-2 ring-background" />
+    </span>
   );
 }
