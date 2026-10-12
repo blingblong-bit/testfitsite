@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ClipboardList, LayoutDashboard, LogOut, CalendarCheck, Receipt, Newspaper, CalendarClock, Ticket, MessageSquare, BookOpen } from "lucide-react";
+import { Users, LayoutDashboard, LogOut, CalendarCheck, Receipt, Newspaper, CalendarClock, Ticket, MessageSquare, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -106,21 +106,21 @@ function StaffHome() {
         </Link>
 
         <Link
-          to="/admin/leads"
+          to="/crm"
           className="group rounded-2xl border border-border bg-card p-8 flex flex-col justify-between min-h-[240px] hover:border-primary transition-colors"
         >
           <div>
             <div className="h-12 w-12 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
-              <ClipboardList className="h-6 w-6" />
+              <Users className="h-6 w-6" />
             </div>
-            <h2 className="mt-5 text-2xl">Lead Tracker</h2>
+            <h2 className="mt-5 text-2xl">CRM</h2>
             <p className="mt-3 text-sm text-muted-foreground max-w-sm">
-              Private admin dashboard. Website leads, day passes, referrals, and
-              membership interest.
+              Sales workspace. Daily dashboard, pipeline, contacts, and tasks.
+              The lead tracker lives here now.
             </p>
           </div>
           <span className="mt-8 text-xs uppercase tracking-widest text-primary group-hover:translate-x-1 transition-transform">
-            Open Lead Tracker →
+            Open CRM →
           </span>
         </Link>
 
