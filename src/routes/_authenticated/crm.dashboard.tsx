@@ -43,7 +43,7 @@ function DashboardPage() {
         {!items.length && <p className="py-10 text-sm text-muted-foreground">{selected ? "No contacts need this action." : "Nothing needs attention right now."}</p>}
         {items.map((item) => {
           const config = ATTENTION_REASONS.find((r) => r.id === item.reason);
-          return <Button key={item.contact.id} variant="ghost" aria-label={`Open ${item.contact.name}: ${config?.instruction}`} onClick={() => navigate({ to: "/crm/dashboard", search: { reason, contact: item.contact.id, tab: config?.tab } })} className="h-auto min-h-24 w-full justify-between whitespace-normal gap-3 px-1 py-4 text-left">
+          return <Button key={item.contact.id} variant="ghost" aria-label={`Open ${item.contact.name}: ${config?.instruction}`} onClick={() => navigate({ to: "/crm/dashboard", search: { reason, contact: item.contact.id, tab: config?.tab } })} className="h-auto min-h-24 w-full justify-between whitespace-normal gap-3 px-1 py-4 text-left hover:bg-secondary hover:text-foreground">
             <span className="min-w-0 flex-1"><span className="block break-words font-medium">{item.contact.name}</span><span className={`mt-1 block text-sm ${item.reason === "overdue" ? "text-destructive" : "text-primary"}`}>{config?.instruction}</span><span className="mt-1 block text-xs text-muted-foreground break-words">{item.detail} · {fmtChicago(item.at)}</span></span><ChevronRight className="text-muted-foreground" />
           </Button>;
         })}
