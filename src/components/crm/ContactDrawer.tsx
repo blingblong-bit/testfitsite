@@ -125,7 +125,6 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
         )}
         <div className="mt-3 flex flex-wrap gap-2">
           <CallFromFitButton contactId={lead.id} phone={lead.phone} />
-          {false && <Phone />}
           <Button variant="outline" onClick={() => setTab("conversation")} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-secondary">
             <MessageSquare className="h-4 w-4" /> Text
           </Button>

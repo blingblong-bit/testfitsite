@@ -327,7 +327,6 @@ function Card({
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-1" onPointerDown={(e) => e.stopPropagation()}>
         <CallFromFitButton contactId={opp.contact_id} opportunityId={opp.id} phone={opp.contact?.phone} compact />
-        {false && <Phone />}
         <Button variant="ghost" onClick={() => onOpen(opp.contact_id, "conversation")} title="Open conversation" aria-label="Text" className="rounded p-1.5 hover:bg-secondary">
           <MessageSquare className="h-4 w-4" />
         </Button>
