@@ -113,5 +113,10 @@ The 4 flagged records:
 ## Technical details
 
 - **One additive DDL migration:** new columns on `leads`; the tables `opportunities`, `crm_tasks`, `contact_activity`, `crm_migration_snapshot` and `crm_migration_ledger`. This includes GRANTs, RLS with `has_role` staff/admin, the partial unique index, the stage/status sync trigger, and a unique activity idempotency key.
-- **Migration logic:** a SQL function `crm_migrate_v1(dry_run boolean)` (security definer; execute revoked from anon/authenticated) runs the snapshot, then the ledger, then a per-lead subtransaction for each record. It is run once as dry run and once for real through a privileged migration step, then reconciled with read queries.
+- **Security:** `crm_migration_snapshot` and `crm_migration_ledger` can be read only by admins (via `has_role(auth.uid(),'admin')`), not staff. All writes go through the service role only.
+- **Migration logic:** a SQL function `public.crm_migrate_v1(dry_run boolean)`.
+  - It is SECURITY DEFINER with `SET search_path = pg_catalog, public`, and every table reference is schema-qualified.
+  - `REVOKE EXECUTE ... FROM PUBLIC, anon, authenticated`.
+  - It runs the snapshot, then the ledger, then a per-lead subtransaction for each record.
+  - It is run once as a dry run and once for real through a privileged migration step, then reconciled with read queries.
 - **Phase B:** `src/routes/_authenticated/crm.tsx` layout, `crm.index.tsx`, `crm.opportunities.tsx` (Kanban with `@dnd-kit/core` plus a List toggle), and the drawer opened via `?contact=`. Server functions live in `src/lib/crm/*.functions.ts`.
