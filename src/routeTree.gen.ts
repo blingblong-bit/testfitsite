@@ -33,6 +33,7 @@ import { Route as SmsConsentRouteImport } from './routes/sms-consent'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
 import { Route as AuthenticatedFrontdeskRouteImport } from './routes/_authenticated/frontdesk'
 import { Route as AuthenticatedStaffHomeRouteImport } from './routes/_authenticated/staff-home'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
@@ -53,6 +54,7 @@ import { Route as AuthenticatedAdminFollowupCatchupRouteImport } from './routes/
 import { Route as AuthenticatedAdminFreeWeekArrivalsRouteImport } from './routes/_authenticated/admin.free-week-arrivals'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 import { Route as AuthenticatedAdminReengagementRouteImport } from './routes/_authenticated/admin.reengagement'
+import { Route as AuthenticatedCrmIndexRouteImport } from './routes/_authenticated/crm.index'
 import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as ApiPublicHooksProcessAppointmentRemindersRouteImport } from './routes/api/public/hooks/process-appointment-reminders'
 import { Route as ApiPublicHooksSnapshotMonthRouteImport } from './routes/api/public/hooks/snapshot-month'
@@ -184,6 +186,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedCrmRoute = AuthenticatedCrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedFrontdeskRoute = AuthenticatedFrontdeskRouteImport.update({
   id: '/frontdesk',
   path: '/frontdesk',
@@ -292,6 +299,11 @@ const AuthenticatedAdminReengagementRoute =
     path: '/admin/reengagement',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCrmIndexRoute = AuthenticatedCrmIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedCrmRoute,
+} as any)
 const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
   id: '/lovable/email/events',
   path: '/lovable/email/events',
@@ -368,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/crm': typeof AuthenticatedCrmRouteWithChildren
   '/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
@@ -389,6 +402,7 @@ export interface FileRoutesByFullPath {
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
+  '/crm/': typeof AuthenticatedCrmIndexRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
@@ -440,6 +454,7 @@ export interface FileRoutesByTo {
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
+  '/crm': typeof AuthenticatedCrmIndexRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
@@ -475,6 +490,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/_authenticated/crm': typeof AuthenticatedCrmRouteWithChildren
   '/_authenticated/frontdesk': typeof AuthenticatedFrontdeskRoute
   '/_authenticated/staff-home': typeof AuthenticatedStaffHomeRoute
   '/admin/login': typeof AdminLoginRoute
@@ -496,6 +512,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
+  '/_authenticated/crm/': typeof AuthenticatedCrmIndexRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
@@ -531,6 +548,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/crm'
     | '/frontdesk'
     | '/staff-home'
     | '/admin/login'
@@ -552,6 +570,7 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/reengagement'
     | '/lovable/email/events'
+    | '/crm/'
     | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
@@ -603,6 +622,7 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/reengagement'
     | '/lovable/email/events'
+    | '/crm'
     | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
@@ -637,6 +657,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/_authenticated/crm'
     | '/_authenticated/frontdesk'
     | '/_authenticated/staff-home'
     | '/admin/login'
@@ -658,6 +679,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/leads'
     | '/_authenticated/admin/reengagement'
     | '/lovable/email/events'
+    | '/_authenticated/crm/'
     | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
     | '/api/public/webhooks/calendly'
@@ -876,6 +898,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/crm': {
+      id: '/_authenticated/crm'
+      path: '/crm'
+      fullPath: '/crm'
+      preLoaderRoute: typeof AuthenticatedCrmRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/frontdesk': {
       id: '/_authenticated/frontdesk'
       path: '/frontdesk'
@@ -1016,6 +1045,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminReengagementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/crm/': {
+      id: '/_authenticated/crm/'
+      path: '/'
+      fullPath: '/crm/'
+      preLoaderRoute: typeof AuthenticatedCrmIndexRouteImport
+      parentRoute: typeof AuthenticatedCrmRoute
+    }
     '/lovable/email/events': {
       id: '/lovable/email/events'
       path: '/lovable/email/events'
@@ -1082,7 +1118,19 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedCrmRouteChildren {
+  AuthenticatedCrmIndexRoute: typeof AuthenticatedCrmIndexRoute
+}
+
+const AuthenticatedCrmRouteChildren: AuthenticatedCrmRouteChildren = {
+  AuthenticatedCrmIndexRoute: AuthenticatedCrmIndexRoute,
+}
+
+const AuthenticatedCrmRouteWithChildren =
+  AuthenticatedCrmRoute._addFileChildren(AuthenticatedCrmRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCrmRoute: typeof AuthenticatedCrmRouteWithChildren
   AuthenticatedFrontdeskRoute: typeof AuthenticatedFrontdeskRoute
   AuthenticatedStaffHomeRoute: typeof AuthenticatedStaffHomeRoute
   AuthenticatedAdminAiReplyRulesRoute: typeof AuthenticatedAdminAiReplyRulesRoute
@@ -1097,6 +1145,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCrmRoute: AuthenticatedCrmRouteWithChildren,
   AuthenticatedFrontdeskRoute: AuthenticatedFrontdeskRoute,
   AuthenticatedStaffHomeRoute: AuthenticatedStaffHomeRoute,
   AuthenticatedAdminAiReplyRulesRoute: AuthenticatedAdminAiReplyRulesRoute,
