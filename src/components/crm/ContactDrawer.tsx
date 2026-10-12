@@ -270,7 +270,7 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
         </TabsContent>
 
         <TabsContent value="appointments" className="text-sm">
-          <TourScheduler lead={lead} appointments={appointments} onChanged={refresh} />
+          <TourScheduler lead={lead} appointments={appointments} sms={data.sms} onChanged={refresh} />
         </TabsContent>
 
         <TabsContent value="notes" className="space-y-3">

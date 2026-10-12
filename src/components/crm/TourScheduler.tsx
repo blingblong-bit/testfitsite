@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { syncStaffTourAppointment } from "@/lib/appointments.functions";
+import { syncStaffTourAppointment, sendScheduleLink } from "@/lib/appointments.functions";
 import { chicagoWallToUTC } from "@/lib/appointment-availability";
 import { fmtChicago } from "@/lib/crm/queries";
 
@@ -42,11 +42,31 @@ function fromChicagoInput(v: string): string | null {
   return chicagoWallToUTC(+m[1], +m[2], +m[3], +m[4], +m[5]);
 }
 
-export function TourScheduler({ lead, appointments, onChanged }: { lead: Lead; appointments: Appt[]; onChanged: () => void }) {
+type Sms = { created_at: string; metadata: unknown };
+
+export function TourScheduler({ lead, appointments, sms = [], onChanged }: { lead: Lead & { sms_opted_out?: boolean | null }; appointments: Appt[]; sms?: Sms[]; onChanged: () => void }) {
   const sync = useServerFn(syncStaffTourAppointment);
+  const sendLink = useServerFn(sendScheduleLink);
   const active = !!lead.tour_scheduled && !lead.tour_completed && !!lead.tour_date;
   const [when, setWhen] = useState(toChicagoInput(active ? lead.tour_date : null));
   const [busy, setBusy] = useState(false);
+  const link = `https://fitbeyondplus.com/schedule-visit?lead=${lead.id}`;
+  const lastLink = [...sms].reverse().find((m) => (m.metadata as { kind?: string } | null)?.kind === "schedule_link");
+  const canText = !!lead.phone && !lead.sms_opted_out;
+
+  async function copyLink() {
+    try { await navigator.clipboard.writeText(link); toast.success("Scheduling link copied"); }
+    catch { toast.message(link); }
+  }
+  async function textLink() {
+    if (!confirm("Text this person their personal scheduling link? Their automated texts will pause.")) return;
+    setBusy(true);
+    const r = await sendLink({ data: { lead_id: lead.id } });
+    setBusy(false);
+    if (r.ok) toast.success(r.test_mode ? "Test contact — logged, not texted" : "Scheduling link texted");
+    else toast.error(r.error === "already_sent" ? "Already sent a moment ago" : r.error === "forbidden" ? "Staff only" : `Not sent: ${r.error}`);
+    onChanged();
+  }
 
   async function save(patch: Partial<Lead>, ok: string) {
     setBusy(true);
