@@ -183,7 +183,19 @@ function OpportunitiesPage() {
       )}
 
       {!isLoading && view === "list" && (
-        <div className="mt-5 overflow-x-auto rounded-lg border border-border">
+        <div className="mt-5 rounded-lg border border-border">
+          <div className="sm:hidden divide-y divide-border">
+            {!filtered.length && <p className="p-4 text-sm text-muted-foreground">No opportunities match these filters.</p>}
+            {filtered.map((o) => <Button key={o.id} variant="ghost" onClick={() => open(o.contact_id)} className="h-auto w-full justify-start whitespace-normal px-4 py-3 text-left">
+              <span className="w-full min-w-0 space-y-1">
+                <span className="block font-medium">{o.contact?.name ?? "—"}</span>
+                <span className="block text-xs text-muted-foreground">{o.contact?.contact_type ?? "Unclassified"} · {o.interest}</span>
+                <span className="block text-xs text-primary">{o.stage}</span>
+                <span className="block text-xs">{taskLabel(o)}</span>
+              </span>
+            </Button>)}
+          </div>
+          <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-card text-left text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
@@ -217,6 +229,7 @@ function OpportunitiesPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
       <StageMoveDialog pending={pending} onCancel={cancel} onConfirm={confirm} />
