@@ -296,6 +296,10 @@ export const approveAppointment = createServerFn({ method: "POST" })
           sequence_status: "paused",
         })
         .eq("id", row.lead_id);
+      if (row.type === "tour") {
+        const { advanceOpportunityForTour } = await import("@/lib/crm/tour-stage.server");
+        await advanceOpportunityForTour(row.lead_id, row.id);
+      }
     }
 
     const to = normalizePhoneE164(row.phone);
@@ -564,6 +568,10 @@ export const syncStaffTourAppointment = createServerFn({ method: "POST" })
             : { ...prevFlags, staff_created: true }) as never,
         })
         .eq("id", keep.id);
+      if (!effectiveDateOnly) {
+        const { advanceOpportunityForTour } = await import("@/lib/crm/tour-stage.server");
+        await advanceOpportunityForTour(lead.id, keep.id);
+      }
       return {
         ok: true as const,
         state: effectiveDateOnly ? ("needs_time" as const) : ("armed" as const),
@@ -572,7 +580,7 @@ export const syncStaffTourAppointment = createServerFn({ method: "POST" })
 
     const targetStatus = dateOnly ? "pending" : "confirmed";
 
-    const { error: insErr } = await supabaseAdmin.from("appointments").insert({
+    const { data: inserted, error: insErr } = await supabaseAdmin.from("appointments").insert({
       lead_id: lead.id,
       name: lead.name,
       phone: lead.phone,
@@ -583,10 +591,14 @@ export const syncStaffTourAppointment = createServerFn({ method: "POST" })
       status: targetStatus,
       type: "tour",
       reminders_sent: { staff_created: true } as never,
-    });
+    }).select("id").single();
     if (insErr) {
       console.error("[syncStaffTourAppointment] insert failed", insErr.message);
       return { ok: false as const, error: insErr.message };
+    }
+    if (!dateOnly && inserted) {
+      const { advanceOpportunityForTour } = await import("@/lib/crm/tour-stage.server");
+      await advanceOpportunityForTour(lead.id, inserted.id);
     }
     return { ok: true as const, state: dateOnly ? ("needs_time" as const) : ("armed" as const) };
   });
