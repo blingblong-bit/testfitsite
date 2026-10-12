@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Phone, MessageSquare, StickyNote, ListTodo, Flag, CalendarPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { sendManualSms } from "@/lib/send-manual-sms.functions";
@@ -15,21 +16,22 @@ import { StageMoveDialog } from "./StageMoveDialog";
 const input =
   "w-full rounded-md bg-secondary border border-border px-3 py-2 text-sm focus:outline-none focus:border-primary";
 
-export function ContactDrawer({ contactId, onClose }: { contactId: string | null; onClose: () => void }) {
+export function ContactDrawer({ contactId, initialTab, onClose }: { contactId: string | null; initialTab?: string; onClose: () => void }) {
   return (
     <Sheet open={!!contactId} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto p-0">
-        {contactId && <DrawerBody id={contactId} />}
+      <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto p-0 min-w-0">
+        {contactId && <DrawerBody key={contactId} id={contactId} initialTab={initialTab} />}
       </SheetContent>
     </Sheet>
   );
 }
 
-function DrawerBody({ id }: { id: string }) {
+function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
   const qc = useQueryClient();
   const { data, isLoading, error } = useQuery(contactQuery(id));
   const { data: me } = useQuery(currentUserQuery);
-  const [tab, setTab] = useState("details");
+  const [tab, setTab] = useState(initialTab ?? "details");
+  useEffect(() => { setTab(initialTab ?? "details"); }, [initialTab]);
   const { requestMove, pending, cancel, confirm } = useMoveStage();
   const sendSms = useServerFn(sendManualSms);
   const assign = useServerFn(assignOpportunityOwner);
@@ -105,12 +107,12 @@ function DrawerBody({ id }: { id: string }) {
 
   return (
     <div className="flex flex-col">
-      <SheetHeader className="p-6 pb-4 border-b border-border text-left">
-        <SheetTitle className="text-2xl">{lead.name}</SheetTitle>
+      <SheetHeader className="p-4 sm:p-6 pb-4 border-b border-border text-left pr-12">
+        <SheetTitle className="text-2xl break-words">{lead.name}</SheetTitle>
         <SheetDescription className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
           <span>{lead.contact_type ?? "Unclassified"}</span>
           {lead.phone && <span>{lead.phone}</span>}
-          {lead.email && <span>{lead.email}</span>}
+          {lead.email && <span className="break-all">{lead.email}</span>}
         </SheetDescription>
         {lead.review_flag && (
           <div className="mt-2 flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
@@ -126,20 +128,20 @@ function DrawerBody({ id }: { id: string }) {
               <Phone className="h-4 w-4" /> Call
             </a>
           )}
-          <button onClick={() => setTab("conversation")} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-secondary">
+          <Button variant="outline" onClick={() => setTab("conversation")} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-secondary">
             <MessageSquare className="h-4 w-4" /> Text
-          </button>
-          <button onClick={() => setTab("notes")} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-secondary">
+          </Button>
+          <Button variant="outline" onClick={() => setTab("notes")} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-secondary">
             <StickyNote className="h-4 w-4" /> Note
-          </button>
-          <button onClick={() => setTab("tasks")} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-secondary">
+          </Button>
+          <Button variant="outline" onClick={() => setTab("tasks")} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-secondary">
             <ListTodo className="h-4 w-4" /> Task
-          </button>
-          <button onClick={() => setTab("appointments")} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-secondary">
+          </Button>
+          <Button variant="outline" onClick={() => setTab("appointments")} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-secondary">
             <CalendarPlus className="h-4 w-4" /> Appointment
-          </button>
+          </Button>
         </div>
-        {openOpp && (
+        {!lead.review_flag && openOpp && (
           <label className="mt-3 flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Stage</span>
             <select
@@ -155,10 +157,20 @@ function DrawerBody({ id }: { id: string }) {
             </select>
           </label>
         )}
+        <div className="mt-3 space-y-1 text-sm">
+          <p className="text-muted-foreground">{lead.review_flag ? "Held for review — outside the sales pipeline" : opportunities.map((o) => `${o.interest}: ${o.stage}`).join(" · ") || "No sales opportunity"}</p>
+          <p>{tasks.find((t) => !t.completed_at)?.title ? `Next task: ${tasks.find((t) => !t.completed_at)?.title}` : "No staff task scheduled"}</p>
+        </div>
       </SheetHeader>
 
       <Tabs value={tab} onValueChange={setTab} className="p-4">
-        <TabsList className="flex flex-wrap h-auto">
+        <label className="sm:hidden block mb-3 text-xs text-muted-foreground">
+          Contact section
+          <select aria-label="Contact section" value={tab} onChange={(e) => setTab(e.target.value)} className={`${input} mt-1 text-foreground`}>
+            {["details", "conversation", "opportunities", "tasks", "appointments", "notes", "activity", "automation"].map((v) => <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>)}
+          </select>
+        </label>
+        <TabsList className="hidden sm:flex flex-wrap h-auto justify-start">
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="conversation">Conversation</TabsTrigger>
           <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
@@ -201,9 +213,9 @@ function DrawerBody({ id }: { id: string }) {
           {lead.phone && !lead.sms_opted_out ? (
             <div className="space-y-2">
               <textarea value={sms} onChange={(e) => setSms(e.target.value)} rows={3} className={input} placeholder="Type a text…" />
-              <button disabled={busy || !sms.trim()} onClick={sendText} className="h-9 rounded-md bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50">
+              <Button disabled={busy || !sms.trim()} onClick={sendText} className="h-9 rounded-md bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50">
                 {busy ? "Sending…" : "Send text"}
-              </button>
+              </Button>
               <p className="text-xs text-muted-foreground">Sending pauses this person's automated texts.</p>
             </div>
           ) : (
@@ -227,9 +239,9 @@ function DrawerBody({ id }: { id: string }) {
               <div className="mt-2 flex items-center gap-2 text-xs">
                 <span>Owner: {o.owner_id ? (o.owner_id === me ? "You" : "Staff") : "Unassigned"}</span>
                 {o.status === "open" && (
-                  <button onClick={() => assignToMe(o.id, o.owner_id !== me)} className="underline text-primary">
+                  <Button variant="link" onClick={() => assignToMe(o.id, o.owner_id !== me)} className="underline text-primary">
                     {o.owner_id === me ? "Unassign" : "Assign to me"}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -240,9 +252,9 @@ function DrawerBody({ id }: { id: string }) {
           <div className="space-y-2">
             <input value={task.title} onChange={(e) => setTask({ ...task, title: e.target.value })} className={input} placeholder="Task, e.g. Call about membership decision" />
             <input type="datetime-local" value={task.due} onChange={(e) => setTask({ ...task, due: e.target.value })} className={input} />
-            <button onClick={addTask} disabled={!task.title.trim()} className="h-9 rounded-md bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50">
+            <Button onClick={addTask} disabled={!task.title.trim()} className="h-9 rounded-md bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50">
               Add task
-            </button>
+            </Button>
           </div>
           {tasks.map((t) => (
             <div key={t.id} className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
@@ -251,9 +263,9 @@ function DrawerBody({ id }: { id: string }) {
                 <p className="text-xs text-muted-foreground">Due {fmtChicago(t.due_at)}</p>
               </div>
               {!t.completed_at && (
-                <button onClick={() => completeTask(t.id)} className="h-8 rounded-md border border-border px-3 text-xs hover:bg-secondary">
+                <Button variant="outline" onClick={() => completeTask(t.id)} className="h-8 rounded-md border border-border px-3 text-xs hover:bg-secondary">
                   Complete
-                </button>
+                </Button>
               )}
             </div>
           ))}
@@ -276,9 +288,10 @@ function DrawerBody({ id }: { id: string }) {
 
         <TabsContent value="notes" className="space-y-3">
           <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} className={input} placeholder="Add a note…" />
-          <button onClick={addNote} disabled={!note.trim()} className="h-9 rounded-md bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50">
+          <Button onClick={addNote} disabled={!note.trim()} className="h-9 rounded-md bg-primary px-4 text-sm text-primary-foreground disabled:opacity-50">
             Save note
-          </button>
+          </Button>
+          {!notes.length && !lead.notes && <p className="text-sm text-muted-foreground">No notes yet.</p>}
           {notes.map((n) => (
             <div key={n.id} className="rounded-lg bg-secondary p-3 text-sm">
               <p className="whitespace-pre-wrap">{n.summary}</p>
@@ -307,11 +320,13 @@ function DrawerBody({ id }: { id: string }) {
         </TabsContent>
 
         <TabsContent value="automation" className="space-y-2 text-sm">
-          <Row k="Sequence" v={lead.sequence_status ?? "—"} />
+          <Row k="Sequence" v={lead.sequence_status ?? "Not enrolled"} />
+          <Row k="Next follow-up" v={fmtChicago(lead.next_follow_up_date)} />
           <Row k="Follow-ups sent" v={String(lead.followup_count ?? 0)} />
           <Row k="Last text" v={fmtChicago(lead.last_sms_at)} />
           <Row k="SMS opted out" v={lead.sms_opted_out ? "Yes" : "No"} />
           <Row k="High intent" v={lead.high_intent ? `Yes — ${lead.high_intent_note ?? ""}` : "No"} />
+          {activity.filter((a) => /automation|sequence|welcome|stage/.test(a.kind)).map((a) => <div key={a.id} className="border-l-2 border-border pl-3 py-2"><p>{a.summary}</p><p className="text-xs text-muted-foreground">{fmtChicago(a.created_at)}</p></div>)}
         </TabsContent>
       </Tabs>
       <StageMoveDialog pending={pending} onCancel={cancel} onConfirm={confirm} />
@@ -323,7 +338,7 @@ function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex justify-between gap-4 border-b border-border/60 py-1.5">
       <span className="text-muted-foreground">{k}</span>
-      <span className="text-right">{v}</span>
+      <span className="text-right min-w-0 break-words">{v}</span>
     </div>
   );
 }
