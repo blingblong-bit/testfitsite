@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, mock } from "bun:test";
 import { createHmac } from "crypto";
 import { startCallCore, applyStatusCallback, toE164US, verifyTwilioSignature, nextStatus, connectTwiml } from "./calls.server";
 
@@ -37,7 +37,7 @@ function mockDb(tables: Record<string, any[]>) {
   return { from: q, tables };
 }
 const env = { sid: "AC1", token: "tok", from: "+19315550100", staff: "9314342243" };
-const okFetch = () => vi.fn(async () => new Response(JSON.stringify({ sid: "CA1" }), { status: 201 }));
+const okFetch = () => mock(async () => new Response(JSON.stringify({ sid: "CA1" }), { status: 201 }));
 const lead = (o: any = {}) => ({ id: "c1", name: "Jane Doe", phone: "(931) 555-0199", contact_type: "Prospect", ...o });
 
 describe("Call from FIT", () => {
@@ -71,7 +71,7 @@ describe("Call from FIT", () => {
   });
   it("records Twilio failures gracefully", async () => {
     const db = mockDb({ leads: [lead()] });
-    const f = vi.fn(async () => new Response(JSON.stringify({ code: 21215, message: "not permitted" }), { status: 400 }));
+    const f = mock(async () => new Response(JSON.stringify({ code: 21215, message: "not permitted" }), { status: 400 }));
     const r = await startCallCore({ db, fetch: f as any, env }, { contactId: "c1", userId: "u1" });
     expect(r.ok).toBe(false); expect(db.tables.crm_call_log[0]).toMatchObject({ status: "failed", error_code: "21215" });
   });
