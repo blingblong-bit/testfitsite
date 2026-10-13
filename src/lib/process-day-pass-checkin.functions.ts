@@ -77,6 +77,16 @@ async function recordPurchase(
     recorded_via: "checkin",
   });
   if (error) console.error("[dayPassCheckin] purchase log failed", error.message);
+  // Advance the open Day Pass opportunity (created by the leads trigger) into
+  // Trial or Day Pass Active. Only early stages move; won/lost never reopen.
+  const { error: oppErr } = await supabaseAdmin
+    .from("opportunities")
+    .update({ stage: "Trial or Day Pass Active", status: "open", last_activity_at: purchasedAt })
+    .eq("contact_id", leadId)
+    .eq("status", "open")
+    .eq("interest", "Day Pass")
+    .in("stage", ["New Lead", "Attempting Contact", "Engaged", "Long-Term Nurture"]);
+  if (oppErr) console.error("[dayPassCheckin] stage move failed", oppErr.message);
 }
 
 // The actual "make this person a real lead" logic — Antaris check, then

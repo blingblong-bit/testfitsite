@@ -7,11 +7,13 @@ export type DirectoryContact = {
   lead_type: string;
   status: string | null;
   tags: string[];
+  day_pass_purchased_at?: string | null;
 };
 
 export const SMART_LISTS = [
   { id: "all", label: "All contacts" },
   { id: "prospects", label: "Prospects" },
+  { id: "daypass", label: "Active Day Passes" },
   { id: "members", label: "Members" },
   { id: "former", label: "Former Members" },
   { id: "vendors", label: "Vendor / Non-Sales" },
@@ -29,6 +31,8 @@ export function inSmartList(c: DirectoryContact, list: SmartList) {
   if (list === "all") return true;
   if (list === "review") return c.review_flag;
   if (list === "excluded") return isTestOrSpam(c);
+  if (list === "daypass") return !isTestOrSpam(c) && c.contact_type !== "Member" && !!c.day_pass_purchased_at &&
+    Date.now() - new Date(c.day_pass_purchased_at).getTime() < 14 * 86400000;
   const types = { prospects: "Prospect", members: "Member", former: "Former Member", vendors: "Vendor/Non-Sales" };
   return !isTestOrSpam(c) && c.contact_type === types[list];
 }

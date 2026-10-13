@@ -105,7 +105,7 @@ export const contactLookupQuery = queryOptions({
     // Page across the entire directory, including held, spam and test contacts.
     const page = async (offset: number) => {
       const { data, error, count } = await supabase.from("leads")
-        .select("id, name, phone, email, contact_type, review_flag, review_reason, lead_type, status, tags, interest, original_source, latest_source, source, created_at, last_response_at, last_sms_at, last_contacted_at", { count: "exact" })
+        .select("id, name, phone, email, contact_type, review_flag, review_reason, lead_type, status, tags, interest, original_source, latest_source, source, created_at, last_response_at, last_sms_at, last_contacted_at, day_pass_purchased_at", { count: "exact" })
         .order("id").range(offset, offset + 499);
       if (error) throw error;
       return { rows: data ?? [], total: count ?? 0 };
