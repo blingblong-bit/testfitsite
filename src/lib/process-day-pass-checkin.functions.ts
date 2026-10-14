@@ -87,6 +87,32 @@ async function recordPurchase(
     .eq("interest", "Day Pass")
     .in("stage", ["New Lead", "Attempting Contact", "Engaged", "Long-Term Nurture"]);
   if (oppErr) console.error("[dayPassCheckin] stage move failed", oppErr.message);
+
+  // Returning contacts (e.g. a membership lead) may have no open Day Pass
+  // opportunity at all — the insert trigger only fires for new leads. Open one
+  // directly in Trial or Day Pass Active so tonight's visitor shows up there.
+  // Other opportunities (Membership, closed ones) are left untouched.
+  const { data: openDayPass } = await supabaseAdmin
+    .from("opportunities")
+    .select("id")
+    .eq("contact_id", leadId)
+    .eq("status", "open")
+    .eq("interest", "Day Pass")
+    .limit(1);
+  if (!openDayPass || openDayPass.length === 0) {
+    const { error: insErr } = await supabaseAdmin.from("opportunities").insert({
+      contact_id: leadId,
+      stage: "Trial or Day Pass Active",
+      status: "open",
+      interest: "Day Pass",
+      source: "day_pass_walkin",
+      last_activity_at: purchasedAt,
+    });
+    // A unique-violation here just means a concurrent check-in already opened it.
+    if (insErr && insErr.code !== "23505") {
+      console.error("[dayPassCheckin] day pass opportunity create failed", insErr.message);
+    }
+  }
 }
 
 // The actual "make this person a real lead" logic — Antaris check, then
