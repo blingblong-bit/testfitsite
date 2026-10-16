@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Vendor solicitation cleanup
-- [ ] Tighten submission filtering with server-side enforcement and regression tests.
-- [ ] Reclassify the five confirmed sellers, stop their follow-up, and close only their open sales attempts.
-- [ ] Verify filtering and CRM cleanup without sending customer messages.
+- [x] Tighten submission filtering with server-side enforcement and regression tests.
+- [x] Reclassify the five confirmed sellers, stop their follow-up, and close only their open sales attempts.
+- [x] Verify filtering and CRM cleanup without sending customer messages; public test saved with zero opportunities, texts, or alerts.
 
 - [x] Monthly class check-in export (CSV + Excel, grouped by date and class, with totals)
 - [x] Lead Command Center V2 — automation-first attention queue and follow-up view
