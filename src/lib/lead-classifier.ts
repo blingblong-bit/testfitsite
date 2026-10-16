@@ -121,6 +121,21 @@ function countMatches(haystack: string, needles: string[]) {
   return n;
 }
 
+// Exact domains from confirmed solicitations, not a blanket rule for business email.
+const CONFIRMED_VENDOR_DOMAINS = new Set([
+  "trustedvirtualteam.com", "getnorthernlightstudios.com", "vettedvas.com",
+  "businesscoachvas.com", "vasdirect.com",
+]);
+
+// Look for the direction of the offer in the message itself. Form dropdowns
+// are weak evidence: sellers routinely select "Book a tour" or "Membership".
+const VENDOR_OFFERS = [
+  /\b(?:we|i)\s+(?:can\s+|will\s+)?(?:build|create|redesign|automate)\b[\s\S]{0,100}\b(?:your|you|website|site|lead system|system)\b/i,
+  /\b(?:we|i)\s+(?:offer|provide|give you|sell)\b[\s\S]{0,100}\b(?:virtual assistant|trained va|va services|marketing|seo|software|ai system|lead generation)\b/i,
+  /\b(?:virtual assistant|trained va|va services|crm automation|lead system|website redesign|marketing services)\b[\s\S]{0,250}\b(?:for you|your business|your gym|reply yes|free trial|days (?:are )?free)\b/i,
+  /\b(?:help|grow|boost|improve)\s+your\s+(?:business|website|traffic|sales|rankings)\b/i,
+];
+
 export function classifyLead(input: {
   name: string;
   email: string;
@@ -133,6 +148,21 @@ export function classifyLead(input: {
   const name = lower(input.name);
   const email = lower(input.email);
   const combined = `${interest} ${message}`;
+
+  const domain = email.trim().split("@")[1] ?? "";
+  const offer = VENDOR_OFFERS.some((pattern) => pattern.test(message));
+  const messageVendorHits = countMatches(message, VENDOR_KEYWORDS);
+  const messageCustomerHits = countMatches(message, CUSTOMER_KEYWORDS);
+  if (CONFIRMED_VENDOR_DOMAINS.has(domain) || offer ||
+      (messageVendorHits >= 1 && messageVendorHits > messageCustomerHits)) {
+    return {
+      lead_type: "vendor_solicitation",
+      lead_score: -10 * Math.max(1, messageVendorHits),
+      should_notify: false,
+      spam_reason: CONFIRMED_VENDOR_DOMAINS.has(domain)
+        ? "confirmed solicitation domain" : "business service sales pitch",
+    };
+  }
 
   // --- Spam checks ---
   const reasons: string[] = [];

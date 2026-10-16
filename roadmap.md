@@ -1,5 +1,10 @@
 # Roadmap
 
+## Vendor solicitation cleanup
+- [x] Tighten submission filtering with server-side enforcement and regression tests.
+- [x] Reclassify the five confirmed sellers, stop their follow-up, and close only their open sales attempts.
+- [x] Verify filtering and CRM cleanup without sending customer messages; public test saved with zero opportunities, texts, or alerts.
+
 - [x] Monthly class check-in export (CSV + Excel, grouped by date and class, with totals)
 - [x] Lead Command Center V2 — automation-first attention queue and follow-up view
 - [ ] Write class check-ins into Antaris — blocked: the Antaris client is read-only and we need a documented Antaris check-in/attendance write endpoint before this can be built.

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { AttributionSchema, attributionColumns } from "./attribution";
+import { classifyLead } from "./lead-classifier";
 
 const Schema = z.object({
   source: z.string().trim().min(1),
@@ -35,6 +36,7 @@ const TEST_EMAIL = "smstest@fitbeyondplus.com";
 export const checkExistingMemberSubmission = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => Schema.parse(data))
   .handler(async ({ data }) => {
+    if (!classifyLead(data).should_notify) return { handled: false as const };
     try {
       const { checkMemberMatch } = await import("./antaris/client");
       const match = await checkMemberMatch(data.name, data.email, data.phone ?? "");

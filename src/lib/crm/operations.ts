@@ -1,6 +1,6 @@
 import type { Database } from "@/integrations/supabase/types";
 import { chicagoDateOf } from "@/lib/chicago-time";
-import { isTestOrSpam } from "./contact-directory";
+import { isTestOrSpam, isVendor } from "./contact-directory";
 
 type Row<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
 export type CrmTask = Row<"crm_tasks">;
@@ -52,7 +52,7 @@ export function hasHumanContact(contact: OperationsData["contacts"][number], dat
 
 export function deriveOperations(data: OperationsData, now: Date) {
   const today = chicagoDateOf(now);
-  const operational = data.contacts.filter((c) => !isTestOrSpam(c) && !c.review_flag);
+  const operational = data.contacts.filter((c) => !isTestOrSpam(c) && !isVendor(c) && !c.review_flag);
   const byId = new Map(operational.map((c) => [c.id, c]));
   const groups: Record<AttentionReason, AttentionItem[]> = { overdue: [], appointments: [], trials: [], new: [], followups: [], stalled: [] };
   const add = (id: string, reason: AttentionReason, at: string, detail: string, opportunityId?: string) => {
