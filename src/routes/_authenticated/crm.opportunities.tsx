@@ -319,6 +319,7 @@ function Card({
       </Button>
       {hasUnansweredReply(opp) && <p className="text-xs font-medium text-destructive">Replied {fmtChicago(opp.contact!.last_response_at!)} · needs a response</p>}
       <p className="mt-1 text-xs text-muted-foreground">{opp.contact?.contact_type ?? "Unclassified"}{opp.contact?.phone ? ` · ${opp.contact.phone}` : ""}</p>
+      {opp.contact?.message && <p className="mt-1 line-clamp-2 text-xs italic text-foreground/80" title={opp.contact.message}>“{opp.contact.message}”</p>}
       <p className="mt-1 text-xs text-muted-foreground">
         {opp.interest} · {opp.source ?? "—"}
       </p>
