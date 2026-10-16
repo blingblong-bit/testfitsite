@@ -139,6 +139,18 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
             <CalendarPlus className="h-4 w-4" /> Book Tour
           </Button>
         </div>
+        <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
+          <p className="text-xs uppercase tracking-widest text-primary">What they submitted</p>
+          {lead.message ? <p className="mt-1 whitespace-pre-wrap">{lead.message}</p> : <p className="mt-1 text-muted-foreground">No message left on the form.</p>}
+          <p className="mt-2 text-xs text-muted-foreground">
+            {[lead.interest && `Interest: ${lead.interest}`, lead.primary_goal && `Goal: ${lead.primary_goal}`, `Form: ${lead.latest_source ?? lead.source}`, `Submitted ${fmtChicago(lead.created_at)}`].filter(Boolean).join(" · ")}
+          </p>
+          {activity.filter((a) => a.kind === "form_submission").length > 1 && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Submissions: {activity.filter((a) => a.kind === "form_submission").map((a) => fmtChicago(a.created_at)).join(", ")} (latest message shown)
+            </p>
+          )}
+        </div>
         {!lead.review_flag && openOpp && (
           <label className="mt-3 flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Stage</span>
@@ -188,7 +200,6 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
           <Row k="Communication" v={lead.comm_pref ?? "—"} />
           <Row k="Interest (form)" v={lead.interest ?? "—"} />
           <Row k="Created" v={fmtChicago(lead.created_at)} />
-          {lead.message && <p className="mt-3 rounded-md bg-secondary p-3 whitespace-pre-wrap">{lead.message}</p>}
         </TabsContent>
 
         <TabsContent value="conversation" className="space-y-3">

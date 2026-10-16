@@ -12,7 +12,7 @@ export type BoardOpportunity = {
   last_activity_at: string | null;
   no_action_required: boolean;
   created_at: string;
-  contact: { name: string; phone: string | null; email: string; review_flag: boolean; contact_type: string | null; last_response_at: string | null; last_contacted_at: string | null } | null;
+  contact: { name: string; phone: string | null; email: string; message: string | null; review_flag: boolean; contact_type: string | null; last_response_at: string | null; last_contacted_at: string | null } | null;
   nextTask: { title: string; due_at: string | null } | null;
   appointmentAt: string | null;
 };
@@ -29,7 +29,7 @@ export const boardQuery = queryOptions({
     const { data: opps, error } = await supabase
       .from("opportunities")
       .select(
-        "id, contact_id, stage, status, interest, source, owner_id, last_activity_at, no_action_required, created_at, contact:leads!opportunities_contact_id_fkey(name, phone, email, review_flag, contact_type, last_response_at, last_contacted_at)",
+        "id, contact_id, stage, status, interest, source, owner_id, last_activity_at, no_action_required, created_at, contact:leads!opportunities_contact_id_fkey(name, phone, email, message, review_flag, contact_type, last_response_at, last_contacted_at)",
       )
       .order("last_activity_at", { ascending: false, nullsFirst: false })
       .limit(1000);
