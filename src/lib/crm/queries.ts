@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isVendor } from "./contact-directory";
 
 export type BoardOpportunity = {
   id: string;
@@ -29,7 +30,7 @@ export const boardQuery = queryOptions({
     const { data: opps, error } = await supabase
       .from("opportunities")
       .select(
-        "id, contact_id, stage, status, interest, source, owner_id, last_activity_at, no_action_required, created_at, contact:leads!opportunities_contact_id_fkey(name, phone, email, message, review_flag, contact_type, last_response_at, last_contacted_at)",
+        "id, contact_id, stage, status, interest, source, owner_id, last_activity_at, no_action_required, created_at, contact:leads!opportunities_contact_id_fkey(name, phone, email, message, review_flag, contact_type, lead_type, last_response_at, last_contacted_at)",
       )
       .order("last_activity_at", { ascending: false, nullsFirst: false })
       .limit(1000);
@@ -53,7 +54,7 @@ export const boardQuery = queryOptions({
             .gte("requested_time", new Date(Date.now() - 86400000).toISOString())
         : Promise.resolve({ data: [] as { lead_id: string | null; requested_time: string; confirmed_time: string | null; status: string }[] }),
     ]);
-    return (opps ?? []).map((o) => {
+    return (opps ?? []).filter((o) => !o.contact || !isVendor(o.contact)).map((o) => {
       const t =
         (tasks.data ?? []).find((x) => x.opportunity_id === o.id) ??
         (tasks.data ?? []).find((x) => x.contact_id === o.contact_id && !x.opportunity_id) ??

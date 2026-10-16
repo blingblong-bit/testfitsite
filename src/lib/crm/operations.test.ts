@@ -61,6 +61,18 @@ describe("daily CRM operations", () => {
     data.referrals = [{ ...data.referrals[0], access_ends_at: "2026-10-14T15:25:01Z" } as OperationsData["referrals"][number]];
     assert.equal(deriveOperations(data, now).groups.trials.length, 0);
   });
+  it("excludes vendors from every operational total even with legacy open opportunities", () => {
+    for (const props of [{ contact_type: "Vendor/Non-Sales" }, { lead_type: "vendor_solicitation" }]) {
+      const data = base();
+      data.contacts = [{ ...contact, ...props, next_follow_up_date: "2026-10-12" }];
+      data.tasks = [task({ due_at: "2026-10-10T15:00:00Z" })];
+      data.appointments = [{ lead_id: "one", status: "confirmed", type: "Tour", requested_time: now.toISOString() } as OperationsData["appointments"][number]];
+      data.referrals = [{ lead_id: "one", promo_type: "free_week", status: "redeemed", access_ends_at: "2026-10-13T15:25:00Z" } as OperationsData["referrals"][number]];
+      const result = deriveOperations(data, now);
+      for (const group of Object.values(result.groups)) assert.equal(group.length, 0);
+      assert.equal(result.tasks.length, 0);
+    }
+  });
   it("uses confirmed appointment time, not the obsolete requested time", () => {
     const data = base();
     data.appointments = [{ lead_id: "one", status: "confirmed", type: "Tour", requested_time: "2026-10-11T16:00:00Z", confirmed_time: "2026-10-12T19:00:00Z" } as OperationsData["appointments"][number]];

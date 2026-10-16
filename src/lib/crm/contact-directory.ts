@@ -22,6 +22,10 @@ export const SMART_LISTS = [
 ] as const;
 export type SmartList = (typeof SMART_LISTS)[number]["id"];
 
+export function isVendor(c: { contact_type: string | null; lead_type?: string }) {
+  return c.contact_type === "Vendor/Non-Sales" || c.lead_type === "vendor_solicitation";
+}
+
 export function isTestOrSpam(c: DirectoryContact) {
   return c.contact_type === "Spam" || c.lead_type === "spam" || c.status?.toLowerCase() === "spam" ||
     /\btest\b/i.test(c.name) || c.tags.some((t) => /^(test|spam)$/i.test(t));
