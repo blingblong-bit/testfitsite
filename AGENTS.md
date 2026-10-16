@@ -1,5 +1,7 @@
 # Project rules
 
+- Lead-form classification is shared and recomputed server-side before saving; inspect message offer direction independently of selected interest and keep confirmed vendor domains exact. Why: dropdown choices and client flags must not let business pitches trigger customer outreach.
+
 - Contacts are `public.leads` rows; sales attempts are `public.opportunities`. Why: one person can have several sales attempts over time without duplicate contacts.
 - Opportunity status is derived from stage and enforced by the `trg_opportunities_stage_status` trigger; always write stage and matching status together. Why: won/lost can never drift out of sync.
 - Only one open opportunity per contact + interest (partial unique index); won/lost opportunities are never reopened. Why: preserves sales history.

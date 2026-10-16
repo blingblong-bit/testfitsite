@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { AttributionSchema, attributionColumns } from "./attribution";
+import { classifyLead } from "./lead-classifier";
 
 const Schema = z.object({
   source: z.string(),
@@ -42,6 +43,9 @@ const Schema = z.object({
 export const insertOrUpdateLead = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => Schema.parse(data))
   .handler(async ({ data }) => {
+    // Never trust classification/notification flags supplied by the browser.
+    const classification = classifyLead(data);
+    data = { ...data, ...classification };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const email = data.email.trim().toLowerCase();
@@ -90,7 +94,8 @@ export const insertOrUpdateLead = createServerFn({ method: "POST" })
       const { error: upErr } = await supabaseAdmin
         .from("leads")
         .update({
-          interest: data.interest ?? undefined,
+          // A pitch must not replace a real contact's sales interest.
+          interest: classification.should_notify ? data.interest ?? undefined : undefined,
           notes,
         })
         .eq("id", existing.id);
@@ -136,6 +141,7 @@ export const insertOrUpdateLead = createServerFn({ method: "POST" })
         lead_score: data.lead_score ?? undefined,
         should_notify: data.should_notify,
         spam_reason: data.spam_reason,
+        ...(classification.should_notify ? {} : { sequence_status: "completed" }),
         // First touch, written on INSERT only — never on the update path
         // above, so the original acquisition can't be overwritten later.
         ...attributionColumns(data.attribution),

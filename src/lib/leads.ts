@@ -41,10 +41,11 @@ export async function submitLead(input: LeadInput) {
   const attribution = attributionForSubmission(payload.source);
   // One ID per form submission — the internal alert dedups on this.
   const submission_id = crypto.randomUUID();
+  const classification = classifyLead(payload);
 
   // Check Antaris first — if this submitter is already an active member,
   // handle it server-side (insert + welcome SMS) and skip the normal flow.
-  try {
+  if (classification.should_notify) try {
     const result = await checkExistingMemberSubmission({
       data: {
         source: payload.source,
@@ -60,8 +61,6 @@ export async function submitLead(input: LeadInput) {
   } catch (e) {
     console.error("Existing member check failed:", e);
   }
-
-  const classification = classifyLead(payload);
 
   const result = await insertOrUpdateLead({
     data: {
