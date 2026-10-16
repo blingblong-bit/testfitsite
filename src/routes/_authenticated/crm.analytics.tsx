@@ -19,7 +19,6 @@ function AnalyticsPage() {
   const { data, error } = useTrackerData();
   return (
     <div className="p-4 md:p-6">
-      <h1 className="text-2xl font-semibold">Business Analytics</h1>
       {error && <p className="mt-4 text-sm text-destructive">{(error as Error).message}</p>}
       <AnalyticsView
         leads={(data?.leads as unknown as AnalyticsLead[]) ?? null}
