@@ -200,7 +200,6 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
           <Row k="Communication" v={lead.comm_pref ?? "—"} />
           <Row k="Interest (form)" v={lead.interest ?? "—"} />
           <Row k="Created" v={fmtChicago(lead.created_at)} />
-          {lead.message && <p className="mt-3 rounded-md bg-secondary p-3 whitespace-pre-wrap">{lead.message}</p>}
         </TabsContent>
 
         <TabsContent value="conversation" className="space-y-3">

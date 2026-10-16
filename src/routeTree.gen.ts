@@ -55,9 +55,12 @@ import { Route as AuthenticatedAdminFreeWeekArrivalsRouteImport } from './routes
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 import { Route as AuthenticatedAdminReengagementRouteImport } from './routes/_authenticated/admin.reengagement'
 import { Route as AuthenticatedCrmIndexRouteImport } from './routes/_authenticated/crm.index'
+import { Route as AuthenticatedCrmAnalyticsRouteImport } from './routes/_authenticated/crm.analytics'
 import { Route as AuthenticatedCrmContactsRouteImport } from './routes/_authenticated/crm.contacts'
 import { Route as AuthenticatedCrmDashboardRouteImport } from './routes/_authenticated/crm.dashboard'
+import { Route as AuthenticatedCrmMissedCallsRouteImport } from './routes/_authenticated/crm.missed-calls'
 import { Route as AuthenticatedCrmOpportunitiesRouteImport } from './routes/_authenticated/crm.opportunities'
+import { Route as AuthenticatedCrmReferralsRouteImport } from './routes/_authenticated/crm.referrals'
 import { Route as AuthenticatedCrmTasksRouteImport } from './routes/_authenticated/crm.tasks'
 import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as ApiPublicHooksProcessAppointmentRemindersRouteImport } from './routes/api/public/hooks/process-appointment-reminders'
@@ -310,6 +313,12 @@ const AuthenticatedCrmIndexRoute = AuthenticatedCrmIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedCrmRoute,
 } as any)
+const AuthenticatedCrmAnalyticsRoute =
+  AuthenticatedCrmAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => AuthenticatedCrmRoute,
+  } as any)
 const AuthenticatedCrmContactsRoute =
   AuthenticatedCrmContactsRouteImport.update({
     id: '/contacts',
@@ -322,10 +331,22 @@ const AuthenticatedCrmDashboardRoute =
     path: '/dashboard',
     getParentRoute: () => AuthenticatedCrmRoute,
   } as any)
+const AuthenticatedCrmMissedCallsRoute =
+  AuthenticatedCrmMissedCallsRouteImport.update({
+    id: '/missed-calls',
+    path: '/missed-calls',
+    getParentRoute: () => AuthenticatedCrmRoute,
+  } as any)
 const AuthenticatedCrmOpportunitiesRoute =
   AuthenticatedCrmOpportunitiesRouteImport.update({
     id: '/opportunities',
     path: '/opportunities',
+    getParentRoute: () => AuthenticatedCrmRoute,
+  } as any)
+const AuthenticatedCrmReferralsRoute =
+  AuthenticatedCrmReferralsRouteImport.update({
+    id: '/referrals',
+    path: '/referrals',
     getParentRoute: () => AuthenticatedCrmRoute,
   } as any)
 const AuthenticatedCrmTasksRoute = AuthenticatedCrmTasksRouteImport.update({
@@ -442,9 +463,12 @@ export interface FileRoutesByFullPath {
   '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
+  '/crm/analytics': typeof AuthenticatedCrmAnalyticsRoute
   '/crm/contacts': typeof AuthenticatedCrmContactsRoute
   '/crm/dashboard': typeof AuthenticatedCrmDashboardRoute
+  '/crm/missed-calls': typeof AuthenticatedCrmMissedCallsRoute
   '/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
+  '/crm/referrals': typeof AuthenticatedCrmReferralsRoute
   '/crm/tasks': typeof AuthenticatedCrmTasksRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/crm/': typeof AuthenticatedCrmIndexRoute
@@ -500,9 +524,12 @@ export interface FileRoutesByTo {
   '/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
+  '/crm/analytics': typeof AuthenticatedCrmAnalyticsRoute
   '/crm/contacts': typeof AuthenticatedCrmContactsRoute
   '/crm/dashboard': typeof AuthenticatedCrmDashboardRoute
+  '/crm/missed-calls': typeof AuthenticatedCrmMissedCallsRoute
   '/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
+  '/crm/referrals': typeof AuthenticatedCrmReferralsRoute
   '/crm/tasks': typeof AuthenticatedCrmTasksRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/crm': typeof AuthenticatedCrmIndexRoute
@@ -564,9 +591,12 @@ export interface FileRoutesById {
   '/_authenticated/admin/free-week-arrivals': typeof AuthenticatedAdminFreeWeekArrivalsRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/admin/reengagement': typeof AuthenticatedAdminReengagementRoute
+  '/_authenticated/crm/analytics': typeof AuthenticatedCrmAnalyticsRoute
   '/_authenticated/crm/contacts': typeof AuthenticatedCrmContactsRoute
   '/_authenticated/crm/dashboard': typeof AuthenticatedCrmDashboardRoute
+  '/_authenticated/crm/missed-calls': typeof AuthenticatedCrmMissedCallsRoute
   '/_authenticated/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
+  '/_authenticated/crm/referrals': typeof AuthenticatedCrmReferralsRoute
   '/_authenticated/crm/tasks': typeof AuthenticatedCrmTasksRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/_authenticated/crm/': typeof AuthenticatedCrmIndexRoute
@@ -628,9 +658,12 @@ export interface FileRouteTypes {
     | '/admin/free-week-arrivals'
     | '/admin/leads'
     | '/admin/reengagement'
+    | '/crm/analytics'
     | '/crm/contacts'
     | '/crm/dashboard'
+    | '/crm/missed-calls'
     | '/crm/opportunities'
+    | '/crm/referrals'
     | '/crm/tasks'
     | '/lovable/email/events'
     | '/crm/'
@@ -686,9 +719,12 @@ export interface FileRouteTypes {
     | '/admin/free-week-arrivals'
     | '/admin/leads'
     | '/admin/reengagement'
+    | '/crm/analytics'
     | '/crm/contacts'
     | '/crm/dashboard'
+    | '/crm/missed-calls'
     | '/crm/opportunities'
+    | '/crm/referrals'
     | '/crm/tasks'
     | '/lovable/email/events'
     | '/crm'
@@ -749,9 +785,12 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/free-week-arrivals'
     | '/_authenticated/admin/leads'
     | '/_authenticated/admin/reengagement'
+    | '/_authenticated/crm/analytics'
     | '/_authenticated/crm/contacts'
     | '/_authenticated/crm/dashboard'
+    | '/_authenticated/crm/missed-calls'
     | '/_authenticated/crm/opportunities'
+    | '/_authenticated/crm/referrals'
     | '/_authenticated/crm/tasks'
     | '/lovable/email/events'
     | '/_authenticated/crm/'
@@ -1131,6 +1170,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCrmIndexRouteImport
       parentRoute: typeof AuthenticatedCrmRoute
     }
+    '/_authenticated/crm/analytics': {
+      id: '/_authenticated/crm/analytics'
+      path: '/analytics'
+      fullPath: '/crm/analytics'
+      preLoaderRoute: typeof AuthenticatedCrmAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedCrmRoute
+    }
     '/_authenticated/crm/contacts': {
       id: '/_authenticated/crm/contacts'
       path: '/contacts'
@@ -1145,11 +1191,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCrmDashboardRouteImport
       parentRoute: typeof AuthenticatedCrmRoute
     }
+    '/_authenticated/crm/missed-calls': {
+      id: '/_authenticated/crm/missed-calls'
+      path: '/missed-calls'
+      fullPath: '/crm/missed-calls'
+      preLoaderRoute: typeof AuthenticatedCrmMissedCallsRouteImport
+      parentRoute: typeof AuthenticatedCrmRoute
+    }
     '/_authenticated/crm/opportunities': {
       id: '/_authenticated/crm/opportunities'
       path: '/opportunities'
       fullPath: '/crm/opportunities'
       preLoaderRoute: typeof AuthenticatedCrmOpportunitiesRouteImport
+      parentRoute: typeof AuthenticatedCrmRoute
+    }
+    '/_authenticated/crm/referrals': {
+      id: '/_authenticated/crm/referrals'
+      path: '/referrals'
+      fullPath: '/crm/referrals'
+      preLoaderRoute: typeof AuthenticatedCrmReferralsRouteImport
       parentRoute: typeof AuthenticatedCrmRoute
     }
     '/_authenticated/crm/tasks': {
@@ -1240,17 +1300,23 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedCrmRouteChildren {
+  AuthenticatedCrmAnalyticsRoute: typeof AuthenticatedCrmAnalyticsRoute
   AuthenticatedCrmContactsRoute: typeof AuthenticatedCrmContactsRoute
   AuthenticatedCrmDashboardRoute: typeof AuthenticatedCrmDashboardRoute
+  AuthenticatedCrmMissedCallsRoute: typeof AuthenticatedCrmMissedCallsRoute
   AuthenticatedCrmOpportunitiesRoute: typeof AuthenticatedCrmOpportunitiesRoute
+  AuthenticatedCrmReferralsRoute: typeof AuthenticatedCrmReferralsRoute
   AuthenticatedCrmTasksRoute: typeof AuthenticatedCrmTasksRoute
   AuthenticatedCrmIndexRoute: typeof AuthenticatedCrmIndexRoute
 }
 
 const AuthenticatedCrmRouteChildren: AuthenticatedCrmRouteChildren = {
+  AuthenticatedCrmAnalyticsRoute: AuthenticatedCrmAnalyticsRoute,
   AuthenticatedCrmContactsRoute: AuthenticatedCrmContactsRoute,
   AuthenticatedCrmDashboardRoute: AuthenticatedCrmDashboardRoute,
+  AuthenticatedCrmMissedCallsRoute: AuthenticatedCrmMissedCallsRoute,
   AuthenticatedCrmOpportunitiesRoute: AuthenticatedCrmOpportunitiesRoute,
+  AuthenticatedCrmReferralsRoute: AuthenticatedCrmReferralsRoute,
   AuthenticatedCrmTasksRoute: AuthenticatedCrmTasksRoute,
   AuthenticatedCrmIndexRoute: AuthenticatedCrmIndexRoute,
 }
