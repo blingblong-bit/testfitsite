@@ -50,15 +50,35 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
   const openOpp = opportunities.find((o) => o.status === "open") ?? null;
 
   async function sendText() {
-    if (!lead.phone || !sms.trim()) return;
+    if (busy || !lead.phone || !sms.trim()) return;
     setBusy(true);
-    const r = await sendSms({ data: { lead_id: lead.id, phone: lead.phone, message: sms.trim() } });
-    setBusy(false);
-    if (r.ok) {
-      setSms("");
-      toast.success("Text sent — automation paused for this person");
-      refresh();
-    } else toast.error(r.error === "forbidden" ? "Only admins can send texts." : `Not sent: ${r.error}`);
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session) {
+        toast.error("Your session has ended. Sign in again before sending.");
+        return;
+      }
+      if ((sessionData.session.expires_at ?? 0) <= Math.floor(Date.now() / 1000) + 60) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshed.session) {
+          toast.error("Your session has ended. Sign in again before sending.");
+          return;
+        }
+      }
+      const r = await sendSms({ data: { lead_id: lead.id, phone: lead.phone, message: sms.trim() } });
+      if (r.ok) {
+        setSms("");
+        toast.success(r.test_mode ? "Test text saved — no SMS sent" : "Text sent — automation paused for this person");
+        refresh();
+      } else toast.error(r.error === "forbidden" ? "Only admins can send texts." : `Not sent: ${r.error}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      toast.error(/unauthorized|401|session|jwt/i.test(message)
+        ? "Your session has ended. Sign in again before sending."
+        : "Could not confirm the text was sent. Check the conversation before trying again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function addNote() {
