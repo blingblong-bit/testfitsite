@@ -1,5 +1,8 @@
 # Project rules
 
+- CRM manual-text submissions check the client session and always release their busy state in finally; keep the draft on failures and never automatically retry a send. Why: failed authentication must not freeze the composer or risk duplicate customer texts.
+- Mount one shared notification presenter in the root layout. Why: success and failure messages from CRM actions must actually be visible.
+
 - Lead-form classification is shared and recomputed server-side before saving; inspect message offer direction independently of selected interest and keep confirmed vendor domains exact. Why: dropdown choices and client flags must not let business pitches trigger customer outreach.
 
 - Contacts are `public.leads` rows; sales attempts are `public.opportunities`. Why: one person can have several sales attempts over time without duplicate contacts.

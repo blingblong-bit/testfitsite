@@ -18,6 +18,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { captureFirstTouch } from "../lib/attribution";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
+import { Toaster } from "../components/ui/sonner";
 import socialImage from "../assets/facility-full-floor.jpg.asset.json";
 
 const SITE_URL = "https://fitbeyondplus.com";
@@ -204,6 +205,7 @@ function RootComponent() {
         </main>
         <SiteFooter />
       </div>
+      <Toaster />
     </QueryClientProvider>
   );
 }

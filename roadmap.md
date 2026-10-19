@@ -1,5 +1,8 @@
 # Roadmap
 
+## CRM texting repair
+- [x] Reset Send after failures, check/refresh the session before sending, and show previously invisible notifications; authenticated test-mode save/read-back and blocked-request recovery verified, 24 CRM tests passed; no customer SMS sent.
+
 ## Vendor solicitation cleanup
 - [x] Tighten submission filtering with server-side enforcement and regression tests.
 - [x] Reclassify the five confirmed sellers, stop their follow-up, and close only their open sales attempts.
