@@ -1,7 +1,7 @@
 # Roadmap
 
 ## CRM texting repair
-- [ ] Reset Send after failures, check the session before sending, and verify authenticated test-mode sending and failure recovery.
+- [x] Reset Send after failures, check/refresh the session before sending, and show previously invisible notifications; authenticated test-mode save/read-back and blocked-request recovery verified, 24 CRM tests passed; no customer SMS sent.
 
 ## Vendor solicitation cleanup
 - [x] Tighten submission filtering with server-side enforcement and regression tests.
