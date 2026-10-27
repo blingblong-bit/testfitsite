@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Check, ClipboardList, Dumbbell, LineChart, MessageSquare, Salad, CalendarCheck } from "lucide-react";
 import { submitLead } from "@/lib/leads";
@@ -12,9 +12,9 @@ export const Route = createFileRoute("/beat-the-holidays")({
       {
         name: "description",
         content:
-          "8 one-on-one personal training sessions, 3 months of gym access, body scans, and weekly coach check-ins for $550 in Tullahoma, TN.",
+          "8 one-on-one personal training sessions, 3 months of gym access, body scans, and weekly coach check-ins for $549 in Tullahoma, TN.",
       },
-      { property: "og:title", content: "Beat the Holidays — $550 Coaching Program in Tullahoma" },
+      { property: "og:title", content: "Beat the Holidays — $549 Coaching Program in Tullahoma" },
       {
         property: "og:description",
         content:
@@ -58,7 +58,7 @@ function BeatTheHolidays() {
     const phone = String(data.get("phone") ?? "").trim();
     const email = String(data.get("email") ?? "").trim();
     const goal = String(data.get("goal") ?? "").trim();
-    const availability = String(data.get("availability") ?? "").trim();
+    const support = String(data.get("support") ?? "").trim();
     if (!phone) {
       setError("Please add your phone number so a coach can reach you.");
       return;
@@ -75,7 +75,7 @@ function BeatTheHolidays() {
         email,
         phone,
         interest: "Personal training",
-        message: `Beat the Holidays program ($550) inquiry.\nMain goal: ${goal || "—"}\nPreferred training times: ${availability || "—"}`,
+        message: `Beat the Holidays program ($549) inquiry.\nMain goal: ${goal || "—"}\nSupport interest: ${support || "—"}`,
       });
       setSent(true);
     } catch (err) {
@@ -96,16 +96,21 @@ function BeatTheHolidays() {
               Don't wait for January. Get a coach, a plan, and weekly accountability to stay consistent
               through the busiest time of year.
             </p>
-            <p className="mt-6 text-3xl font-bold">
-              $550 <span className="text-base font-normal text-muted-foreground">per person</span>
-            </p>
             <a
               href="#inquire"
               className="mt-8 inline-flex h-12 items-center rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
               style={{ boxShadow: "var(--shadow-glow)" }}
             >
-              Ask about a spot
+              Find my best fit
             </a>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Tell us your goal and what you're looking for. We'll help you choose the right way to get started.
+            </p>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Looking for gym access or classes instead? Explore{" "}
+              <Link to="/memberships" className="text-primary underline">memberships</Link> and{" "}
+              <Link to="/classes" className="text-primary underline">classes</Link>.
+            </p>
           </div>
           <img
             src={ptAsset.url}
@@ -146,8 +151,8 @@ function BeatTheHolidays() {
             ))}
           </ul>
           <p className="mt-6 text-sm text-muted-foreground">
-            No crash diets and no promised results — just coaching, a plan, and consistency. You set a
-            realistic personal goal with your coach at the start.
+            Practical training, realistic nutrition guidance, and personal support built around your
+            goals and everyday life.
           </p>
         </div>
         <div>
@@ -165,19 +170,52 @@ function BeatTheHolidays() {
         </div>
       </section>
 
+      <section className="border-t border-border">
+        <div className="container-page py-16 max-w-2xl">
+          <div className="rounded-lg border border-primary bg-card p-8" style={{ boxShadow: "var(--shadow-glow)" }}>
+            <h2 className="text-3xl md:text-4xl">Beat the Holidays</h2>
+            <p className="mt-2 text-muted-foreground">Your coach. Your plan. Support through the holidays.</p>
+            <p className="mt-6 text-xs uppercase tracking-widest">Includes</p>
+            <ul className="mt-3 space-y-2 text-muted-foreground">
+              {[
+                "Eight 45-minute one-on-one training sessions",
+                "Three months of gym access",
+                "Beginning and ending body scans",
+                "Personalized workouts",
+                "Practical nutrition guidance",
+                "Weekly coach check-ins",
+              ].map((t) => (
+                <li key={t} className="flex gap-3">
+                  <Check className="h-5 w-5 text-primary shrink-0" /> {t}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 text-3xl font-bold">
+              $549 <span className="text-base font-normal text-muted-foreground">for the complete program</span>
+            </p>
+            <a
+              href="#inquire"
+              className="mt-6 inline-flex h-12 items-center rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
+            >
+              Find my best fit
+            </a>
+          </div>
+        </div>
+      </section>
+
       <section id="inquire" className="border-t border-border bg-card">
         <div className="container-page py-16 max-w-2xl">
-          <h2 className="text-3xl md:text-4xl">Ask about a spot</h2>
+          <h2 className="text-3xl md:text-4xl">Find my best fit</h2>
           <p className="mt-3 text-muted-foreground">
-            Spots are limited by coach availability. Send this and we'll follow up to answer
-            questions and set up your first visit.
+            Send the short form below. A FIT team member will reach out to discuss your goals, answer
+            questions, and help you choose an option.
           </p>
           {sent ? (
             <div className="mt-8 rounded-lg border border-primary bg-primary/10 p-8">
               <p className="text-lg font-semibold">Thanks — we got your request.</p>
               <p className="mt-2 text-muted-foreground">
                 A FIT staff member will call or text you, usually within one business day, to talk
-                through the program and find a time for your starting assessment. Questions now? Call{" "}
+                through your goals and help you choose the right option. Questions now? Call{" "}
                 <a href="tel:9312224449" className="text-primary underline">(931) 222-4449</a>.
               </p>
             </div>
@@ -189,7 +227,23 @@ function BeatTheHolidays() {
               </div>
               <Field label="Email (optional)" name="email" type="email" />
               <Field label="Main goal" name="goal" placeholder="e.g. get stronger, lose weight, build a routine" />
-              <Field label="Best times to train" name="availability" placeholder="e.g. weekday mornings, Tue/Thu evenings" />
+              <div>
+                <label htmlFor="support" className="block text-xs uppercase tracking-widest mb-2">
+                  What kind of support interests you? (optional)
+                </label>
+                <select
+                  id="support"
+                  name="support"
+                  defaultValue=""
+                  className="w-full h-11 rounded-md bg-secondary border border-border px-3 text-sm focus:outline-none focus:border-primary"
+                >
+                  <option value="">Choose one</option>
+                  <option>Coaching and accountability</option>
+                  <option>Gym access</option>
+                  <option>Classes or combat sports</option>
+                  <option>Help me decide</option>
+                </select>
+              </div>
               <SmsConsentCheckbox checked={smsConsent} onChange={setSmsConsent} />
               {error && <p className="text-sm text-destructive">{error}</p>}
               <button
