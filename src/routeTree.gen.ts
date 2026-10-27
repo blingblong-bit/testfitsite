@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BeatTheHolidaysRouteImport } from './routes/beat-the-holidays'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as ClaimFreeWeekRouteImport } from './routes/claim-free-week'
 import { Route as ClassCheckinRouteImport } from './routes/class-checkin'
@@ -91,6 +92,11 @@ const AboutRoute = AboutRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BeatTheHolidaysRoute = BeatTheHolidaysRouteImport.update({
+  id: '/beat-the-holidays',
+  path: '/beat-the-holidays',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogRoute = BlogRouteImport.update({
@@ -422,6 +428,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/beat-the-holidays': typeof BeatTheHolidaysRoute
   '/blog': typeof BlogRouteWithChildren
   '/claim-free-week': typeof ClaimFreeWeekRoute
   '/class-checkin': typeof ClassCheckinRoute
@@ -487,6 +494,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/beat-the-holidays': typeof BeatTheHolidaysRoute
   '/claim-free-week': typeof ClaimFreeWeekRoute
   '/class-checkin': typeof ClassCheckinRoute
   '/contact': typeof ContactRoute
@@ -550,6 +558,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/beat-the-holidays': typeof BeatTheHolidaysRoute
   '/blog': typeof BlogRouteWithChildren
   '/claim-free-week': typeof ClaimFreeWeekRoute
   '/class-checkin': typeof ClassCheckinRoute
@@ -617,6 +626,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/beat-the-holidays'
     | '/blog'
     | '/claim-free-week'
     | '/class-checkin'
@@ -682,6 +692,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/beat-the-holidays'
     | '/claim-free-week'
     | '/class-checkin'
     | '/contact'
@@ -744,6 +755,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/auth'
+    | '/beat-the-holidays'
     | '/blog'
     | '/claim-free-week'
     | '/class-checkin'
@@ -811,6 +823,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
+  BeatTheHolidaysRoute: typeof BeatTheHolidaysRoute
   BlogRoute: typeof BlogRouteWithChildren
   ClaimFreeWeekRoute: typeof ClaimFreeWeekRoute
   ClassCheckinRoute: typeof ClassCheckinRoute
@@ -874,6 +887,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/beat-the-holidays': {
+      id: '/beat-the-holidays'
+      path: '/beat-the-holidays'
+      fullPath: '/beat-the-holidays'
+      preLoaderRoute: typeof BeatTheHolidaysRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog': {
@@ -1407,6 +1427,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
+  BeatTheHolidaysRoute: BeatTheHolidaysRoute,
   BlogRoute: BlogRouteWithChildren,
   ClaimFreeWeekRoute: ClaimFreeWeekRoute,
   ClassCheckinRoute: ClassCheckinRoute,

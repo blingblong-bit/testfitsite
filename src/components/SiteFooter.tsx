@@ -53,6 +53,11 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link to="/beat-the-holidays" className="hover:text-foreground">
+                Beat the Holidays
+              </Link>
+            </li>
+            <li>
               <Link to="/classes" className="hover:text-foreground">
                 Classes
               </Link>
