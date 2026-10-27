@@ -9,6 +9,7 @@ const LEAD_TRACKER_URL = "https://fitbeyondplus.com/admin/leads";
 
 const SOURCE_LABELS: Record<string, string> = {
   general_contact: "Contact form",
+  beat_the_holidays: "Beat the Holidays program",
   book_a_tour: "Book a Tour form",
   membership_inquiry: "Membership form",
   personal_training_inquiry: "Personal Training form",

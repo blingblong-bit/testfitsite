@@ -22,6 +22,7 @@ const FROM_DOMAIN = "fitbeyondplus.com";
 
 const SOURCE_LABELS: Record<string, string> = {
   general_contact: "Contact form",
+  beat_the_holidays: "Beat the Holidays program",
   book_a_tour: "Book a Tour",
   membership_inquiry: "Membership inquiry",
   personal_training_inquiry: "Personal Training inquiry",
