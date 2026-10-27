@@ -38,13 +38,6 @@ const INCLUDED = [
   { icon: MessageSquare, title: "Weekly check-ins", body: "A real coach reviews your progress each week and helps you adjust." },
 ];
 
-const STEPS = [
-  "Send the short form below.",
-  "A FIT staff member reaches out to answer questions and set your first visit.",
-  "At your first visit: starting assessment, body scan, and your personal goal.",
-  "Enroll at the front desk, get your plan, and start training.",
-];
-
 function BeatTheHolidays() {
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
