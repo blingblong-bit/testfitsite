@@ -38,13 +38,6 @@ const INCLUDED = [
   { icon: MessageSquare, title: "Weekly check-ins", body: "A real coach reviews your progress each week and helps you adjust." },
 ];
 
-const STEPS = [
-  "Send the short form below.",
-  "A FIT staff member reaches out to answer questions and set your first visit.",
-  "At your first visit: starting assessment, body scan, and your personal goal.",
-  "Enroll at the front desk, get your plan, and start training.",
-];
-
 function BeatTheHolidays() {
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -155,51 +148,16 @@ function BeatTheHolidays() {
             goals and everyday life.
           </p>
         </div>
-        <div>
-          <h2 className="text-3xl">How it works</h2>
-          <ol className="mt-6 space-y-4">
-            {STEPS.map((s, i) => (
-              <li key={s} className="flex gap-4">
-                <span className="h-8 w-8 shrink-0 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                  {i + 1}
-                </span>
-                <span className="pt-1 text-muted-foreground">{s}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className="border-t border-border">
-        <div className="container-page py-16 max-w-2xl">
-          <div className="rounded-lg border border-primary bg-card p-8" style={{ boxShadow: "var(--shadow-glow)" }}>
-            <h2 className="text-3xl md:text-4xl">Beat the Holidays</h2>
-            <p className="mt-2 text-muted-foreground">Your coach. Your plan. Support through the holidays.</p>
-            <p className="mt-6 text-xs uppercase tracking-widest">Includes</p>
-            <ul className="mt-3 space-y-2 text-muted-foreground">
-              {[
-                "Eight 45-minute one-on-one training sessions",
-                "Three months of gym access",
-                "Beginning and ending body scans",
-                "Personalized workouts",
-                "Practical nutrition guidance",
-                "Weekly coach check-ins",
-              ].map((t) => (
-                <li key={t} className="flex gap-3">
-                  <Check className="h-5 w-5 text-primary shrink-0" /> {t}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-6 text-3xl font-bold">
-              $549 <span className="text-base font-normal text-muted-foreground">for the complete program</span>
-            </p>
-            <a
-              href="#inquire"
-              className="mt-6 inline-flex h-12 items-center rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
-            >
-              Find my best fit
-            </a>
-          </div>
+        <div className="rounded-lg border border-primary bg-card p-8" style={{ boxShadow: "var(--shadow-glow)" }}>
+          <h2 className="text-3xl">Pricing</h2>
+          <p className="mt-4 text-4xl font-bold">$549</p>
+          <p className="mt-1 text-muted-foreground">for the complete program</p>
+          <a
+            href="#inquire"
+            className="mt-6 inline-flex h-12 items-center rounded-md bg-primary px-6 text-sm font-bold uppercase tracking-wide text-primary-foreground hover:brightness-110 transition"
+          >
+            Find my best fit
+          </a>
         </div>
       </section>
 
