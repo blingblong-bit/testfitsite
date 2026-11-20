@@ -1,3 +1,4 @@
+import { pausedSmsFetch, isOutboundSmsPaused } from "@/lib/sms-pause";
 // Server-only CRM helpers. Never throw into the caller — CRM bookkeeping must
 // never break a customer's form submission or an alert.
 
@@ -100,6 +101,7 @@ function e164(raw: string): string {
 export async function sendMemberWelcomeOnce(
   leadId: string,
 ): Promise<"sent" | "skipped" | "failed"> {
+  if (isOutboundSmsPaused(process.env.SMS_OUTBOUND_PAUSED)) return "skipped";
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: lead } = await supabaseAdmin
     .from("leads")
@@ -130,7 +132,7 @@ export async function sendMemberWelcomeOnce(
   const first = (lead.name ?? "").trim().split(/\s+/)[0] || "there";
   const body = `Welcome to the FIT Beyond Plus family, ${first}! 💪 We're pumped to have you. If you ever have questions, need to update your schedule, or just want to know what's going on at the gym — just text here. See you soon!`;
   const to = e164(lead.phone);
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+  const res = await pausedSmsFetch(process.env.SMS_OUTBOUND_PAUSED, `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: "POST",
     headers: {
       Authorization: `Basic ${btoa(`${sid}:${token}`)}`,

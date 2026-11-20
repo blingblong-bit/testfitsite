@@ -1,3 +1,4 @@
+import { pausedSmsFetch, isOutboundSmsPaused } from "@/lib/sms-pause";
 // Twilio Voice webhook: missed-call text-back.
 // The office phone forwards to our Twilio number after N unanswered rings.
 // Twilio POSTs this route (form-encoded), we answer with TwiML and text the caller.
@@ -27,6 +28,7 @@ function twiml(xml: string) {
 }
 
 function okTwiml() {
+  if (isOutboundSmsPaused(process.env.SMS_OUTBOUND_PAUSED)) return twiml('<Response><Say voice="Polly.Joanna">Thanks for calling FIT Beyond Plus. Sorry we missed your call. Please try us again during staffed hours.</Say><Hangup/></Response>');
   return twiml(
     `<Response><Say voice="Polly.Joanna">${VOICE_PROMPT}</Say><Hangup/></Response>`,
   );
@@ -57,7 +59,7 @@ async function sendTwilioSms(
   const from = process.env.TWILIO_FROM_NUMBER;
   if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
   const auth = btoa(`${sid}:${token}`);
-  const res = await fetch(
+  const res = await pausedSmsFetch(process.env.SMS_OUTBOUND_PAUSED,
     `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
     {
       method: "POST",
@@ -188,6 +190,7 @@ export const Route = createFileRoute("/api/public/webhooks/twilio-missed-call")(
             return okTwiml();
           }
 
+          if (isOutboundSmsPaused(process.env.SMS_OUTBOUND_PAUSED)) return okTwiml();
           const send = await sendTwilioSms(caller, TEXT_BACK_BODY);
           if (!send.ok) {
             console.error("[twilio-missed-call] twilio error", send.error);

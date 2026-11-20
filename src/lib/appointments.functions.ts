@@ -1,3 +1,4 @@
+import { pausedSmsFetch, isOutboundSmsPaused, SMS_PAUSED_MESSAGE } from "@/lib/sms-pause";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { AttributionSchema, attributionColumns } from "./attribution";
@@ -31,7 +32,7 @@ async function sendTwilioSms(
   const from = process.env.TWILIO_FROM_NUMBER;
   if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
   const auth = Buffer.from(`${sid}:${token}`).toString("base64");
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+  const res = await pausedSmsFetch(process.env.SMS_OUTBOUND_PAUSED, `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: "POST",
     headers: {
       Authorization: `Basic ${auth}`,
@@ -655,6 +656,8 @@ export const sendScheduleLink = createServerFn({ method: "POST" })
         (await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" })).data,
       );
     if (!staffOk) return { ok: false as const, error: "forbidden" };
+
+    if (isOutboundSmsPaused(process.env.SMS_OUTBOUND_PAUSED)) return { ok: false as const, error: SMS_PAUSED_MESSAGE };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: lead } = await supabaseAdmin

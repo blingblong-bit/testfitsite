@@ -1,5 +1,9 @@
 # Roadmap
 
+## Temporary outgoing texting pause
+- [ ] Block every outgoing SMS path without disabling forms or voice calls; verify tests and live pause.
+- [ ] Publish the pause with Jalen’s approval and verify the live reminder endpoint skips sending.
+
 ## CRM texting repair
 - [x] Reset Send after failures, check/refresh the session before sending, and show previously invisible notifications; authenticated test-mode save/read-back and blocked-request recovery verified, 24 CRM tests passed; no customer SMS sent.
 

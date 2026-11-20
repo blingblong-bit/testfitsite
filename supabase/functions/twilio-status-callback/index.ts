@@ -1,3 +1,11 @@
+// Global outgoing SMS pause; keep aligned with src/lib/sms-pause.ts.
+function isOutboundSmsPaused(value: string | undefined): boolean {
+  return value?.trim().toLowerCase() !== "false";
+}
+async function pausedSmsFetch(value: string | undefined, input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  if (isOutboundSmsPaused(value)) return Response.json({ message: "Texting is temporarily paused. No text was sent.", code: "sms_paused" }, { status: 423 });
+  return fetch(input, init);
+}
 // Twilio delivery status webhook. Twilio POSTs form-encoded status updates
 // (queued -> sent -> delivered / undelivered / failed) for every outbound
 // message that included a StatusCallback URL.
@@ -40,7 +48,7 @@ async function sendStaffAlert(message: string): Promise<void> {
   await Promise.all(
     recipients.map(async (to) => {
       try {
-        const res = await fetch(
+        const res = await pausedSmsFetch(Deno.env.get("SMS_OUTBOUND_PAUSED"),
           `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
           {
             method: "POST",

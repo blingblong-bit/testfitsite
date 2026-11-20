@@ -1,3 +1,4 @@
+import { pausedSmsFetch } from "@/lib/sms-pause";
 // Central configuration for internal staff / developer SMS alerts.
 //
 // Server-only (.server.ts is never bundled for the browser). Recipient
@@ -54,7 +55,7 @@ async function sendOne(
   const from = process.env.TWILIO_FROM_NUMBER;
   if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
   const auth = Buffer.from(`${sid}:${token}`).toString("base64");
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+  const res = await pausedSmsFetch(process.env.SMS_OUTBOUND_PAUSED, `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: "POST",
     headers: {
       Authorization: `Basic ${auth}`,

@@ -1,3 +1,11 @@
+// Global outgoing SMS pause; keep aligned with src/lib/sms-pause.ts.
+function isOutboundSmsPaused(value: string | undefined): boolean {
+  return value?.trim().toLowerCase() !== "false";
+}
+async function pausedSmsFetch(value: string | undefined, input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  if (isOutboundSmsPaused(value)) return Response.json({ message: "Texting is temporarily paused. No text was sent.", code: "sms_paused" }, { status: 423 });
+  return fetch(input, init);
+}
 // Runs every 15 minutes via pg_cron. Sends Hormozi Gym Launch drip SMS to active leads.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -27,7 +35,7 @@ async function sendTwilioSms(
   if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
 
   const auth = btoa(`${sid}:${token}`);
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+  const res = await pausedSmsFetch(Deno.env.get("SMS_OUTBOUND_PAUSED"), `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: "POST",
     headers: {
       Authorization: `Basic ${auth}`,
@@ -390,6 +398,7 @@ function isDayPassSource(source: string | null): boolean {
 
 Deno.serve(async (_req) => {
   try {
+    if (isOutboundSmsPaused(Deno.env.get("SMS_OUTBOUND_PAUSED"))) return Response.json({ ok: true, skipped: "sms_paused", sent: 0 });
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,

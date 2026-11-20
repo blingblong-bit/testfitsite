@@ -1,3 +1,4 @@
+import { pausedSmsFetch, isOutboundSmsPaused, SMS_PAUSED_MESSAGE } from "@/lib/sms-pause";
 // Instant internal "NEW FIT LEAD — CALL NOW" SMS to the owner.
 // Server-only. Recipient comes from the LEAD_ALERT_PHONE secret (one value to
 // change). One alert per form submission is guaranteed by the UNIQUE
@@ -120,6 +121,7 @@ export async function sendNewLeadAlert(
   }
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (isOutboundSmsPaused(process.env.SMS_OUTBOUND_PAUSED)) return { status: "failed", error: SMS_PAUSED_MESSAGE };
     const to = e164(process.env.LEAD_ALERT_PHONE ?? "");
 
     // Claim first: the UNIQUE submission_id makes a retry of the same
@@ -161,7 +163,7 @@ export async function sendNewLeadAlert(
     const from = process.env.TWILIO_FROM_NUMBER;
     if (!sid || !token || !from) return fail("twilio_not_configured");
 
-    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    const res = await pausedSmsFetch(process.env.SMS_OUTBOUND_PAUSED, `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
       method: "POST",
       headers: {
         Authorization: `Basic ${btoa(`${sid}:${token}`)}`,

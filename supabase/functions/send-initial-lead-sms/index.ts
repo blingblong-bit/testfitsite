@@ -1,3 +1,11 @@
+// Global outgoing SMS pause; keep aligned with src/lib/sms-pause.ts.
+function isOutboundSmsPaused(value: string | undefined): boolean {
+  return value?.trim().toLowerCase() !== "false";
+}
+async function pausedSmsFetch(value: string | undefined, input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  if (isOutboundSmsPaused(value)) return Response.json({ message: "Texting is temporarily paused. No text was sent.", code: "sms_paused" }, { status: 423 });
+  return fetch(input, init);
+}
 // Fires from a Supabase database webhook on leads INSERT.
 // Sends the personalized first SMS immediately for qualifying leads.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -214,7 +222,7 @@ async function sendTwilioSms(
   const from = Deno.env.get("TWILIO_FROM_NUMBER");
   if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
   const auth = btoa(`${sid}:${token}`);
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+  const res = await pausedSmsFetch(Deno.env.get("SMS_OUTBOUND_PAUSED"), `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: "POST",
     headers: {
       Authorization: `Basic ${auth}`,
@@ -238,6 +246,7 @@ async function sendTwilioSms(
 
 Deno.serve(async (req) => {
   try {
+    if (isOutboundSmsPaused(Deno.env.get("SMS_OUTBOUND_PAUSED"))) return Response.json({ ok: true, skipped: "sms_paused", sent: 0 });
     // Supabase DB webhook payload: { type, table, record, old_record, schema }
     const payload = (await req.json().catch(() => null)) as {
       type?: string;

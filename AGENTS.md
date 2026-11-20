@@ -1,5 +1,7 @@
 # Project rules
 
+- Every outgoing Twilio Messages request uses a fail-closed SMS pause guard in both runtimes; SMS_OUTBOUND_PAUSED must explicitly be false to resume. Why: the pause must cover manual texts, automation, reminders, and alerts without disabling calls.
+
 - CRM manual-text submissions check the client session and always release their busy state in finally; keep the draft on failures and never automatically retry a send. Why: failed authentication must not freeze the composer or risk duplicate customer texts.
 - Mount one shared notification presenter in the root layout. Why: success and failure messages from CRM actions must actually be visible.
 

@@ -1,3 +1,4 @@
+import { pausedSmsFetch, isOutboundSmsPaused, SMS_PAUSED_MESSAGE } from "@/lib/sms-pause";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { createReferral } from "@/lib/referrals";
@@ -26,6 +27,7 @@ export const generateDayPassCode = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => Schema.parse(data))
   .handler(async ({ data }) => {
     try {
+      if (isOutboundSmsPaused(process.env.SMS_OUTBOUND_PAUSED)) return { ok: false as const, error: SMS_PAUSED_MESSAGE };
       const refResult = await createReferral({
         data: {
           referrer_name: "FIT Beyond Plus",
@@ -53,7 +55,7 @@ export const generateDayPassCode = createServerFn({ method: "POST" })
       const body = `Hey ${firstName(data.name)}! Here's your free FIT Beyond Plus day pass 🎟️ Code: ${code} Just show this text and your name at the front desk — valid for 14 days. We can't wait to have you in! 449 W Lincoln St, Tullahoma 💪`;
 
       const auth = btoa(`${sid}:${token}`);
-      const res = await fetch(
+      const res = await pausedSmsFetch(process.env.SMS_OUTBOUND_PAUSED,
         `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
         {
           method: "POST",

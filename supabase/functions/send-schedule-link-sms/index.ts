@@ -1,3 +1,11 @@
+// Global outgoing SMS pause; keep aligned with src/lib/sms-pause.ts.
+function isOutboundSmsPaused(value: string | undefined): boolean {
+  return value?.trim().toLowerCase() !== "false";
+}
+async function pausedSmsFetch(value: string | undefined, input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  if (isOutboundSmsPaused(value)) return Response.json({ message: "Texting is temporarily paused. No text was sent.", code: "sms_paused" }, { status: 423 });
+  return fetch(input, init);
+}
 // One-off admin utility: sends a personalized appointment scheduling link
 // to a specific lead and logs it to the conversation log so the Lead
 // Tracker stays in sync. Invoked manually with the service role key.
@@ -27,7 +35,7 @@ async function sendTwilioSms(to: string, body: string) {
     return { ok: false as const, error: "twilio_not_configured" };
   }
   const auth = btoa(`${sid}:${token}`);
-  const res = await fetch(
+  const res = await pausedSmsFetch(Deno.env.get("SMS_OUTBOUND_PAUSED"),
     `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
     {
       method: "POST",
@@ -53,6 +61,7 @@ async function sendTwilioSms(to: string, body: string) {
 
 Deno.serve(async (req) => {
   try {
+    if (isOutboundSmsPaused(Deno.env.get("SMS_OUTBOUND_PAUSED"))) return Response.json({ ok: true, skipped: "sms_paused", sent: 0 });
     const body = (await req.json().catch(() => null)) as
       | { lead_id?: string }
       | null;

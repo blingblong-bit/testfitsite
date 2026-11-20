@@ -1,3 +1,11 @@
+// Global outgoing SMS pause; keep aligned with src/lib/sms-pause.ts.
+function isOutboundSmsPaused(value: string | undefined): boolean {
+  return value?.trim().toLowerCase() !== "false";
+}
+async function pausedSmsFetch(value: string | undefined, input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  if (isOutboundSmsPaused(value)) return Response.json({ message: "Texting is temporarily paused. No text was sent.", code: "sms_paused" }, { status: 423 });
+  return fetch(input, init);
+}
 // Antaris member sync — polls recent leads and marks conversions when a
 // matching Active member is found in Antaris. READ-ONLY toward Antaris.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -109,6 +117,7 @@ async function sendWelcomeIfNeeded(
   supabase: ReturnType<typeof createClient>,
   lead: LeadRow,
 ): Promise<void> {
+  if (isOutboundSmsPaused(Deno.env.get("SMS_OUTBOUND_PAUSED"))) return;
   if (lead.last_sms_at) return;
   if (!lead.phone) return;
 
@@ -163,7 +172,7 @@ async function sendWelcomeIfNeeded(
     return;
   }
   const auth = btoa(`${sid}:${token}`);
-  const res = await fetch(
+  const res = await pausedSmsFetch(Deno.env.get("SMS_OUTBOUND_PAUSED"),
     `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
     {
       method: "POST",
@@ -201,6 +210,7 @@ async function sendSms(
   body: string,
   kind: string,
 ): Promise<boolean> {
+  if (isOutboundSmsPaused(Deno.env.get("SMS_OUTBOUND_PAUSED"))) return false;
   const to = normalizePhone(phone);
   const isTest =
     (lead.email ?? "").trim().toLowerCase() === TEST_EMAIL || isTestPhone(phone);
@@ -227,7 +237,7 @@ async function sendSms(
     return false;
   }
   const auth = btoa(`${sid}:${token}`);
-  const res = await fetch(
+  const res = await pausedSmsFetch(Deno.env.get("SMS_OUTBOUND_PAUSED"),
     `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
     {
       method: "POST",
@@ -260,6 +270,7 @@ async function sendSms(
 async function runPostTrialNudges(
   supabase: ReturnType<typeof createClient>,
 ): Promise<{ nudged: number; errors: number }> {
+  if (isOutboundSmsPaused(Deno.env.get("SMS_OUTBOUND_PAUSED"))) return { nudged: 0, errors: 0 };
   let nudged = 0;
   let errors = 0;
   const nowIso = new Date().toISOString();

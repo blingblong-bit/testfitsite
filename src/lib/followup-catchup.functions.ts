@@ -1,3 +1,4 @@
+import { pausedSmsFetch, isOutboundSmsPaused, SMS_PAUSED_MESSAGE } from "@/lib/sms-pause";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
@@ -187,6 +188,7 @@ export const sendFollowupCatchup = createServerFn({ method: "POST" })
   })
   .handler(async ({ context }) => {
     await assertAdmin(context as never);
+    if (isOutboundSmsPaused(process.env.SMS_OUTBOUND_PAUSED)) return { ok: false as const, error: SMS_PAUSED_MESSAGE };
 
     if (isQuietHours()) {
       return { ok: false as const, error: "quiet_hours" };
@@ -209,7 +211,7 @@ export const sendFollowupCatchup = createServerFn({ method: "POST" })
       let error: string | undefined;
 
       try {
-        const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+        const res = await pausedSmsFetch(process.env.SMS_OUTBOUND_PAUSED, `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
           method: "POST",
           headers: {
             Authorization: `Basic ${auth}`,

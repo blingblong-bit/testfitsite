@@ -1,3 +1,4 @@
+import { pausedSmsFetch, isOutboundSmsPaused, SMS_PAUSED_MESSAGE } from "@/lib/sms-pause";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -25,6 +26,7 @@ export const sendManualSms = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => Schema.parse(data))
   .handler(async ({ data, context }) => {
     try {
+      if (isOutboundSmsPaused(process.env.SMS_OUTBOUND_PAUSED)) return { ok: false as const, error: SMS_PAUSED_MESSAGE };
       const { data: isAdmin, error: roleErr } = await context.supabase.rpc(
         "has_role",
         { _user_id: context.userId, _role: "admin" },
@@ -78,7 +80,7 @@ export const sendManualSms = createServerFn({ method: "POST" })
       }
 
       const auth = btoa(`${sid}:${token}`);
-      const res = await fetch(
+      const res = await pausedSmsFetch(process.env.SMS_OUTBOUND_PAUSED,
         `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
         {
           method: "POST",

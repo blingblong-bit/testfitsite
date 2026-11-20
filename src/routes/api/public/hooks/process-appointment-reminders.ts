@@ -1,3 +1,4 @@
+import { pausedSmsFetch, isOutboundSmsPaused } from "@/lib/sms-pause";
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
@@ -35,7 +36,7 @@ async function sendTwilioSms(
   const from = process.env.TWILIO_FROM_NUMBER;
   if (!sid || !token || !from) return { ok: false, error: "twilio_not_configured" };
   const auth = Buffer.from(`${sid}:${token}`).toString("base64");
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+  const res = await pausedSmsFetch(process.env.SMS_OUTBOUND_PAUSED, `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: "POST",
     headers: {
       Authorization: `Basic ${auth}`,
@@ -84,6 +85,7 @@ export const Route = createFileRoute("/api/public/hooks/process-appointment-remi
   server: {
     handlers: {
       POST: async () => {
+        if (isOutboundSmsPaused(process.env.SMS_OUTBOUND_PAUSED)) return Response.json({ ok: true, skipped: "sms_paused", sent: 0 });
         const supabase = createClient<Database>(
           process.env.SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY!,

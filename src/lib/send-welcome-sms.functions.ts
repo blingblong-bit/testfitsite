@@ -1,3 +1,4 @@
+import { pausedSmsFetch, isOutboundSmsPaused, SMS_PAUSED_MESSAGE } from "@/lib/sms-pause";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
@@ -26,6 +27,7 @@ export const sendWelcomeSms = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => Schema.parse(data))
   .handler(async ({ data }) => {
     try {
+      if (isOutboundSmsPaused(process.env.SMS_OUTBOUND_PAUSED)) return { ok: false as const, error: SMS_PAUSED_MESSAGE };
       const to = normalizePhone(data.phone);
       const body = `Welcome to the FIT Beyond Plus family, ${firstName(data.name)}! 💪 We're pumped to have you. If you ever have questions, need to update your schedule, or just want to know what's going on at the gym — just text here. See you soon!`;
 
@@ -70,7 +72,7 @@ export const sendWelcomeSms = createServerFn({ method: "POST" })
       }
 
       const auth = btoa(`${sid}:${token}`);
-      const res = await fetch(
+      const res = await pausedSmsFetch(process.env.SMS_OUTBOUND_PAUSED,
         `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
         {
           method: "POST",

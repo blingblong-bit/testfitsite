@@ -1,3 +1,4 @@
+import { pausedSmsFetch, isOutboundSmsPaused } from "@/lib/sms-pause";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { AttributionSchema, attributionColumns } from "./attribution";
@@ -78,7 +79,7 @@ export const checkExistingMemberSubmission = createServerFn({ method: "POST" })
 
       const leadId = inserted.id as string;
 
-      if (!data.phone) {
+      if (isOutboundSmsPaused(process.env.SMS_OUTBOUND_PAUSED) || !data.phone) {
         return { handled: true as const, lead_id: leadId };
       }
 
@@ -114,7 +115,7 @@ export const checkExistingMemberSubmission = createServerFn({ method: "POST" })
       }
 
       const auth = btoa(`${sid}:${token}`);
-      const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      const res = await pausedSmsFetch(process.env.SMS_OUTBOUND_PAUSED, `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
         method: "POST",
         headers: {
           Authorization: `Basic ${auth}`,
