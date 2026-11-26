@@ -59,6 +59,7 @@ import { Route as AuthenticatedCrmIndexRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCrmAnalyticsRouteImport } from './routes/_authenticated/crm.analytics'
 import { Route as AuthenticatedCrmContactsRouteImport } from './routes/_authenticated/crm.contacts'
 import { Route as AuthenticatedCrmDashboardRouteImport } from './routes/_authenticated/crm.dashboard'
+import { Route as AuthenticatedCrmInactiveMembersRouteImport } from './routes/_authenticated/crm.inactive-members'
 import { Route as AuthenticatedCrmMissedCallsRouteImport } from './routes/_authenticated/crm.missed-calls'
 import { Route as AuthenticatedCrmOpportunitiesRouteImport } from './routes/_authenticated/crm.opportunities'
 import { Route as AuthenticatedCrmReferralsRouteImport } from './routes/_authenticated/crm.referrals'
@@ -66,6 +67,7 @@ import { Route as AuthenticatedCrmTasksRouteImport } from './routes/_authenticat
 import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as ApiPublicHooksProcessAppointmentRemindersRouteImport } from './routes/api/public/hooks/process-appointment-reminders'
 import { Route as ApiPublicHooksSnapshotMonthRouteImport } from './routes/api/public/hooks/snapshot-month'
+import { Route as ApiPublicHooksSyncGymSigninsRouteImport } from './routes/api/public/hooks/sync-gym-signins'
 import { Route as ApiPublicWebhooksCalendlyRouteImport } from './routes/api/public/webhooks/calendly'
 import { Route as ApiPublicWebhooksCrmCallRouteImport } from './routes/api/public/webhooks/crm-call'
 import { Route as ApiPublicWebhooksInboundCallForwardRouteImport } from './routes/api/public/webhooks/inbound-call-forward'
@@ -337,6 +339,12 @@ const AuthenticatedCrmDashboardRoute =
     path: '/dashboard',
     getParentRoute: () => AuthenticatedCrmRoute,
   } as any)
+const AuthenticatedCrmInactiveMembersRoute =
+  AuthenticatedCrmInactiveMembersRouteImport.update({
+    id: '/inactive-members',
+    path: '/inactive-members',
+    getParentRoute: () => AuthenticatedCrmRoute,
+  } as any)
 const AuthenticatedCrmMissedCallsRoute =
   AuthenticatedCrmMissedCallsRouteImport.update({
     id: '/missed-calls',
@@ -375,6 +383,12 @@ const ApiPublicHooksSnapshotMonthRoute =
   ApiPublicHooksSnapshotMonthRouteImport.update({
     id: '/api/public/hooks/snapshot-month',
     path: '/api/public/hooks/snapshot-month',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksSyncGymSigninsRoute =
+  ApiPublicHooksSyncGymSigninsRouteImport.update({
+    id: '/api/public/hooks/sync-gym-signins',
+    path: '/api/public/hooks/sync-gym-signins',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicWebhooksCalendlyRoute =
@@ -473,6 +487,7 @@ export interface FileRoutesByFullPath {
   '/crm/analytics': typeof AuthenticatedCrmAnalyticsRoute
   '/crm/contacts': typeof AuthenticatedCrmContactsRoute
   '/crm/dashboard': typeof AuthenticatedCrmDashboardRoute
+  '/crm/inactive-members': typeof AuthenticatedCrmInactiveMembersRoute
   '/crm/missed-calls': typeof AuthenticatedCrmMissedCallsRoute
   '/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
   '/crm/referrals': typeof AuthenticatedCrmReferralsRoute
@@ -481,6 +496,7 @@ export interface FileRoutesByFullPath {
   '/crm/': typeof AuthenticatedCrmIndexRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
+  '/api/public/hooks/sync-gym-signins': typeof ApiPublicHooksSyncGymSigninsRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/crm-call': typeof ApiPublicWebhooksCrmCallRoute
   '/api/public/webhooks/inbound-call-forward': typeof ApiPublicWebhooksInboundCallForwardRoute
@@ -535,6 +551,7 @@ export interface FileRoutesByTo {
   '/crm/analytics': typeof AuthenticatedCrmAnalyticsRoute
   '/crm/contacts': typeof AuthenticatedCrmContactsRoute
   '/crm/dashboard': typeof AuthenticatedCrmDashboardRoute
+  '/crm/inactive-members': typeof AuthenticatedCrmInactiveMembersRoute
   '/crm/missed-calls': typeof AuthenticatedCrmMissedCallsRoute
   '/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
   '/crm/referrals': typeof AuthenticatedCrmReferralsRoute
@@ -543,6 +560,7 @@ export interface FileRoutesByTo {
   '/crm': typeof AuthenticatedCrmIndexRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
+  '/api/public/hooks/sync-gym-signins': typeof ApiPublicHooksSyncGymSigninsRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/crm-call': typeof ApiPublicWebhooksCrmCallRoute
   '/api/public/webhooks/inbound-call-forward': typeof ApiPublicWebhooksInboundCallForwardRoute
@@ -603,6 +621,7 @@ export interface FileRoutesById {
   '/_authenticated/crm/analytics': typeof AuthenticatedCrmAnalyticsRoute
   '/_authenticated/crm/contacts': typeof AuthenticatedCrmContactsRoute
   '/_authenticated/crm/dashboard': typeof AuthenticatedCrmDashboardRoute
+  '/_authenticated/crm/inactive-members': typeof AuthenticatedCrmInactiveMembersRoute
   '/_authenticated/crm/missed-calls': typeof AuthenticatedCrmMissedCallsRoute
   '/_authenticated/crm/opportunities': typeof AuthenticatedCrmOpportunitiesRoute
   '/_authenticated/crm/referrals': typeof AuthenticatedCrmReferralsRoute
@@ -611,6 +630,7 @@ export interface FileRoutesById {
   '/_authenticated/crm/': typeof AuthenticatedCrmIndexRoute
   '/api/public/hooks/process-appointment-reminders': typeof ApiPublicHooksProcessAppointmentRemindersRoute
   '/api/public/hooks/snapshot-month': typeof ApiPublicHooksSnapshotMonthRoute
+  '/api/public/hooks/sync-gym-signins': typeof ApiPublicHooksSyncGymSigninsRoute
   '/api/public/webhooks/calendly': typeof ApiPublicWebhooksCalendlyRoute
   '/api/public/webhooks/crm-call': typeof ApiPublicWebhooksCrmCallRoute
   '/api/public/webhooks/inbound-call-forward': typeof ApiPublicWebhooksInboundCallForwardRoute
@@ -671,6 +691,7 @@ export interface FileRouteTypes {
     | '/crm/analytics'
     | '/crm/contacts'
     | '/crm/dashboard'
+    | '/crm/inactive-members'
     | '/crm/missed-calls'
     | '/crm/opportunities'
     | '/crm/referrals'
@@ -679,6 +700,7 @@ export interface FileRouteTypes {
     | '/crm/'
     | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
+    | '/api/public/hooks/sync-gym-signins'
     | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/crm-call'
     | '/api/public/webhooks/inbound-call-forward'
@@ -733,6 +755,7 @@ export interface FileRouteTypes {
     | '/crm/analytics'
     | '/crm/contacts'
     | '/crm/dashboard'
+    | '/crm/inactive-members'
     | '/crm/missed-calls'
     | '/crm/opportunities'
     | '/crm/referrals'
@@ -741,6 +764,7 @@ export interface FileRouteTypes {
     | '/crm'
     | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
+    | '/api/public/hooks/sync-gym-signins'
     | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/crm-call'
     | '/api/public/webhooks/inbound-call-forward'
@@ -800,6 +824,7 @@ export interface FileRouteTypes {
     | '/_authenticated/crm/analytics'
     | '/_authenticated/crm/contacts'
     | '/_authenticated/crm/dashboard'
+    | '/_authenticated/crm/inactive-members'
     | '/_authenticated/crm/missed-calls'
     | '/_authenticated/crm/opportunities'
     | '/_authenticated/crm/referrals'
@@ -808,6 +833,7 @@ export interface FileRouteTypes {
     | '/_authenticated/crm/'
     | '/api/public/hooks/process-appointment-reminders'
     | '/api/public/hooks/snapshot-month'
+    | '/api/public/hooks/sync-gym-signins'
     | '/api/public/webhooks/calendly'
     | '/api/public/webhooks/crm-call'
     | '/api/public/webhooks/inbound-call-forward'
@@ -849,6 +875,7 @@ export interface RootRouteChildren {
   LovableEmailEventsRoute: typeof LovableEmailEventsRoute
   ApiPublicHooksProcessAppointmentRemindersRoute: typeof ApiPublicHooksProcessAppointmentRemindersRoute
   ApiPublicHooksSnapshotMonthRoute: typeof ApiPublicHooksSnapshotMonthRoute
+  ApiPublicHooksSyncGymSigninsRoute: typeof ApiPublicHooksSyncGymSigninsRoute
   ApiPublicWebhooksCalendlyRoute: typeof ApiPublicWebhooksCalendlyRoute
   ApiPublicWebhooksCrmCallRoute: typeof ApiPublicWebhooksCrmCallRoute
   ApiPublicWebhooksInboundCallForwardRoute: typeof ApiPublicWebhooksInboundCallForwardRoute
@@ -1211,6 +1238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCrmDashboardRouteImport
       parentRoute: typeof AuthenticatedCrmRoute
     }
+    '/_authenticated/crm/inactive-members': {
+      id: '/_authenticated/crm/inactive-members'
+      path: '/inactive-members'
+      fullPath: '/crm/inactive-members'
+      preLoaderRoute: typeof AuthenticatedCrmInactiveMembersRouteImport
+      parentRoute: typeof AuthenticatedCrmRoute
+    }
     '/_authenticated/crm/missed-calls': {
       id: '/_authenticated/crm/missed-calls'
       path: '/missed-calls'
@@ -1258,6 +1292,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/snapshot-month'
       fullPath: '/api/public/hooks/snapshot-month'
       preLoaderRoute: typeof ApiPublicHooksSnapshotMonthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/sync-gym-signins': {
+      id: '/api/public/hooks/sync-gym-signins'
+      path: '/api/public/hooks/sync-gym-signins'
+      fullPath: '/api/public/hooks/sync-gym-signins'
+      preLoaderRoute: typeof ApiPublicHooksSyncGymSigninsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/webhooks/calendly': {
@@ -1323,6 +1364,7 @@ interface AuthenticatedCrmRouteChildren {
   AuthenticatedCrmAnalyticsRoute: typeof AuthenticatedCrmAnalyticsRoute
   AuthenticatedCrmContactsRoute: typeof AuthenticatedCrmContactsRoute
   AuthenticatedCrmDashboardRoute: typeof AuthenticatedCrmDashboardRoute
+  AuthenticatedCrmInactiveMembersRoute: typeof AuthenticatedCrmInactiveMembersRoute
   AuthenticatedCrmMissedCallsRoute: typeof AuthenticatedCrmMissedCallsRoute
   AuthenticatedCrmOpportunitiesRoute: typeof AuthenticatedCrmOpportunitiesRoute
   AuthenticatedCrmReferralsRoute: typeof AuthenticatedCrmReferralsRoute
@@ -1334,6 +1376,7 @@ const AuthenticatedCrmRouteChildren: AuthenticatedCrmRouteChildren = {
   AuthenticatedCrmAnalyticsRoute: AuthenticatedCrmAnalyticsRoute,
   AuthenticatedCrmContactsRoute: AuthenticatedCrmContactsRoute,
   AuthenticatedCrmDashboardRoute: AuthenticatedCrmDashboardRoute,
+  AuthenticatedCrmInactiveMembersRoute: AuthenticatedCrmInactiveMembersRoute,
   AuthenticatedCrmMissedCallsRoute: AuthenticatedCrmMissedCallsRoute,
   AuthenticatedCrmOpportunitiesRoute: AuthenticatedCrmOpportunitiesRoute,
   AuthenticatedCrmReferralsRoute: AuthenticatedCrmReferralsRoute,
@@ -1455,6 +1498,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksProcessAppointmentRemindersRoute:
     ApiPublicHooksProcessAppointmentRemindersRoute,
   ApiPublicHooksSnapshotMonthRoute: ApiPublicHooksSnapshotMonthRoute,
+  ApiPublicHooksSyncGymSigninsRoute: ApiPublicHooksSyncGymSigninsRoute,
   ApiPublicWebhooksCalendlyRoute: ApiPublicWebhooksCalendlyRoute,
   ApiPublicWebhooksCrmCallRoute: ApiPublicWebhooksCrmCallRoute,
   ApiPublicWebhooksInboundCallForwardRoute:

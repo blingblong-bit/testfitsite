@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tansta
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Kanban, ClipboardList, Home, Users, ListTodo, LayoutDashboard, BarChart3, Gift, PhoneMissed, Plus } from "lucide-react";
+import { Kanban, ClipboardList, Home, Users, ListTodo, LayoutDashboard, BarChart3, Gift, PhoneMissed, Plus, UserX } from "lucide-react";
 import { AddLeadModal } from "@/components/crm/LeadTools";
 import { ContactDrawer } from "@/components/crm/ContactDrawer";
 
@@ -30,6 +30,7 @@ const nav = [
   { to: "/crm/tasks", label: "Tasks", icon: ListTodo },
   { to: "/crm/opportunities", label: "Opportunities", icon: Kanban },
   { to: "/crm/contacts", label: "Contacts", icon: Users },
+  { to: "/crm/inactive-members", label: "Inactive Members", icon: UserX },
   { to: "/crm/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/crm/referrals", label: "Referrals", icon: Gift },
   { to: "/crm/missed-calls", label: "Missed Calls", icon: PhoneMissed },

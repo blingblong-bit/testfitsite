@@ -50,6 +50,13 @@
       "when": 1791822111403,
       "tag": "0006_crm_call_log",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795724001516,
+      "tag": "0007_antaris_signin_sync",
+      "breakpoints": true
     }
   ]
 }

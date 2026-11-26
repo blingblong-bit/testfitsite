@@ -25,6 +25,8 @@
 - [x] Phase D approved — CRM V1 complete; development paused for ~1 week of real operational use
 - [x] Staff Portal tile changed from "Lead Tracker" to "CRM" (opens /crm; the lead tracker lives inside the CRM)
 
+- [x] Antaris sign-in sync, Last visit on CRM, Inactive Members list (manual texts only)
+
 ## Operations week (log issues; one focused revision afterward)
 - [ ] Manually resolve the four Migration Review contacts: Haleigh Woodcox, Toye Ray, Seth Vaughn, Luz Sanchez
 - [ ] Collect operational notes for ~1 week: anything confusing, slow, missing, or incorrect in the CRM

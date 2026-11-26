@@ -591,6 +591,60 @@ export type Database = {
         }
         Relationships: []
       }
+      gym_signin_sync_state: {
+        Row: {
+          backfill_complete: boolean
+          backfill_next_page: number | null
+          id: number
+          last_result: Json | null
+          last_run_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          backfill_complete?: boolean
+          backfill_next_page?: number | null
+          id?: number
+          last_result?: Json | null
+          last_run_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          backfill_complete?: boolean
+          backfill_next_page?: number | null
+          id?: number
+          last_result?: Json | null
+          last_run_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gym_signins: {
+        Row: {
+          antaris_signin_id: number
+          client_id: string
+          created_at: string
+          location_id: number
+          scan_type: string | null
+          scanned_at: string
+        }
+        Insert: {
+          antaris_signin_id: number
+          client_id: string
+          created_at?: string
+          location_id: number
+          scan_type?: string | null
+          scanned_at: string
+        }
+        Update: {
+          antaris_signin_id?: number
+          client_id?: string
+          created_at?: string
+          location_id?: number
+          scan_type?: string | null
+          scanned_at?: string
+        }
+        Relationships: []
+      }
       lead_alert_log: {
         Row: {
           alert_kind: string
@@ -638,6 +692,8 @@ export type Database = {
       }
       leads: {
         Row: {
+          antaris_client_id: string | null
+          antaris_link_checked_at: string | null
           attribution_channel: string | null
           became_member: boolean
           comm_pref: string | null
@@ -662,6 +718,7 @@ export type Database = {
           last_contacted_at: string | null
           last_response_at: string | null
           last_sms_at: string | null
+          last_visit_at: string | null
           latest_source: string | null
           lead_score: number
           lead_type: string
@@ -700,6 +757,8 @@ export type Database = {
           utm_term: string | null
         }
         Insert: {
+          antaris_client_id?: string | null
+          antaris_link_checked_at?: string | null
           attribution_channel?: string | null
           became_member?: boolean
           comm_pref?: string | null
@@ -724,6 +783,7 @@ export type Database = {
           last_contacted_at?: string | null
           last_response_at?: string | null
           last_sms_at?: string | null
+          last_visit_at?: string | null
           latest_source?: string | null
           lead_score?: number
           lead_type?: string
@@ -762,6 +822,8 @@ export type Database = {
           utm_term?: string | null
         }
         Update: {
+          antaris_client_id?: string | null
+          antaris_link_checked_at?: string | null
           attribution_channel?: string | null
           became_member?: boolean
           comm_pref?: string | null
@@ -786,6 +848,7 @@ export type Database = {
           last_contacted_at?: string | null
           last_response_at?: string | null
           last_sms_at?: string | null
+          last_visit_at?: string | null
           latest_source?: string | null
           lead_score?: number
           lead_type?: string

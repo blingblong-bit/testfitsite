@@ -1,3 +1,4 @@
+import { formatLastVisit } from "@/lib/gym/signins";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -135,6 +136,7 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
           <span>{lead.contact_type ?? "Unclassified"}</span>
           {lead.phone && <span>{lead.phone}</span>}
           {lead.email && <span className="break-all">{lead.email}</span>}
+          {lead.last_visit_at && <span>Last visit: {formatLastVisit(lead.last_visit_at)}</span>}
         </SheetDescription>
         {lead.review_flag && (
           <div className="mt-2 flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
@@ -213,6 +215,7 @@ function DrawerBody({ id, initialTab }: { id: string; initialTab?: string }) {
 
         <TabsContent value="details" className="space-y-2 text-sm">
           <Row k="Contact type" v={lead.contact_type ?? "—"} />
+          <Row k="Last visit" v={lead.antaris_client_id || lead.last_visit_at ? formatLastVisit(lead.last_visit_at) : "Not linked to Antaris"} />
           <Row k="Tags" v={lead.tags?.length ? lead.tags.join(", ") : "—"} />
           <Row k="Original source" v={lead.original_source ?? lead.source} />
           <Row k="Latest source" v={lead.latest_source ?? "—"} />

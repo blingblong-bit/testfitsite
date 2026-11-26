@@ -400,3 +400,48 @@ export async function checkClassCheckinMatch(
     return base;
   }
 }
+
+// ---- Sign-in (front-desk scan) feed — READ-ONLY GET ----
+export type AntarisSignin = {
+  id: number;
+  client_id: number | string;
+  date: number; // unix seconds (UTC)
+  location_id: number;
+  type?: string | null;
+};
+
+export type AntarisSigninPage = {
+  ok: boolean;
+  status: number;
+  rows: AntarisSignin[];
+  totalPages: number;
+};
+
+export async function fetchLocationSigninsPage(
+  locationId: number,
+  page: number,
+): Promise<AntarisSigninPage> {
+  const token = await login();
+  if (!token) return { ok: false, status: 0, rows: [], totalPages: 0 };
+  try {
+    const res = await fetch(
+      `${BASE_URL}/v1/locations/${locationId}/signins?order=DESC&page=${page}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (!res.ok) return { ok: false, status: res.status, rows: [], totalPages: 0 };
+    const json = (await res.json()) as {
+      data?: AntarisSignin[];
+      pagination?: { total_pages?: number };
+      meta?: { pagination?: { total_pages?: number } };
+    };
+    return {
+      ok: true,
+      status: res.status,
+      rows: Array.isArray(json.data) ? json.data : [],
+      totalPages: json.meta?.pagination?.total_pages ?? json.pagination?.total_pages ?? 0,
+    };
+  } catch {
+    console.error("[antaris] signins fetch failed");
+    return { ok: false, status: 0, rows: [], totalPages: 0 };
+  }
+}
