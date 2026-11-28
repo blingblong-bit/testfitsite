@@ -26,6 +26,8 @@ export const Route = createFileRoute("/")({
           "Join FIT Beyond Plus in Tullahoma, TN for 24/7 gym access, group fitness classes, personal training, and athlete performance training. Tour the gym today.",
       },
       { property: "og:url", content: "https://fitbeyondplus.com/" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         name: "twitter:title",
         content: "FIT Beyond Plus | Gym, Training & Classes | Tullahoma, TN",

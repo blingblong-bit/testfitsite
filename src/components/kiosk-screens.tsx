@@ -5,6 +5,8 @@ import { processDayPassCheckin } from "@/lib/process-day-pass-checkin.functions"
 import { lookupDayPassGuest, type DayPassGuestLookup } from "@/lib/lookup-day-pass-guest.functions";
 import venmoQrAsset from "@/assets/venmo-qr.jpeg.asset.json";
 import { SmsConsentCheckbox } from "@/components/SmsConsent";
+import { DayPassTextChoice } from "@/components/DayPassTextChoice";
+import { Button } from "@/components/ui/button";
 
 export const WAIVER_TEXT =
   "I have read and understood the foregoing assumption of risk and release of liability and I understand that by signing this document it obligates me to indemnify FIT Beyond Plus for any liability for injury or death of any person and damage of property caused by negligent or intentional act or omission. I understand that by signing, I am waiving my valuable legal rights.";
@@ -170,13 +172,20 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
   const [known, setKnown] = useState<DayPassGuestLookup | null>(null);
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [waiverAccepted, setWaiverAccepted] = useState(false);
-  const [smsConsent, setSmsConsent] = useState(false);
+  const [smsConsent, setSmsConsent] = useState<boolean | null>(null);
   // Timestamp the form rendered — used to reject submissions that come in
   // suspiciously fast (bots filling and submitting in under a second).
   const [renderedAt] = useState(() => Date.now());
 
-  // Step one is phone only. If we already have this person, they skip
-  // straight to the waiver + payment step with nothing to re-type.
+  useEffect(() => {
+    const form = document.getElementById("day-pass-form");
+    const shell = form?.parentElement;
+    if (step !== "phone" && shell) {
+      window.scrollTo({ top: shell.getBoundingClientRect().top + window.scrollY - 96 });
+    }
+  }, [step]);
+
+  // Returning guests confirm the waiver on the details step without retyping.
   async function handlePhoneSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const d = new FormData(e.currentTarget);
@@ -199,7 +208,7 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
       const result = await lookupDayPassGuest({ data: { phone } });
       if (result.found) {
         setKnown(result);
-        setStep("pay");
+        setStep("info");
         return;
       }
     } catch {
@@ -214,8 +223,12 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
 
   function handleInfoSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!waiverAccepted) {
+      setError("Please accept the liability waiver to continue.");
+      return;
+    }
     const d = new FormData(e.currentTarget);
-    setGuest({
+    if (!known) setGuest({
       name: String(d.get("name") ?? ""),
       email: String(d.get("email") ?? ""),
       phone: String(d.get("phone") ?? ""),
@@ -234,8 +247,8 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
       setError("Please accept the liability waiver to continue.");
       return;
     }
-    if (!smsConsent) {
-      setError("Please check the box to consent to text messages.");
+    if (smsConsent === null) {
+      setError("Please choose whether you would like to receive texts.");
       return;
     }
     setSubmitting(true);
@@ -248,6 +261,8 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
           phone: guest.phone,
           payment_method: method,
           lead_id: known?.lead_id ?? null,
+          waiver_accepted: true,
+          sms_consent: smsConsent,
         },
       });
       if (!result.ok) {
@@ -358,10 +373,11 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
     return (
       <FormShell
         eyebrow="DAY PASS"
-        title="Tell Us About You"
-        sub="First time here — we just need your name and number."
+        title={known?.first_name ? `Welcome back, ${known.first_name}!` : "Tell Us About You"}
+        sub={known ? "Please accept the waiver for today's visit." : "Your details and liability waiver."}
       >
-        <form onSubmit={handleInfoSubmit} className="space-y-5">
+        <form id="day-pass-form" onSubmit={handleInfoSubmit} className="scroll-mt-24 space-y-5">
+          {known ? <p className="text-sm text-muted-foreground">Phone: {guest.phone}</p> : <>
           <KioskField label="Full name" name="name" required defaultValue={guest.name} />
           <KioskField
             label="Email (optional)"
@@ -370,8 +386,13 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
             defaultValue={guest.email}
           />
           <KioskField label="Phone" name="phone" type="tel" required defaultValue={guest.phone} />
+          </>}
+          <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <SubmitButton submitting={false} label="Continue to Payment" />
+          <Button type="submit" className="h-14 w-full text-base">Continue to Payment</Button>
+          {known && <Button type="button" variant="ghost" className="w-full" onClick={() => {
+            setKnown(null); setWaiverAccepted(false); setSmsConsent(null); setMethod(null); setStep("phone"); setError(null);
+          }}>Not you? Start over</Button>}
         </form>
       </FormShell>
     );
@@ -388,14 +409,23 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
       title={known?.first_name ? `Welcome back, ${known.first_name}!` : "Confirm Payment — $10"}
       sub={
         known
-          ? `$10 day pass. ${known.visit_count > 0 ? `This will be day pass #${known.visit_count + 1}.` : "Just confirm payment and the waiver below."}`
+          ? `$10 day pass. ${known.visit_count > 0 ? `This will be day pass #${known.visit_count + 1}.` : "Confirm payment below."}`
           : `Day pass for ${guest.name}`
       }
     >
-      <form onSubmit={handlePaySubmit} className="space-y-6">
-        <div className="rounded-2xl border border-border bg-card p-6 text-center">
+      <form id="day-pass-form" onSubmit={handlePaySubmit} className="scroll-mt-24 space-y-6 pb-36">
+        <div>
+          <p className="mb-3 text-xs uppercase tracking-widest">Payment method</p>
+          <div className="grid grid-cols-2 gap-3">
+            {methods.map((m) => <Button key={m.id} type="button" aria-pressed={method === m.id}
+              variant={method === m.id ? "default" : "secondary"} className="h-14 text-base"
+              onClick={() => setMethod(m.id)}>{m.label}</Button>)}
+          </div>
+        </div>
+        <DayPassTextChoice value={smsConsent} onChange={setSmsConsent} />
+        {method === "venmo" && <div className="rounded-lg border border-border p-6 text-center">
           <p className="text-xs uppercase tracking-widest text-primary">Venmo</p>
-          <div className="mt-4 mx-auto h-64 w-64 rounded-lg border border-border bg-white flex items-center justify-center overflow-hidden">
+          <div className="mt-4 mx-auto h-48 w-48 rounded-lg border border-border bg-background flex items-center justify-center overflow-hidden">
             <img
               src={venmoQrAsset.url}
               alt="Scan to pay FIT Beyond Plus on Venmo"
@@ -413,47 +443,27 @@ export function DayPassScreen({ onDone }: { onDone: () => void }) {
           <p className="mt-3 text-sm text-muted-foreground">
             Enter $10 and include the day-pass visitor’s name in the payment note.
           </p>
-        </div>
+        </div>}
 
-        <div>
-          <p className="block text-xs uppercase tracking-widest mb-3">Payment method</p>
-          <div className="grid grid-cols-2 gap-3">
-            {methods.map((m) => {
-              const active = method === m.id;
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setMethod(m.id)}
-                  className={`h-14 rounded-md border text-base font-semibold transition-colors ${
-                    active
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-secondary hover:border-primary"
-                  }`}
-                >
-                  {m.label}
-                </button>
-              );
-            })}
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="mx-auto max-w-2xl space-y-2">
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" disabled={submitting} className="h-14 w-full text-base font-bold">
+              {submitting ? "Checking in…" : "Check In — $10"}
+            </Button>
           </div>
         </div>
-
-        <WaiverCheckbox checked={waiverAccepted} onChange={setWaiverAccepted} />
-        <SmsConsentCheckbox checked={smsConsent} onChange={setSmsConsent} />
-
-        {error && <p className="text-sm text-destructive">{error}</p>}
-        <SubmitButton submitting={submitting} label="Check In" />
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => {
-            setStep(known ? "phone" : "info");
-            setKnown(null);
+            setStep("info");
             setError(null);
           }}
           className="w-full text-sm text-muted-foreground hover:text-foreground"
         >
-          {known ? "← Not you? Start over" : "← Back to guest info"}
-        </button>
+          ← Back to guest info
+        </Button>
       </form>
     </FormShell>
   );

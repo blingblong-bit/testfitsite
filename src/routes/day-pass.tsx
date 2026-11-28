@@ -7,6 +7,10 @@ export const Route = createFileRoute("/day-pass")({
   head: () => ({
     meta: [
       { title: "Buy a Day Pass — $10 | FIT Beyond Plus" },
+      { property: "og:title", content: "Buy a Day Pass — $10 | FIT Beyond Plus" },
+      { property: "og:description", content: "Get single-day gym access at FIT Beyond Plus in Tullahoma for $10. Complete your guest details, waiver, and check-in." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         name: "description",
         content:

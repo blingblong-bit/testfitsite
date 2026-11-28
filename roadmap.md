@@ -1,5 +1,9 @@
 # Roadmap
 
+## Day-pass completion
+- [x] Move waiver to guest details for new and returning guests; explicit optional texting on payment; keep Check In visible.
+- [x] Persist declined text preference and waiver evidence; 36 tests passed, desktop/phone checks passed, public TEST checkout saved and read back in authenticated CRM; QA contact/purchase removed, texting remains paused.
+
 ## Temporary outgoing texting pause
 - [x] Block every outgoing SMS path without disabling forms or voice calls; 26 tests passed and authenticated CRM send was blocked with draft retained.
 - [x] Published with Jalen’s approval; live appointment reminders, initial messages, follow-ups, and schedule-link utilities return sms_paused with zero sends. Existing messaging services deployed and verified.

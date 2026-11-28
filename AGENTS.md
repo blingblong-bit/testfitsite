@@ -1,5 +1,7 @@
 # Project rules
 
+- Day-pass checkout requires a server-validated waiver and explicit text choice; save waiver evidence and text preferences with the contact, and never clear an existing SMS opt-out from a public check-in. Why: purchasing a pass must not require texts or override STOP.
+
 - Every outgoing Twilio Messages request uses a fail-closed SMS pause guard in both runtimes; SMS_OUTBOUND_PAUSED must explicitly be false to resume. Why: the pause must cover manual texts, automation, reminders, and alerts without disabling calls.
 
 - CRM manual-text submissions check the client session and always release their busy state in finally; keep the draft on failures and never automatically retry a send. Why: failed authentication must not freeze the composer or risk duplicate customer texts.

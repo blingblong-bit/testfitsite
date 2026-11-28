@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { AttributionSchema, attributionColumns, type AttributionInput } from "./attribution";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { DayPassConsentSchema, dayPassTextPreferences } from "./day-pass-consent";
 
 const Schema = z
   .object({
@@ -13,6 +14,7 @@ const Schema = z
     payment_method: z.enum(["venmo", "paid_at_desk"]),
     lead_id: z.string().uuid().optional().nullable(),
     attribution: AttributionSchema,
+    ...DayPassConsentSchema.shape,
   })
   .refine(
     // Email is optional; when supplied it must be valid. Name is required
@@ -53,6 +55,8 @@ type FinalizeInput = {
   payment_method: "venmo" | "paid_at_desk";
   lead_id?: string | null;
   attribution?: AttributionInput;
+  waiver_accepted?: true;
+  sms_consent?: boolean;
 };
 
 type FinalizeResult =
@@ -136,13 +140,14 @@ async function finalizeDayPassLead(data: FinalizeInput): Promise<FinalizeResult>
         email: string | null;
         phone: string | null;
         name?: string | null;
+        sms_opted_out: boolean;
       }
     | undefined;
 
   if (data.lead_id) {
     const { data: byId } = await supabaseAdmin
       .from("leads")
-      .select("id, notes, email, phone, name")
+      .select("id, notes, email, phone, name, sms_opted_out")
       .eq("id", data.lead_id)
       .maybeSingle();
     if (byId) existingLead = byId;
@@ -158,7 +163,7 @@ async function finalizeDayPassLead(data: FinalizeInput): Promise<FinalizeResult>
     if (orFilters.length > 0) {
       const { data: existingCandidates, error: findErr } = await supabaseAdmin
         .from("leads")
-        .select("id, notes, email, phone, name")
+        .select("id, notes, email, phone, name, sms_opted_out")
         .or(orFilters.join(","));
       if (findErr) {
         console.error("[dayPassCheckin] find error", findErr.message);
@@ -177,6 +182,27 @@ async function finalizeDayPassLead(data: FinalizeInput): Promise<FinalizeResult>
 
   const name = data.name.trim() || (existingLead?.name ?? "").trim();
   const resolvedEmail = email || (existingLead?.email ?? "").trim().toLowerCase();
+  const preferences = typeof data.sms_consent === "boolean"
+    ? dayPassTextPreferences(data.sms_consent, existingLead?.sms_opted_out ?? false)
+    : {};
+  const consentNote = data.waiver_accepted
+    ? `\n[${now}] Day-pass liability waiver accepted (website waiver v1); texts ${data.sms_consent ? "requested" : "declined"}.`
+    : "";
+
+  if (typeof data.sms_consent === "boolean") {
+    const names = name.split(/\s+/);
+    const { error: consentError } = await supabaseAdmin.from("sms_consent_records").insert({
+      first_name: names[0] ?? "",
+      last_name: names.slice(1).join(" "),
+      phone: `+1${phone.replace(/\D/g, "").slice(-10)}`,
+      consent: data.sms_consent && !(existingLead?.sms_opted_out ?? false),
+      consent_at: now,
+      consent_source: "day_pass_checkout",
+    });
+    if (consentError) {
+      return { ok: false, error: "Could not save your text preference. Please try again or see the front desk." };
+    }
+  }
 
   let existingMember = false;
   try {
@@ -190,15 +216,16 @@ async function finalizeDayPassLead(data: FinalizeInput): Promise<FinalizeResult>
   }
 
   if (existingMember) {
-    const noteEntry = `[${now}] Existing Antaris member checked in for day pass (paid via ${payment_status})`;
+    const noteEntry = `[${now}] Existing Antaris member checked in for day pass (paid via ${payment_status})${consentNote}`;
     if (existingLead) {
       const notes = existingLead.notes ? `${existingLead.notes}\n${noteEntry}` : noteEntry;
-      await supabaseAdmin.from("leads").update({ notes }).eq("id", existingLead.id);
+      const { error } = await supabaseAdmin.from("leads").update({ notes, ...preferences }).eq("id", existingLead.id);
+      if (error) return { ok: false, error: "Could not save your check-in. Please see the front desk." };
     }
     return { ok: true, existing_member: true, lead_id: existingLead?.id ?? null };
   }
 
-  const noteEntry = `[${now}] Day pass walk-in — paid via ${payment_status}`;
+  const noteEntry = `[${now}] Day pass walk-in — paid via ${payment_status}${consentNote}`;
 
   if (existingLead) {
     const notes = existingLead.notes ? `${existingLead.notes}\n${noteEntry}` : noteEntry;
@@ -221,6 +248,7 @@ async function finalizeDayPassLead(data: FinalizeInput): Promise<FinalizeResult>
         // latest-purchase field; full history lives in day_pass_purchases.
         day_pass_purchased_at: now,
         notes,
+        ...preferences,
       })
       .eq("id", existingLead.id);
     if (upErr) {
@@ -254,6 +282,7 @@ async function finalizeDayPassLead(data: FinalizeInput): Promise<FinalizeResult>
       ...attributionColumns(data.attribution),
       status: "checked_in",
       notes: noteEntry,
+      ...preferences,
     })
     .select("id")
     .single();
